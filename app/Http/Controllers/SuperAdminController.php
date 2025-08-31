@@ -178,7 +178,7 @@ class SuperAdminController extends Controller
                 $query->orderBy('subject', 'asc'); // Fallback to subject ASC
         }
         
-        $questions = $query->paginate(20);
+        $questions = $query->paginate(10);
         
         return inertia('SuperAdmin/QuestionsFixed', [
             'questions' => $questions,

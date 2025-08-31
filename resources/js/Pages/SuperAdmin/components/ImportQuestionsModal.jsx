@@ -219,38 +219,38 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
-                    <h2 className="text-xl font-semibold text-gray-900">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                         Import Soal dari File CSV
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 p-1"
                     >
-                        <X className="h-6 w-6" />
+                        <X className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                     {/* Template Download */}
-                    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="flex items-center">
-                            <FileText className="h-5 w-5 text-blue-500 mr-2" />
+                    <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0">
+                            <FileText className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
                             <div className="flex-1">
-                                <h3 className="font-medium text-blue-900">
+                                <h3 className="font-medium text-blue-900 text-sm sm:text-base">
                                     Download Template CSV
                                 </h3>
-                                <p className="text-sm text-blue-700 mt-1">
+                                <p className="text-xs sm:text-sm text-blue-700 mt-1">
                                     Gunakan template ini sebagai panduan format
                                     yang benar untuk import soal
                                 </p>
                             </div>
                             <button
                                 onClick={downloadTemplate}
-                                className="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50"
+                                className="w-full sm:w-auto inline-flex items-center justify-center px-3 py-2 border border-blue-300 rounded-md text-xs sm:text-sm font-medium text-blue-700 bg-white hover:bg-blue-50"
                             >
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Template
@@ -259,14 +259,14 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                     </div>
 
                     {/* Format Requirements */}
-                    <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div className="flex items-start">
-                            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5" />
+                            <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
                             <div>
-                                <h3 className="font-medium text-yellow-900">
+                                <h3 className="font-medium text-yellow-900 text-sm sm:text-base">
                                     Format yang Diperlukan
                                 </h3>
-                                <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                                <ul className="text-xs sm:text-sm text-yellow-700 mt-2 space-y-1">
                                     <li>
                                         • File harus berformat CSV dengan
                                         delimiter semicolon (;)
@@ -295,12 +295,12 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                     </div>
 
                     {/* File Upload */}
-                    <div className="mb-6">
+                    <div className="mb-4 sm:mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Pilih File CSV
                         </label>
                         <div
-                            className={`border-2 border-dashed rounded-lg p-6 text-center ${
+                            className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center ${
                                 dragActive
                                     ? "border-blue-500 bg-blue-50"
                                     : "border-gray-300 hover:border-gray-400"
@@ -310,9 +310,9 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                             onDragOver={handleDrag}
                             onDrop={handleDrop}
                         >
-                            <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                            <div className="mt-4">
-                                <p className="text-sm text-gray-600">
+                            <Upload className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
+                            <div className="mt-3 sm:mt-4">
+                                <p className="text-xs sm:text-sm text-gray-600">
                                     <span className="font-medium text-blue-600 hover:text-blue-500">
                                         Klik untuk upload
                                     </span>{" "}
@@ -332,7 +332,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                             />
                             <label
                                 htmlFor="file-upload"
-                                className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                className="mt-3 sm:mt-4 inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
                             >
                                 Pilih File
                             </label>
@@ -346,14 +346,14 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
 
                     {/* File Info */}
                     {selectedFile && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg">
                             <div className="flex items-center">
-                                <FileText className="h-5 w-5 text-green-500 mr-2" />
+                                <FileText className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
                                 <div>
-                                    <p className="font-medium text-green-900">
+                                    <p className="font-medium text-green-900 text-sm sm:text-base">
                                         File dipilih: {selectedFile.name}
                                     </p>
-                                    <p className="text-sm text-green-700">
+                                    <p className="text-xs sm:text-sm text-green-700">
                                         Ukuran:{" "}
                                         {(selectedFile.size / 1024).toFixed(2)}{" "}
                                         KB
@@ -365,8 +365,8 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
 
                     {/* Preview Data */}
                     {previewData.length > 0 && (
-                        <div className="mb-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        <div className="mb-4 sm:mb-6">
+                            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4">
                                 Preview Data (5 baris pertama)
                             </h3>
                             <div className="overflow-x-auto">
@@ -378,7 +378,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                                             ).map((header) => (
                                                 <th
                                                     key={header}
-                                                    className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-200"
+                                                    className="px-2 sm:px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border border-gray-200"
                                                 >
                                                     {header}
                                                 </th>
@@ -392,7 +392,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                                                     (value, cellIndex) => (
                                                         <td
                                                             key={cellIndex}
-                                                            className="px-3 py-2 text-sm text-gray-900 border border-gray-200"
+                                                            className="px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-900 border border-gray-200"
                                                         >
                                                             {value || "-"}
                                                         </td>
@@ -407,17 +407,17 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                     )}
 
                     {/* Action Buttons */}
-                    <div className="flex justify-end space-x-3">
+                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                            className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                         >
                             Batal
                         </button>
                         <button
                             onClick={handleSubmit}
                             disabled={!selectedFile || isImporting}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {isImporting ? (
                                 <>
@@ -438,11 +438,11 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
             {/* Loading Overlay */}
             {isImporting && (
                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-60">
-                    <div className="bg-white rounded-lg p-6 shadow-xl">
+                    <div className="bg-white rounded-lg p-4 sm:p-6 shadow-xl mx-4">
                         <div className="flex items-center space-x-3">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
                             <div>
-                                <p className="text-lg font-medium text-gray-900">
+                                <p className="text-base sm:text-lg font-medium text-gray-900">
                                     Mengimport Soal...
                                 </p>
                                 <p className="text-sm text-gray-500">

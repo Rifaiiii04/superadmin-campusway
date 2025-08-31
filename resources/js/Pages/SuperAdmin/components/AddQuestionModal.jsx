@@ -17,21 +17,21 @@ export default function AddQuestionModal({
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div className="relative top-4 sm:top-10 mx-auto p-4 sm:p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900">
                         Tambah Soal Baru
                     </h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                     >
-                        <X className="h-6 w-6" />
+                        <X className="h-5 w-5 sm:h-6 sm:w-6" />
                     </button>
                 </div>
 
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
                                 Mata Pelajaran
@@ -42,7 +42,7 @@ export default function AddQuestionModal({
                                 onChange={(e) =>
                                     setData("subject", e.target.value)
                                 }
-                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                             />
                             {errors.subject && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -58,7 +58,7 @@ export default function AddQuestionModal({
                                 type="text"
                                 value="Pilihan Ganda"
                                 disabled
-                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed text-sm"
                             />
                             <p className="mt-1 text-xs text-gray-500">
                                 Saat ini hanya mendukung soal Pilihan Ganda
@@ -74,7 +74,7 @@ export default function AddQuestionModal({
                             value={data.content}
                             onChange={(e) => setData("content", e.target.value)}
                             rows={4}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                         />
                         {errors.content && (
                             <p className="mt-1 text-sm text-red-600">
@@ -90,7 +90,7 @@ export default function AddQuestionModal({
 
                         {/* Upload File */}
                         <div className="mb-3">
-                            <label className="block text-sm text-gray-600 mb-1">
+                            <label className="block text-xs sm:text-sm text-gray-600 mb-1">
                                 Upload File
                             </label>
                             <input
@@ -102,7 +102,7 @@ export default function AddQuestionModal({
                                         handleFileUpload(file);
                                     }
                                 }}
-                                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
                             <p className="text-xs text-gray-500 mt-1">
                                 Format: JPG, PNG, MP3, WAV (Max: 5MB)
@@ -111,7 +111,7 @@ export default function AddQuestionModal({
 
                         {/* Manual URL */}
                         <div>
-                            <label className="block text-sm text-gray-600 mb-1">
+                            <label className="block text-xs sm:text-sm text-gray-600 mb-1">
                                 Atau Masukkan URL Manual
                             </label>
                             <input
@@ -121,7 +121,7 @@ export default function AddQuestionModal({
                                     setData("media_url", e.target.value)
                                 }
                                 placeholder="https://example.com/image.jpg atau audio.mp3"
-                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                             />
                             {errors.media_url && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -133,7 +133,7 @@ export default function AddQuestionModal({
                         {/* Preview Media */}
                         {data.media_url && (
                             <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                                <p className="text-sm font-medium text-gray-700 mb-2">
+                                <p className="text-xs sm:text-sm font-medium text-gray-700 mb-2">
                                     Preview Media:
                                 </p>
                                 {data.media_url.match(
@@ -143,7 +143,7 @@ export default function AddQuestionModal({
                                         <img
                                             src={data.media_url}
                                             alt="Preview"
-                                            className="max-w-full h-32 object-cover rounded"
+                                            className="max-w-full h-24 sm:h-32 object-cover rounded"
                                             onError={(e) => {
                                                 e.target.style.display = "none";
                                                 e.target.nextSibling.style.display =
@@ -168,7 +168,7 @@ export default function AddQuestionModal({
                                         Browser tidak mendukung audio
                                     </audio>
                                 ) : (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-xs sm:text-sm text-gray-600">
                                         URL: {data.media_url}
                                     </p>
                                 )}
@@ -185,7 +185,7 @@ export default function AddQuestionModal({
                             {data.options.map((option, index) => (
                                 <div
                                     key={index}
-                                    className="flex items-center space-x-3"
+                                    className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3"
                                 >
                                     <div className="flex items-center">
                                         <input
@@ -215,7 +215,7 @@ export default function AddQuestionModal({
                                             )
                                         }
                                         placeholder={`Masukkan opsi ${option.label}`}
-                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                     />
                                 </div>
                             ))}
@@ -226,17 +226,17 @@ export default function AddQuestionModal({
                     </div>
                 </div>
 
-                <div className="flex justify-end space-x-3 mt-6">
+                <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                         Batal
                     </button>
                     <button
                         onClick={onSubmit}
                         disabled={processing}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
                     >
                         {processing ? "Menyimpan..." : "Simpan"}
                     </button>

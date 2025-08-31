@@ -135,11 +135,11 @@ export default function Reports({ errors, flash }) {
         <SuperAdminLayout>
             <Head title="Laporan" />
 
-            <div className="p-6">
-                <div className="bg-white shadow-sm border rounded-lg mb-6">
-                    <div className="px-6 py-4">
+            <div className="p-4 sm:p-6">
+                <div className="bg-white shadow-sm border rounded-lg mb-4 sm:mb-6">
+                    <div className="px-4 sm:px-6 py-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                                 Laporan
                             </h1>
                             <p className="mt-1 text-sm text-gray-500">
@@ -151,7 +151,7 @@ export default function Reports({ errors, flash }) {
 
                 {/* Flash Messages */}
                 {flash?.success && (
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
                         <div className="flex">
                             <div className="flex-shrink-0">
                                 <svg
@@ -176,7 +176,7 @@ export default function Reports({ errors, flash }) {
                 )}
 
                 {flash?.error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                         <div className="flex">
                             <div className="flex-shrink-0">
                                 <svg
@@ -201,16 +201,16 @@ export default function Reports({ errors, flash }) {
                 )}
 
                 {/* Report Selection */}
-                <div className="mb-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="mb-6 sm:mb-8">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                         Pilih Jenis Laporan
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         {reportTypes.map((report) => (
                             <div
                                 key={report.id}
                                 onClick={() => setSelectedReport(report.id)}
-                                className={`bg-white rounded-lg shadow-sm border p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                                className={`bg-white rounded-lg shadow-sm border p-4 sm:p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
                                     selectedReport === report.id
                                         ? "ring-2 ring-blue-500 border-blue-500"
                                         : "hover:border-gray-300"
@@ -218,15 +218,15 @@ export default function Reports({ errors, flash }) {
                             >
                                 <div className="flex items-center">
                                     <div
-                                        className={`p-3 rounded-lg ${report.color}`}
+                                        className={`p-2 sm:p-3 rounded-lg ${report.color}`}
                                     >
-                                        <report.icon className="h-6 w-6 text-white" />
+                                        <report.icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                     </div>
-                                    <div className="ml-4">
-                                        <h3 className="font-semibold text-gray-900">
+                                    <div className="ml-3 sm:ml-4">
+                                        <h3 className="text-sm sm:text-base font-semibold text-gray-900">
                                             {report.title}
                                         </h3>
-                                        <p className="text-sm text-gray-500">
+                                        <p className="text-xs sm:text-sm text-gray-500">
                                             {report.description}
                                         </p>
                                     </div>
@@ -238,12 +238,12 @@ export default function Reports({ errors, flash }) {
 
                 {/* Date Range Selection */}
                 {selectedReport && (
-                    <div className="mb-8">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <div className="mb-6 sm:mb-8">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                             Rentang Waktu (Opsional)
                         </h3>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         <Calendar className="inline h-4 w-4 mr-2" />
@@ -279,7 +279,7 @@ export default function Reports({ errors, flash }) {
                                     />
                                 </div>
                             </div>
-                            <div className="mt-4 flex items-center justify-between">
+                            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
                                 <button
                                     onClick={() =>
                                         setDateRange({ start: "", end: "" })
@@ -303,10 +303,10 @@ export default function Reports({ errors, flash }) {
 
                 {/* Download Section */}
                 {selectedReport && (
-                    <div className="bg-white rounded-lg shadow-sm border p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
+                    <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                            <div className="flex-1">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                                     Download Laporan{" "}
                                     {
                                         reportTypes.find(
@@ -314,43 +314,45 @@ export default function Reports({ errors, flash }) {
                                         )?.title
                                     }
                                 </h3>
-                                <p className="text-sm text-gray-500 mt-1">
+                                <p className="text-xs sm:text-sm text-gray-500 mt-1">
                                     Laporan akan diunduh dalam format CSV (.csv)
                                     dengan delimiter semicolon (;) yang siap
                                     dibuka di Excel
                                 </p>
                             </div>
-                            <button
-                                onClick={handleDownloadReportDirect}
-                                disabled={processing}
-                                className="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            >
-                                <Download className="h-4 w-4 mr-2" />
-                                {processing
-                                    ? "Mengunduh..."
-                                    : "Download Laporan"}
-                            </button>
-                            {processing && (
-                                <div className="mt-2 text-sm text-gray-500">
-                                    ⏳ Sedang memproses laporan...
-                                </div>
-                            )}
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                                <button
+                                    onClick={handleDownloadReportDirect}
+                                    disabled={processing}
+                                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    <Download className="h-4 w-4 mr-2" />
+                                    {processing
+                                        ? "Mengunduh..."
+                                        : "Download Laporan"}
+                                </button>
+                                {processing && (
+                                    <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-left">
+                                        ⏳ Sedang memproses laporan...
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {/* Report Information */}
-                <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="mt-6 sm:mt-8">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                         Informasi Laporan
                     </h3>
-                    <div className="bg-white rounded-lg shadow-sm border p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                             <div>
                                 <h4 className="font-medium text-gray-900 mb-2">
                                     Format Laporan
                                 </h4>
-                                <ul className="text-sm text-gray-600 space-y-1">
+                                <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                                     <li>
                                         • File CSV (.csv) dengan delimiter
                                         semicolon (;)
@@ -372,7 +374,7 @@ export default function Reports({ errors, flash }) {
                                 <h4 className="font-medium text-gray-900 mb-2">
                                     Konten Laporan
                                 </h4>
-                                <ul className="text-sm text-gray-600 space-y-1">
+                                <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
                                     <li>• Data lengkap sesuai jenis laporan</li>
                                     <li>• Format kolom yang terstruktur</li>
                                     <li>• Filter berdasarkan rentang waktu</li>

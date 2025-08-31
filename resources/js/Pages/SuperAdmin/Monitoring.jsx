@@ -142,11 +142,11 @@ export default function Monitoring({
         <SuperAdminLayout>
             <Head title="Monitoring Global" />
 
-            <div className="p-6">
-                <div className="bg-white shadow-sm border rounded-lg mb-6">
-                    <div className="px-6 py-4">
+            <div className="p-4 sm:p-6">
+                <div className="bg-white shadow-sm border rounded-lg mb-4 sm:mb-6">
+                    <div className="px-4 sm:px-6 py-4">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                                 Monitoring Global
                             </h1>
                             <p className="mt-1 text-sm text-gray-500">
@@ -157,51 +157,51 @@ export default function Monitoring({
                 </div>
 
                 {/* National Statistics */}
-                <div className="mb-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="mb-6 sm:mb-8">
+                    <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                         Statistik Nasional
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="p-3 rounded-lg bg-blue-500">
-                                    <Building2 className="h-6 w-6 text-white" />
+                                <div className="p-2 sm:p-3 rounded-lg bg-blue-500">
+                                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">
+                                <div className="ml-3 sm:ml-4">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                                         Total Sekolah
                                     </p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                         {defaultStats.total_schools}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="p-3 rounded-lg bg-green-500">
-                                    <Users className="h-6 w-6 text-white" />
+                                <div className="p-2 sm:p-3 rounded-lg bg-green-500">
+                                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">
+                                <div className="ml-3 sm:ml-4">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                                         Total Siswa
                                     </p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                         {defaultStats.total_students}
                                     </p>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="p-3 rounded-lg bg-purple-500">
-                                    <BarChart3 className="h-6 w-6 text-white" />
+                                <div className="p-2 sm:p-3 rounded-lg bg-purple-500">
+                                    <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">
+                                <div className="ml-3 sm:ml-4">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                                         Rata-rata Skor
                                     </p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                         {formatScore(
                                             defaultStats.average_score
                                         )}
@@ -209,16 +209,16 @@ export default function Monitoring({
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="p-3 rounded-lg bg-orange-500">
-                                    <School className="h-6 w-6 text-white" />
+                                <div className="p-2 sm:p-3 rounded-lg bg-orange-500">
+                                    <School className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
-                                <div className="ml-4">
-                                    <p className="text-sm font-medium text-gray-600">
+                                <div className="ml-3 sm:ml-4">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">
                                         Total Rekomendasi
                                     </p>
-                                    <p className="text-2xl font-bold text-gray-900">
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
                                         {defaultStats.total_recommendations}
                                     </p>
                                 </div>
@@ -227,33 +227,33 @@ export default function Monitoring({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                     {/* School Performance */}
                     <div className="bg-white rounded-lg shadow-sm border">
-                        <div className="px-6 py-4 border-b">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                                 Performa Sekolah
                             </h3>
                         </div>
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             {defaultSchoolPerformance.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     {defaultSchoolPerformance.map((school) => (
                                         <div
                                             key={school.id}
-                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                            className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gray-50 rounded-lg space-y-2 sm:space-y-0"
                                         >
-                                            <div>
-                                                <p className="font-medium text-gray-900">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
                                                     {school.name}
                                                 </p>
-                                                <p className="text-sm text-gray-500">
+                                                <p className="text-xs sm:text-sm text-gray-500">
                                                     {school.students_count || 0}{" "}
                                                     siswa
                                                 </p>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="text-sm font-medium text-gray-900">
+                                            <div className="text-left sm:text-right">
+                                                <p className="text-xs sm:text-sm font-medium text-gray-900">
                                                     Rata-rata:{" "}
                                                     {formatScore(
                                                         school.avg_score
@@ -264,11 +264,11 @@ export default function Monitoring({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500 mb-2">
+                                <div className="text-center py-6 sm:py-8">
+                                    <p className="text-sm sm:text-base text-gray-500 mb-2">
                                         Belum ada data performa sekolah
                                     </p>
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-xs sm:text-sm text-gray-400">
                                         Data akan muncul setelah ada siswa yang
                                         mengikuti ujian
                                     </p>
@@ -279,31 +279,31 @@ export default function Monitoring({
 
                     {/* Subject Performance */}
                     <div className="bg-white rounded-lg shadow-sm border">
-                        <div className="px-6 py-4 border-b">
-                            <h3 className="text-lg font-semibold text-gray-900">
+                        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                                 Performa Mata Pelajaran
                             </h3>
                         </div>
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                             {defaultSubjectPerformance.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="space-y-3 sm:space-y-4">
                                     {defaultSubjectPerformance.map(
                                         (subject, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gray-50 rounded-lg space-y-2 sm:space-y-0"
                                             >
-                                                <div>
-                                                    <p className="font-medium text-gray-900">
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm sm:text-base font-medium text-gray-900 truncate">
                                                         {subject.subject}
                                                     </p>
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-xs sm:text-sm text-gray-500">
                                                         {subject.total_students}{" "}
                                                         siswa
                                                     </p>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-medium text-gray-900">
+                                                <div className="text-left sm:text-right">
+                                                    <p className="text-xs sm:text-sm font-medium text-gray-900">
                                                         Rata-rata:{" "}
                                                         {formatScore(
                                                             subject.avg_score
@@ -315,11 +315,11 @@ export default function Monitoring({
                                     )}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500 mb-2">
+                                <div className="text-center py-6 sm:py-8">
+                                    <p className="text-sm sm:text-base text-gray-500 mb-2">
                                         Belum ada data performa mata pelajaran
                                     </p>
-                                    <p className="text-sm text-gray-400">
+                                    <p className="text-xs sm:text-sm text-gray-400">
                                         Data akan muncul setelah ada siswa yang
                                         mengikuti ujian
                                     </p>
@@ -331,27 +331,27 @@ export default function Monitoring({
 
                 {/* Charts Section */}
                 {defaultSchoolPerformance.length > 0 && (
-                    <div className="mt-8">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                    <div className="mt-6 sm:mt-8">
+                        <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                             Grafik Performa
                         </h2>
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div className="bg-white rounded-lg shadow-sm border p-6">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                            <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
                                     Distribusi Skor Nasional
                                 </h3>
-                                <div className="h-64">
+                                <div className="h-48 sm:h-64">
                                     <Doughnut
                                         data={scoreDistributionData}
                                         options={doughnutOptions}
                                     />
                                 </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow-sm border p-6">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
                                     Perbandingan Antar Sekolah
                                 </h3>
-                                <div className="h-64">
+                                <div className="h-48 sm:h-64">
                                     <Bar
                                         data={schoolComparisonData}
                                         options={chartOptions}
@@ -365,13 +365,13 @@ export default function Monitoring({
                 {/* Additional Charts */}
                 {defaultSchoolPerformance.length > 0 &&
                     defaultSubjectPerformance.length > 0 && (
-                        <div className="mt-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <div className="bg-white rounded-lg shadow-sm border p-6">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        <div className="mt-6 sm:mt-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                                <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
                                         Performa Mata Pelajaran
                                     </h3>
-                                    <div className="h-64">
+                                    <div className="h-48 sm:h-64">
                                         <Bar
                                             data={{
                                                 labels: defaultSubjectPerformance.map(
@@ -399,11 +399,11 @@ export default function Monitoring({
                                         />
                                     </div>
                                 </div>
-                                <div className="bg-white rounded-lg shadow-sm border p-6">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
                                         Jumlah Siswa per Sekolah
                                     </h3>
-                                    <div className="h-64">
+                                    <div className="h-48 sm:h-64">
                                         <Bar
                                             data={{
                                                 labels: defaultSchoolPerformance.map(

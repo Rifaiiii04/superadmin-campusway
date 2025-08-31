@@ -266,12 +266,13 @@ export default function Questions({
         <SuperAdminLayout>
             <Head title="Kelola Bank Soal" />
 
-            <div className="p-6">
-                <div className="bg-white shadow-sm border rounded-lg mb-6">
-                    <div className="px-6 py-4">
-                        <div className="flex justify-between items-center">
+            <div className="p-4 sm:p-6">
+                {/* Header Section */}
+                <div className="bg-white shadow-sm border rounded-lg mb-4 sm:mb-6">
+                    <div className="px-4 sm:px-6 py-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-900">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                                     Kelola Bank Soal
                                 </h1>
                                 <p className="mt-1 text-sm text-gray-500">
@@ -287,20 +288,26 @@ export default function Questions({
                                     </p>
                                 )}
                             </div>
-                            <div className="flex space-x-3">
+                            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                                 <button
                                     onClick={() => setShowImportModal(true)}
-                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                    className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                                 >
                                     <Upload className="h-4 w-4 mr-2" />
-                                    Import CSV
+                                    <span className="hidden sm:inline">
+                                        Import CSV
+                                    </span>
+                                    <span className="sm:hidden">Import</span>
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                    className="inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Tambah Soal
+                                    <span className="hidden sm:inline">
+                                        Tambah Soal
+                                    </span>
+                                    <span className="sm:hidden">Tambah</span>
                                 </button>
                             </div>
                         </div>
@@ -309,7 +316,7 @@ export default function Questions({
 
                 {/* Flash Messages */}
                 {flash?.success && (
-                    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
                         <div className="flex">
                             <div className="flex-shrink-0">
                                 <svg
@@ -334,7 +341,7 @@ export default function Questions({
                 )}
 
                 {flash?.error && (
-                    <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
                         <div className="flex">
                             <div className="flex-shrink-0">
                                 <svg
@@ -358,9 +365,10 @@ export default function Questions({
                     </div>
                 )}
 
-                <div className="mb-6 space-y-4">
+                {/* Search and Filters Section */}
+                <div className="mb-4 sm:mb-6 space-y-4">
                     {/* Search and Filters Row */}
-                    <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex flex-col space-y-4">
                         {/* Search Bar */}
                         <div className="relative flex-1 max-w-md">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -369,12 +377,13 @@ export default function Questions({
                                 placeholder="Cari soal berdasarkan mata pelajaran, pertanyaan, atau opsi jawaban..."
                                 value={searchTerm}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                             />
                         </div>
 
-                        {/* Subject Filter */}
-                        <div className="flex flex-col sm:flex-row gap-2">
+                        {/* Filters Row */}
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                            {/* Subject Filter */}
                             <select
                                 value={selectedSubject}
                                 onChange={(e) =>
@@ -406,40 +415,42 @@ export default function Questions({
                             </select>
 
                             {/* Sorting Controls */}
-                            <div className="flex items-center space-x-2">
-                                <label className="text-sm text-gray-700">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <label className="text-sm text-gray-700 whitespace-nowrap">
                                     Urutkan:
                                 </label>
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) =>
-                                        handleSortChange(e.target.value)
-                                    }
-                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[140px]"
-                                >
-                                    <option value="subject">
-                                        Mata Pelajaran
-                                    </option>
-                                    <option value="created_at">
-                                        Tanggal Dibuat
-                                    </option>
-                                    <option value="type">Tipe Soal</option>
-                                </select>
-                                <button
-                                    onClick={() => handleSortChange(sortBy)}
-                                    className={`p-2 rounded-md border ${
-                                        sortOrder === "asc"
-                                            ? "bg-blue-50 border-blue-300 text-blue-600"
-                                            : "bg-gray-50 border-gray-300 text-gray-600"
-                                    } hover:bg-blue-100 transition-colors`}
-                                    title={
-                                        sortOrder === "asc"
-                                            ? "Urutkan A-Z"
-                                            : "Urutkan Z-A"
-                                    }
-                                >
-                                    {sortOrder === "asc" ? "↑" : "↓"}
-                                </button>
+                                <div className="flex items-center space-x-2">
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) =>
+                                            handleSortChange(e.target.value)
+                                        }
+                                        className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[140px]"
+                                    >
+                                        <option value="subject">
+                                            Mata Pelajaran
+                                        </option>
+                                        <option value="created_at">
+                                            Tanggal Dibuat
+                                        </option>
+                                        <option value="type">Tipe Soal</option>
+                                    </select>
+                                    <button
+                                        onClick={() => handleSortChange(sortBy)}
+                                        className={`p-2 rounded-md border ${
+                                            sortOrder === "asc"
+                                                ? "bg-blue-50 border-blue-300 text-blue-600"
+                                                : "bg-gray-50 border-gray-300 text-gray-600"
+                                        } hover:bg-blue-100 transition-colors`}
+                                        title={
+                                            sortOrder === "asc"
+                                                ? "Urutkan A-Z"
+                                                : "Urutkan Z-A"
+                                        }
+                                    >
+                                        {sortOrder === "asc" ? "↑" : "↓"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -452,7 +463,7 @@ export default function Questions({
                         sortOrder !== "asc") && (
                         <div className="flex flex-wrap gap-2">
                             {searchTerm && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                     Pencarian: {searchTerm}
                                     <button
                                         onClick={() => handleSearch("")}
@@ -463,7 +474,7 @@ export default function Questions({
                                 </span>
                             )}
                             {selectedSubject && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                     Mata Pelajaran: {selectedSubject}
                                     <button
                                         onClick={() => handleSubjectFilter("")}
@@ -474,7 +485,7 @@ export default function Questions({
                                 </span>
                             )}
                             {selectedType && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                     Tipe: {selectedType}
                                     <button
                                         onClick={() => handleTypeFilter("")}
@@ -485,7 +496,7 @@ export default function Questions({
                                 </span>
                             )}
                             {(sortBy !== "subject" || sortOrder !== "asc") && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                     Urutan:{" "}
                                     {sortBy === "subject"
                                         ? "Mata Pelajaran"
@@ -525,7 +536,7 @@ export default function Questions({
                                         page: 1,
                                     });
                                 }}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
                             >
                                 Reset Semua
                             </button>
@@ -533,6 +544,7 @@ export default function Questions({
                     )}
                 </div>
 
+                {/* Questions Table */}
                 <QuestionTable
                     questions={questions.data}
                     onEdit={openEditModal}
@@ -570,12 +582,12 @@ export default function Questions({
                 {/* Edit Question Modal */}
                 {showEditModal && editingQuestion && (
                     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                        <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                        <div className="relative top-4 sm:top-10 mx-auto p-4 sm:p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+                            <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
                                 Edit Soal
                             </h3>
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran
@@ -589,7 +601,7 @@ export default function Questions({
                                                     e.target.value
                                                 )
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                         />
                                     </div>
                                     <div>
@@ -600,7 +612,7 @@ export default function Questions({
                                             type="text"
                                             value="Pilihan Ganda"
                                             disabled
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500 text-sm"
                                         />
                                     </div>
                                 </div>
@@ -615,7 +627,7 @@ export default function Questions({
                                             setData("content", e.target.value)
                                         }
                                         rows={4}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                     />
                                 </div>
 
@@ -630,7 +642,7 @@ export default function Questions({
                                             setData("media_url", e.target.value)
                                         }
                                         placeholder="https://example.com/image.jpg"
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                     />
                                 </div>
 
@@ -644,7 +656,7 @@ export default function Questions({
                                         {data.options.map((option, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-center space-x-3"
+                                                className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3"
                                             >
                                                 <div className="flex items-center">
                                                     <input
@@ -676,7 +688,7 @@ export default function Questions({
                                                         )
                                                     }
                                                     placeholder={`Masukkan opsi ${option.label}`}
-                                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                                 />
                                             </div>
                                         ))}
@@ -687,21 +699,21 @@ export default function Questions({
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex justify-end space-x-3 mt-6">
+                            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
                                 <button
                                     onClick={() => {
                                         setShowEditModal(false);
                                         setEditingQuestion(null);
                                         resetForm();
                                     }}
-                                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                    className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     onClick={handleEditQuestion}
                                     disabled={processing}
-                                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                    className="w-full sm:w-auto px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                                 >
                                     {processing ? "Menyimpan..." : "Update"}
                                 </button>
