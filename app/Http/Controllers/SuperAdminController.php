@@ -138,10 +138,15 @@ class SuperAdminController extends Controller
     public function questions()
     {
         $questions = Question::with('questionOptions')->paginate(10);
-        return inertia('SuperAdmin/Questions', [
+        return inertia('SuperAdmin/QuestionsFixed', [
             'questions' => $questions,
             'auth' => [
                 'user' => Auth::guard('admin')->user()
+            ],
+            'errors' => session('errors'),
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('error'),
             ]
         ]);
     }
@@ -545,6 +550,168 @@ class SuperAdminController extends Controller
             
         } catch (\Exception $e) {
             return response()->json(['error' => 'Test error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function importTest()
+    {
+        return response()->json([
+            'message' => 'Import test endpoint accessible',
+            'timestamp' => now(),
+            'status' => 'success'
+        ]);
+    }
+
+    public function importQuestions(Request $request)
+    {
+        try {
+            // Debug: log request data
+            Log::info('Import questions request received', [
+                'all_data' => $request->all(),
+                'has_file' => $request->hasFile('file'),
+                'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'no file',
+                'file_size' => $request->file('file') ? $request->file('file')->getSize() : 'no file'
+            ]);
+
+            $request->validate([
+                'file' => 'required|file|mimes:csv,txt|max:2048',
+            ]);
+
+            $file = $request->file('file');
+            $content = file_get_contents($file->getPathname());
+            $lines = explode("\n", $content);
+            
+            // Skip header
+            $headers = array_map('trim', explode(';', $lines[0]));
+            $expectedHeaders = ['No', 'Mata Pelajaran', 'Tipe', 'Soal', 'Media', 'Opsi A', 'Opsi B', 'Opsi C', 'Opsi D', 'Jawaban Benar', 'Tanggal Dibuat'];
+            
+            // Validasi header
+            if (count(array_intersect($headers, $expectedHeaders)) < count($expectedHeaders)) {
+                return back()->withErrors(['file' => 'Format header tidak sesuai. Gunakan template yang disediakan.']);
+            }
+
+            $imported = 0;
+            $errors = [];
+            
+            // Process data rows
+            for ($i = 1; $i < count($lines); $i++) {
+                if (empty(trim($lines[$i]))) continue;
+                
+                $values = array_map('trim', explode(';', $lines[$i]));
+                if (count($values) < 10) continue; // Skip incomplete rows
+                
+                try {
+                    // Map values to columns
+                    $data = array_combine($headers, $values);
+                    
+                    // Validasi data
+                    if (empty($data['Mata Pelajaran']) || empty($data['Soal']) || empty($data['Tipe'])) {
+                        $errors[] = "Baris " . ($i + 1) . ": Data tidak lengkap";
+                        continue;
+                    }
+                    
+                    if ($data['Tipe'] !== 'Pilihan Ganda') {
+                        $errors[] = "Baris " . ($i + 1) . ": Hanya soal pilihan ganda yang didukung";
+                        continue;
+                    }
+                    
+                    // Validasi opsi jawaban
+                    $options = [
+                        $data['Opsi A'] ?? '',
+                        $data['Opsi B'] ?? '',
+                        $data['Opsi C'] ?? '',
+                        $data['Opsi D'] ?? ''
+                    ];
+                    
+                    if (empty(array_filter($options))) {
+                        $errors[] = "Baris " . ($i + 1) . ": Minimal harus ada satu opsi jawaban";
+                        continue;
+                    }
+                    
+                    // Validasi jawaban benar
+                    $correctAnswer = strtoupper(trim($data['Jawaban Benar'] ?? ''));
+                    if (!in_array($correctAnswer, ['A', 'B', 'C', 'D'])) {
+                        $errors[] = "Baris " . ($i + 1) . ": Jawaban benar harus A, B, C, atau D";
+                        continue;
+                    }
+                    
+                    // Buat soal baru
+                    $question = Question::create([
+                        'subject' => $data['Mata Pelajaran'],
+                        'type' => $data['Tipe'],
+                        'content' => $data['Soal'],
+                        'media_url' => ($data['Media'] === 'Ya') ? 'placeholder' : null,
+                    ]);
+                    
+                    // Buat opsi jawaban
+                    foreach ($options as $index => $optionText) {
+                        if (!empty($optionText)) {
+                            QuestionOption::create([
+                                'question_id' => $question->id,
+                                'option_text' => $optionText,
+                                'is_correct' => ($correctAnswer === chr(65 + $index)), // A=0, B=1, C=2, D=3
+                            ]);
+                        }
+                    }
+                    
+                    $imported++;
+                    
+                } catch (\Exception $e) {
+                    $errors[] = "Baris " . ($i + 1) . ": " . $e->getMessage();
+                }
+            }
+            
+            if ($imported > 0) {
+                $message = "Berhasil mengimport {$imported} soal.";
+                if (count($errors) > 0) {
+                    $message .= " Terdapat " . count($errors) . " error yang di-skip.";
+                }
+                
+                Log::info('Import questions completed successfully', [
+                    'imported' => $imported,
+                    'errors_count' => count($errors),
+                    'message' => $message
+                ]);
+                
+                // Return JSON response untuk AJAX request
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'imported' => $imported,
+                        'errors_count' => count($errors)
+                    ]);
+                }
+                
+                return back()->with('success', $message);
+            } else {
+                Log::warning('Import questions failed - no questions imported');
+                
+                // Return JSON response untuk AJAX request
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak ada soal yang berhasil diimport. Periksa format file.',
+                        'errors' => ['file' => 'Tidak ada soal yang berhasil diimport. Periksa format file.']
+                    ], 422);
+                }
+                
+                return back()->withErrors(['file' => 'Tidak ada soal yang berhasil diimport. Periksa format file.']);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('Import questions error: ' . $e->getMessage());
+            
+            // Return JSON response untuk AJAX request
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat import: ' . $e->getMessage(),
+                    'errors' => ['file' => 'Terjadi kesalahan saat import: ' . $e->getMessage()]
+                ], 500);
+            }
+            
+            return back()->withErrors(['file' => 'Terjadi kesalahan saat import: ' . $e->getMessage()]);
         }
     }
 

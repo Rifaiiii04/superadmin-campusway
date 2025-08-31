@@ -1,20 +1,22 @@
 import React, { useState } from "react";
-import { Head, useForm, Link, router } from "@inertiajs/react";
+import { Head, useForm, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Upload } from "lucide-react";
 import QuestionTable from "./components/QuestionTable";
 import AddQuestionModal from "./components/AddQuestionModal";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
+import ImportQuestionsModal from "./components/ImportQuestionsModal";
 
-export default function Questions({ questions }) {
+export default function Questions({ questions, errors, flash }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [questionToDelete, setQuestionToDelete] = useState(null);
 
-    const { data, setData, post, put, processing, errors, reset } = useForm({
+    const { data, setData, post, put, processing, reset } = useForm({
         subject: "",
         type: "Pilihan Ganda",
         content: "",
@@ -27,8 +29,17 @@ export default function Questions({ questions }) {
         ],
     });
 
+    const resetForm = () => {
+        reset();
+        setData("options", [
+            { option_text: "", is_correct: false, label: "A" },
+            { option_text: "", is_correct: false, label: "B" },
+            { option_text: "", is_correct: false, label: "C" },
+            { option_text: "", is_correct: false, label: "D" },
+        ]);
+    };
+
     const handleAddQuestion = () => {
-        // Validate that at least one option is correct for multiple choice
         if (data.type === "Pilihan Ganda") {
             const hasCorrectAnswer = data.options.some(
                 (option) => option.is_correct
@@ -50,7 +61,6 @@ export default function Questions({ questions }) {
     };
 
     const handleEditQuestion = () => {
-        // Validate that at least one option is correct for multiple choice
         if (data.type === "Pilihan Ganda") {
             const hasCorrectAnswer = data.options.some(
                 (option) => option.is_correct
@@ -83,20 +93,13 @@ export default function Questions({ questions }) {
             return;
         }
 
-        console.log("Menggunakan Inertia router.delete untuk:", questionId);
-
-        // Gunakan Inertia router.delete yang lebih reliable
         router.delete(`/super-admin/questions/${questionId}`, {
             onSuccess: () => {
                 console.log("Soal berhasil dihapus");
-                // Halaman akan otomatis reload oleh Inertia
             },
             onError: (errors) => {
                 console.error("Delete failed:", errors);
                 alert("Gagal menghapus soal. Silakan coba lagi.");
-            },
-            onFinish: () => {
-                console.log("Delete request selesai");
             },
         });
     };
@@ -128,33 +131,16 @@ export default function Questions({ questions }) {
 
     const handleOptionChange = (index, field, value) => {
         const newOptions = [...data.options];
-        if (field === "is_correct") {
-            // For multiple choice, allow multiple correct answers
-            newOptions[index][field] = value;
-        } else {
-            newOptions[index][field] = value;
-        }
+        newOptions[index][field] = value;
         setData("options", newOptions);
     };
 
-    const resetForm = () => {
-        reset();
-        setData("options", [
-            { option_text: "", is_correct: false, label: "A" },
-            { option_text: "", is_correct: false, label: "B" },
-            { option_text: "", is_correct: false, label: "C" },
-            { option_text: "", is_correct: false, label: "D" },
-        ]);
-    };
-
     const handleFileUpload = async (file) => {
-        // Validasi ukuran file (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert("Ukuran file terlalu besar! Maksimal 5MB");
             return;
         }
 
-        // Validasi tipe file
         const allowedTypes = [
             "image/jpeg",
             "image/png",
@@ -170,7 +156,6 @@ export default function Questions({ questions }) {
         }
 
         try {
-            // Buat FormData untuk upload
             const formData = new FormData();
             formData.append("media", file);
             formData.append(
@@ -180,7 +165,6 @@ export default function Questions({ questions }) {
                     ?.getAttribute("content")
             );
 
-            // Upload file ke server
             const response = await fetch("/super-admin/upload-media", {
                 method: "POST",
                 body: formData,
@@ -217,16 +201,76 @@ export default function Questions({ questions }) {
                                     Daftar dan kelola semua soal dalam sistem
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Tambah Soal
-                            </button>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={() => setShowImportModal(true)}
+                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import CSV
+                                </button>
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Tambah Soal
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Flash Messages */}
+                {flash?.success && (
+                    <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg
+                                    className="h-5 w-5 text-green-400"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-green-800">
+                                    {flash.success}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {flash?.error && (
+                    <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex">
+                            <div className="flex-shrink-0">
+                                <svg
+                                    className="h-5 w-5 text-red-400"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-red-800">
+                                    {flash.error}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="mb-6">
                     <div className="relative max-w-md">
@@ -289,11 +333,6 @@ export default function Questions({ questions }) {
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                         />
-                                        {errors.subject && (
-                                            <p className="mt-1 text-sm text-red-600">
-                                                {errors.subject}
-                                            </p>
-                                        )}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
@@ -303,12 +342,8 @@ export default function Questions({ questions }) {
                                             type="text"
                                             value="Pilihan Ganda"
                                             disabled
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500"
                                         />
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            Saat ini hanya mendukung soal
-                                            Pilihan Ganda
-                                        </p>
                                     </div>
                                 </div>
 
@@ -324,116 +359,21 @@ export default function Questions({ questions }) {
                                         rows={4}
                                         className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                     />
-                                    {errors.content && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.content}
-                                        </p>
-                                    )}
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Media (opsional)
+                                    <label className="block text-sm font-medium text-gray-700">
+                                        Media URL (Opsional)
                                     </label>
-
-                                    {/* Upload File */}
-                                    <div className="mb-3">
-                                        <label className="block text-sm text-gray-600 mb-1">
-                                            Upload File
-                                        </label>
-                                        <input
-                                            type="file"
-                                            accept="image/*,audio/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
-                                                if (file) {
-                                                    handleFileUpload(file);
-                                                }
-                                            }}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Format: JPG, PNG, MP3, WAV (Max:
-                                            5MB)
-                                        </p>
-                                    </div>
-
-                                    {/* Manual URL */}
-                                    <div>
-                                        <label className="block text-sm text-gray-600 mb-1">
-                                            Atau Masukkan URL Manual
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={data.media_url}
-                                            onChange={(e) =>
-                                                setData(
-                                                    "media_url",
-                                                    e.target.value
-                                                )
-                                            }
-                                            placeholder="https://example.com/image.jpg atau audio.mp3"
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                        {errors.media_url && (
-                                            <p className="mt-1 text-sm text-red-600">
-                                                {errors.media_url}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Preview Media */}
-                                    {data.media_url && (
-                                        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                                            <p className="text-sm font-medium text-gray-700 mb-2">
-                                                Preview Media:
-                                            </p>
-                                            {data.media_url.match(
-                                                /\.(jpg|jpeg|png|gif|webp)$/i
-                                            ) ? (
-                                                <div>
-                                                    <img
-                                                        src={data.media_url}
-                                                        alt="Preview"
-                                                        className="max-w-full h-32 object-cover rounded"
-                                                        onError={(e) => {
-                                                            e.target.style.display =
-                                                                "none";
-                                                            e.target.nextSibling.style.display =
-                                                                "block";
-                                                        }}
-                                                    />
-                                                    <p
-                                                        className="text-xs text-gray-500 mt-1"
-                                                        style={{
-                                                            display: "none",
-                                                        }}
-                                                    >
-                                                        Gambar tidak dapat
-                                                        ditampilkan
-                                                    </p>
-                                                </div>
-                                            ) : data.media_url.match(
-                                                  /\.(mp3|wav|ogg|m4a)$/i
-                                              ) ? (
-                                                <audio
-                                                    controls
-                                                    className="w-full"
-                                                >
-                                                    <source
-                                                        src={data.media_url}
-                                                        type="audio/mpeg"
-                                                    />
-                                                    Browser tidak mendukung
-                                                    audio
-                                                </audio>
-                                            ) : (
-                                                <p className="text-sm text-gray-600">
-                                                    URL: {data.media_url}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
+                                    <input
+                                        type="text"
+                                        value={data.media_url}
+                                        onChange={(e) =>
+                                            setData("media_url", e.target.value)
+                                        }
+                                        placeholder="https://example.com/image.jpg"
+                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    />
                                 </div>
 
                                 {/* Opsi Jawaban */}
@@ -525,6 +465,15 @@ export default function Questions({ questions }) {
                         50
                     )}${questionToDelete?.content?.length > 50 ? "..." : ""}"`}
                     questionId={questionToDelete?.id}
+                />
+
+                {/* Import Questions Modal */}
+                <ImportQuestionsModal
+                    isOpen={showImportModal}
+                    onClose={() => setShowImportModal(false)}
+                    onSuccess={() => {
+                        window.location.reload();
+                    }}
                 />
             </div>
         </SuperAdminLayout>
