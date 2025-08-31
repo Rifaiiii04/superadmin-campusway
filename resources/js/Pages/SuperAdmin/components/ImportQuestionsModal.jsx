@@ -7,6 +7,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
     const [selectedFile, setSelectedFile] = useState(null);
     const [previewData, setPreviewData] = useState([]);
     const [errors, setErrors] = useState({});
+    const [isImporting, setIsImporting] = useState(false);
 
     const { post, processing } = useForm();
 
@@ -72,6 +73,10 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
             setErrors({ file: "Pilih file CSV terlebih dahulu" });
             return;
         }
+
+        // Set loading state
+        setIsImporting(true);
+        setErrors({});
 
         console.log("🚀 Mulai import file:", selectedFile.name);
         console.log("📁 File size:", selectedFile.size);
@@ -145,6 +150,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                                 onClose();
                             }
                         }
+                        setIsImporting(false);
                     });
                 }
 
@@ -156,6 +162,7 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                         onClose();
                         setSelectedFile(null);
                         setPreviewData([]);
+                        setIsImporting(false);
                     });
                 }
 
@@ -179,12 +186,14 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
 
                     alert(errorMessage);
                     setErrors({ file: errorMessage });
+                    setIsImporting(false);
                 });
             })
             .catch((error) => {
                 console.error("❌ Network error:", error);
                 alert("Gagal mengirim request: " + error.message);
                 setErrors({ file: "Network error: " + error.message });
+                setIsImporting(false);
             });
     };
 
@@ -407,15 +416,43 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={!selectedFile || processing}
-                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={!selectedFile || isImporting}
+                            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
-                            <Upload className="h-4 w-4 mr-2" />
-                            {processing ? "Mengimport..." : "Import Soal"}
+                            {isImporting ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Mengimport...
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import Soal
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Loading Overlay */}
+            {isImporting && (
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-60">
+                    <div className="bg-white rounded-lg p-6 shadow-xl">
+                        <div className="flex items-center space-x-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <div>
+                                <p className="text-lg font-medium text-gray-900">
+                                    Mengimport Soal...
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                    Mohon tunggu sebentar
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
