@@ -6,13 +6,26 @@ import QuestionTable from "./components/QuestionTable";
 import AddQuestionModal from "./components/AddQuestionModal";
 import DeleteConfirmationModal from "./components/DeleteConfirmationModal";
 import ImportQuestionsModal from "./components/ImportQuestionsModal";
+import Pagination from "./components/Pagination";
 
-export default function Questions({ questions, errors, flash }) {
+export default function Questions({
+    questions,
+    errors,
+    flash,
+    subjects,
+    filters,
+}) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(filters?.search || "");
+    const [selectedSubject, setSelectedSubject] = useState(
+        filters?.subject || ""
+    );
+    const [selectedType, setSelectedType] = useState(filters?.type || "");
+    const [sortBy, setSortBy] = useState(filters?.sort_by || "subject");
+    const [sortOrder, setSortOrder] = useState(filters?.sort_order || "asc");
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [questionToDelete, setQuestionToDelete] = useState(null);
 
@@ -185,6 +198,70 @@ export default function Questions({ questions, errors, flash }) {
         }
     };
 
+    // Handle search and filter changes with debounce
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        // Debounce search to avoid too many requests
+        clearTimeout(searchTimeout.current);
+        searchTimeout.current = setTimeout(() => {
+            updateURL({ search: value, page: 1 });
+        }, 500);
+    };
+
+    // Use ref for search timeout
+    const searchTimeout = React.useRef(null);
+
+    const handleSubjectFilter = (value) => {
+        setSelectedSubject(value);
+        updateURL({ subject: value, page: 1 });
+    };
+
+    const handleTypeFilter = (value) => {
+        setSelectedType(value);
+        updateURL({ type: value, page: 1 });
+    };
+
+    const handleSortChange = (newSortBy) => {
+        let newSortOrder = "asc";
+
+        // If clicking the same column, toggle order
+        if (newSortBy === sortBy) {
+            newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+        }
+
+        setSortBy(newSortBy);
+        setSortOrder(newSortOrder);
+        updateURL({
+            sort_by: newSortBy,
+            sort_order: newSortOrder,
+            page: 1,
+        });
+    };
+
+    const updateURL = (params) => {
+        const url = new URL(window.location);
+        Object.keys(params).forEach((key) => {
+            if (params[key]) {
+                url.searchParams.set(key, params[key]);
+            } else {
+                url.searchParams.delete(key);
+            }
+        });
+        window.history.pushState({}, "", url);
+    };
+
+    // Get pagination data from backend
+    const currentPage = questions.current_page || 1;
+    const totalPages = questions.last_page || 1;
+    const totalItems = questions.total || 0;
+    const itemsPerPage = questions.per_page || 20;
+
+    const handlePageChange = (page) => {
+        const url = new URL(window.location);
+        url.searchParams.set("page", page);
+        window.location.href = url.toString();
+    };
+
     return (
         <SuperAdminLayout>
             <Head title="Kelola Bank Soal" />
@@ -200,6 +277,15 @@ export default function Questions({ questions, errors, flash }) {
                                 <p className="mt-1 text-sm text-gray-500">
                                     Daftar dan kelola semua soal dalam sistem
                                 </p>
+                                {totalItems > 0 && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Total:{" "}
+                                        <span className="font-medium">
+                                            {totalItems}
+                                        </span>{" "}
+                                        soal
+                                    </p>
+                                )}
                             </div>
                             <div className="flex space-x-3">
                                 <button
@@ -272,17 +358,179 @@ export default function Questions({ questions, errors, flash }) {
                     </div>
                 )}
 
-                <div className="mb-6">
-                    <div className="relative max-w-md">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Cari soal..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                <div className="mb-6 space-y-4">
+                    {/* Search and Filters Row */}
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        {/* Search Bar */}
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Cari soal berdasarkan mata pelajaran, pertanyaan, atau opsi jawaban..."
+                                value={searchTerm}
+                                onChange={(e) => handleSearch(e.target.value)}
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+
+                        {/* Subject Filter */}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                            <select
+                                value={selectedSubject}
+                                onChange={(e) =>
+                                    handleSubjectFilter(e.target.value)
+                                }
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
+                            >
+                                <option value="">Semua Mata Pelajaran</option>
+                                {subjects?.map((subject) => (
+                                    <option key={subject} value={subject}>
+                                        {subject}
+                                    </option>
+                                ))}
+                            </select>
+
+                            {/* Type Filter */}
+                            <select
+                                value={selectedType}
+                                onChange={(e) =>
+                                    handleTypeFilter(e.target.value)
+                                }
+                                className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
+                            >
+                                <option value="">Semua Tipe</option>
+                                <option value="Pilihan Ganda">
+                                    Pilihan Ganda
+                                </option>
+                                <option value="Essay">Essay</option>
+                            </select>
+
+                            {/* Sorting Controls */}
+                            <div className="flex items-center space-x-2">
+                                <label className="text-sm text-gray-700">
+                                    Urutkan:
+                                </label>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) =>
+                                        handleSortChange(e.target.value)
+                                    }
+                                    className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 min-w-[140px]"
+                                >
+                                    <option value="subject">
+                                        Mata Pelajaran
+                                    </option>
+                                    <option value="created_at">
+                                        Tanggal Dibuat
+                                    </option>
+                                    <option value="type">Tipe Soal</option>
+                                </select>
+                                <button
+                                    onClick={() => handleSortChange(sortBy)}
+                                    className={`p-2 rounded-md border ${
+                                        sortOrder === "asc"
+                                            ? "bg-blue-50 border-blue-300 text-blue-600"
+                                            : "bg-gray-50 border-gray-300 text-gray-600"
+                                    } hover:bg-blue-100 transition-colors`}
+                                    title={
+                                        sortOrder === "asc"
+                                            ? "Urutkan A-Z"
+                                            : "Urutkan Z-A"
+                                    }
+                                >
+                                    {sortOrder === "asc" ? "↑" : "↓"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
+
+                    {/* Active Filters Display */}
+                    {(searchTerm ||
+                        selectedSubject ||
+                        selectedType ||
+                        sortBy !== "subject" ||
+                        sortOrder !== "asc") && (
+                        <div className="flex flex-wrap gap-2">
+                            {searchTerm && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    Pencarian: {searchTerm}
+                                    <button
+                                        onClick={() => handleSearch("")}
+                                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-500"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            )}
+                            {selectedSubject && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Mata Pelajaran: {selectedSubject}
+                                    <button
+                                        onClick={() => handleSubjectFilter("")}
+                                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-green-400 hover:bg-green-200 hover:text-green-500"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            )}
+                            {selectedType && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    Tipe: {selectedType}
+                                    <button
+                                        onClick={() => handleTypeFilter("")}
+                                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-purple-400 hover:bg-purple-200 hover:text-purple-500"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            )}
+                            {(sortBy !== "subject" || sortOrder !== "asc") && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    Urutan:{" "}
+                                    {sortBy === "subject"
+                                        ? "Mata Pelajaran"
+                                        : sortBy === "created_at"
+                                        ? "Tanggal Dibuat"
+                                        : "Tipe Soal"}{" "}
+                                    ({sortOrder === "asc" ? "A-Z" : "Z-A"})
+                                    <button
+                                        onClick={() => {
+                                            setSortBy("subject");
+                                            setSortOrder("asc");
+                                            updateURL({
+                                                sort_by: "subject",
+                                                sort_order: "asc",
+                                                page: 1,
+                                            });
+                                        }}
+                                        className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-orange-400 hover:bg-orange-200 hover:text-orange-500"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            )}
+                            <button
+                                onClick={() => {
+                                    handleSearch("");
+                                    handleSubjectFilter("");
+                                    handleTypeFilter("");
+                                    setSortBy("subject");
+                                    setSortOrder("asc");
+                                    updateURL({
+                                        search: "",
+                                        subject: "",
+                                        type: "",
+                                        sort_by: "subject",
+                                        sort_order: "asc",
+                                        page: 1,
+                                    });
+                                }}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            >
+                                Reset Semua
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <QuestionTable
@@ -290,6 +538,16 @@ export default function Questions({ questions, errors, flash }) {
                     onEdit={openEditModal}
                     onDelete={handleDeleteQuestion}
                     searchTerm={searchTerm}
+                />
+
+                {/* Pagination Component */}
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    totalItems={totalItems}
+                    itemsPerPage={itemsPerPage}
+                    showPageInfo={true}
                 />
 
                 {/* Add Question Modal */}

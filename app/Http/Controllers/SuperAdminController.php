@@ -135,11 +135,65 @@ class SuperAdminController extends Controller
     }
 
     // Question Bank Management
-    public function questions()
+    public function questions(Request $request)
     {
-        $questions = Question::with('questionOptions')->paginate(10);
+        $query = Question::with('questionOptions');
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhereHas('questionOptions', function($subQ) use ($search) {
+                      $subQ->where('option_text', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Filter by subject
+        if ($request->filled('subject')) {
+            $query->where('subject', $request->subject);
+        }
+        
+        // Filter by type
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        // Get unique subjects for filter dropdown
+        $subjects = Question::distinct()->pluck('subject')->filter()->values();
+        
+        // Sorting
+        $sortBy = $request->get('sort_by', 'subject'); // Default sort by subject
+        $sortOrder = $request->get('sort_order', 'asc'); // Default ascending
+        
+        switch ($sortBy) {
+            case 'subject':
+                $query->orderBy('subject', $sortOrder);
+                break;
+            case 'created_at':
+                $query->orderBy('created_at', $sortOrder);
+                break;
+            case 'type':
+                $query->orderBy('type', $sortOrder);
+                break;
+            default:
+                $query->orderBy('subject', 'asc'); // Fallback to subject ASC
+        }
+        
+        $questions = $query->paginate(20);
+        
         return inertia('SuperAdmin/QuestionsFixed', [
             'questions' => $questions,
+            'subjects' => $subjects,
+            'filters' => [
+                'search' => $request->search,
+                'subject' => $request->subject,
+                'type' => $request->type,
+                'sort_by' => $request->get('sort_by', 'subject'),
+                'sort_order' => $request->get('sort_order', 'asc'),
+            ],
             'auth' => [
                 'user' => Auth::guard('admin')->user()
             ],
