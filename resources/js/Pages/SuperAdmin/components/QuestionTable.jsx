@@ -37,7 +37,7 @@ export default function QuestionTable({
                                 Media
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                Opsi Jawaban
+                                Jawaban Benar
                             </th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                                 Aksi
@@ -99,37 +99,53 @@ export default function QuestionTable({
                                     {question.type === "Pilihan Ganda" &&
                                     question.question_options ? (
                                         <div className="space-y-1">
-                                            {question.question_options.map(
-                                                (option, index) => (
+                                            {question.question_options
+                                                .filter(
+                                                    (option) =>
+                                                        option.is_correct
+                                                )
+                                                .map((option, index) => (
                                                     <div
                                                         key={index}
                                                         className="flex items-center space-x-2"
                                                     >
-                                                        <span
-                                                            className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                                                option.is_correct
-                                                                    ? "bg-green-100 text-green-800"
-                                                                    : "bg-gray-100 text-gray-600"
-                                                            }`}
-                                                        >
+                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold bg-green-100 text-green-800">
                                                             {String.fromCharCode(
-                                                                65 + index
+                                                                65 +
+                                                                    question.question_options.findIndex(
+                                                                        (opt) =>
+                                                                            opt.id ===
+                                                                            option.id
+                                                                    )
                                                             )}
                                                         </span>
-                                                        <span
-                                                            className={`text-xs ${
-                                                                option.is_correct
-                                                                    ? "text-green-700 font-medium"
-                                                                    : "text-gray-600"
-                                                            }`}
-                                                        >
+                                                        <span className="text-xs text-green-700 font-medium">
                                                             {option.option_text}
                                                         </span>
-                                                        {option.is_correct && (
-                                                            <CheckCircle className="h-3 w-3 text-green-600" />
-                                                        )}
+                                                        <CheckCircle className="h-3 w-3 text-green-600" />
                                                     </div>
-                                                )
+                                                ))}
+                                            {question.question_options.filter(
+                                                (option) => option.is_correct
+                                            ).length === 0 && (
+                                                <span className="text-xs text-red-600 italic">
+                                                    Belum ada jawaban benar
+                                                </span>
+                                            )}
+                                            {question.question_options.filter(
+                                                (option) => option.is_correct
+                                            ).length > 0 && (
+                                                <div className="mt-1 pt-1 border-t border-gray-100">
+                                                    <span className="text-xs text-gray-500">
+                                                        Total:{" "}
+                                                        {
+                                                            question
+                                                                .question_options
+                                                                .length
+                                                        }{" "}
+                                                        opsi
+                                                    </span>
+                                                </div>
                                             )}
                                         </div>
                                     ) : (
