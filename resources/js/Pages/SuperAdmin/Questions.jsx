@@ -105,7 +105,7 @@ export default function Questions({ questions }) {
         setEditingQuestion(question);
         setData({
             subject: question.subject,
-            type: question.type,
+            type: "Pilihan Ganda",
             content: question.content,
             media_url: question.media_url || "",
             options:
@@ -299,51 +299,16 @@ export default function Questions({ questions }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Tipe Soal
                                         </label>
-                                        <select
-                                            value={data.type}
-                                            onChange={(e) => {
-                                                setData("type", e.target.value);
-                                                if (
-                                                    e.target.value === "Essay"
-                                                ) {
-                                                    setData("options", []);
-                                                } else {
-                                                    setData("options", [
-                                                        {
-                                                            option_text: "",
-                                                            is_correct: false,
-                                                            label: "A",
-                                                        },
-                                                        {
-                                                            option_text: "",
-                                                            is_correct: false,
-                                                            label: "B",
-                                                        },
-                                                        {
-                                                            option_text: "",
-                                                            is_correct: false,
-                                                            label: "C",
-                                                        },
-                                                        {
-                                                            option_text: "",
-                                                            is_correct: false,
-                                                            label: "D",
-                                                        },
-                                                    ]);
-                                                }
-                                            }}
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                        >
-                                            <option value="Pilihan Ganda">
-                                                Pilihan Ganda
-                                            </option>
-                                            <option value="Essay">Essay</option>
-                                        </select>
-                                        {errors.type && (
-                                            <p className="mt-1 text-sm text-red-600">
-                                                {errors.type}
-                                            </p>
-                                        )}
+                                        <input
+                                            type="text"
+                                            value="Pilihan Ganda"
+                                            disabled
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            Saat ini hanya mendukung soal
+                                            Pilihan Ganda
+                                        </p>
                                     </div>
                                 </div>
 
@@ -471,66 +436,58 @@ export default function Questions({ questions }) {
                                     )}
                                 </div>
 
-                                {/* Options for Multiple Choice */}
-                                {data.type === "Pilihan Ganda" && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                                            Opsi Jawaban (Pilih minimal satu
-                                            yang benar)
-                                        </label>
-                                        <div className="space-y-3">
-                                            {data.options.map(
-                                                (option, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="flex items-center space-x-3"
-                                                    >
-                                                        <div className="flex items-center">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={
-                                                                    option.is_correct
-                                                                }
-                                                                onChange={(e) =>
-                                                                    handleOptionChange(
-                                                                        index,
-                                                                        "is_correct",
-                                                                        e.target
-                                                                            .checked
-                                                                    )
-                                                                }
-                                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                            />
-                                                            <span className="ml-2 text-sm font-medium text-gray-700 w-6">
-                                                                {option.label}:
-                                                            </span>
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            value={
-                                                                option.option_text
-                                                            }
-                                                            onChange={(e) =>
-                                                                handleOptionChange(
-                                                                    index,
-                                                                    "option_text",
-                                                                    e.target
-                                                                        .value
-                                                                )
-                                                            }
-                                                            placeholder={`Masukkan opsi ${option.label}`}
-                                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                        />
-                                                    </div>
-                                                )
-                                            )}
-                                        </div>
-                                        <p className="mt-2 text-xs text-gray-500">
-                                            Centang kotak untuk menandai jawaban
-                                            yang benar
-                                        </p>
+                                {/* Opsi Jawaban */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                                        Opsi Jawaban (Pilih minimal satu yang
+                                        benar)
+                                    </label>
+                                    <div className="space-y-3">
+                                        {data.options.map((option, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center space-x-3"
+                                            >
+                                                <div className="flex items-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={
+                                                            option.is_correct
+                                                        }
+                                                        onChange={(e) =>
+                                                            handleOptionChange(
+                                                                index,
+                                                                "is_correct",
+                                                                e.target.checked
+                                                            )
+                                                        }
+                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    />
+                                                    <span className="ml-2 text-sm font-medium text-gray-700 w-6">
+                                                        {option.label}:
+                                                    </span>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={option.option_text}
+                                                    onChange={(e) =>
+                                                        handleOptionChange(
+                                                            index,
+                                                            "option_text",
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    placeholder={`Masukkan opsi ${option.label}`}
+                                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
-                                )}
+                                    <p className="mt-2 text-xs text-gray-500">
+                                        Centang kotak untuk menandai jawaban
+                                        yang benar
+                                    </p>
+                                </div>
                             </div>
                             <div className="flex justify-end space-x-3 mt-6">
                                 <button

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 // use Maatwebsite\Excel\Facades\Excel;
 // use App\Imports\SchoolsImport;
 
@@ -225,25 +226,65 @@ class SuperAdminController extends Controller
     // Global Monitoring
     public function monitoring()
     {
+        // National Statistics
         $nationalStats = [
             'total_students' => Student::count(),
             'total_schools' => School::count(),
-            'average_score' => Result::avg('score'),
+            'average_score' => Result::avg('score') ?? 0,
             'total_recommendations' => Recommendation::count(),
         ];
 
+        // School Performance - Get schools with student count and average scores
         $schoolPerformance = School::withCount('students')
+            ->with(['students.results'])
             ->get()
             ->map(function ($school) {
-                $school->avg_score = $school->students->avg(function ($student) {
-                    return $student->results->avg('score');
-                });
-                return $school;
-            });
+                $avgScore = 0;
+                if ($school->students_count > 0) {
+                    $totalScore = 0;
+                    $totalResults = 0;
+                    
+                    foreach ($school->students as $student) {
+                        if ($student->results->count() > 0) {
+                            $totalScore += $student->results->sum('score');
+                            $totalResults += $student->results->count();
+                        }
+                    }
+                    
+                    if ($totalResults > 0) {
+                        $avgScore = round($totalScore / $totalResults, 2);
+                    }
+                }
+                
+                return [
+                    'id' => $school->id,
+                    'name' => $school->name,
+                    'students_count' => $school->students_count,
+                    'avg_score' => $avgScore,
+                ];
+            })
+            ->filter(function ($school) {
+                return $school['students_count'] > 0; // Only show schools with students
+            })
+            ->values();
 
-        $subjectPerformance = Result::selectRaw('subject, AVG(score) as avg_score, COUNT(*) as total_students')
+        // Subject Performance - Get subjects with average scores and student counts
+        $subjectPerformance = Result::selectRaw('
+                subject, 
+                ROUND(AVG(CAST(score AS DECIMAL(5,2))), 2) as avg_score, 
+                COUNT(DISTINCT student_id) as total_students
+            ')
+            ->whereNotNull('subject')
+            ->where('subject', '!=', '')
             ->groupBy('subject')
-            ->get();
+            ->get()
+            ->map(function ($subject) {
+                return [
+                    'subject' => $subject->subject,
+                    'total_students' => $subject->total_students,
+                    'avg_score' => round($subject->avg_score, 2),
+                ];
+            });
 
         return inertia('SuperAdmin/Monitoring', [
             'nationalStats' => $nationalStats,
@@ -261,35 +302,250 @@ class SuperAdminController extends Controller
         return inertia('SuperAdmin/Reports', [
             'auth' => [
                 'user' => Auth::guard('admin')->user()
+            ],
+            'errors' => session('errors'),
+            'flash' => [
+                'success' => session('success'),
+                'error' => session('error'),
             ]
         ]);
     }
 
     public function downloadReport(Request $request)
     {
-        $type = $request->type;
-        
-        switch ($type) {
-            case 'schools':
-                $data = School::withCount('students')->get();
-                break;
-            case 'students':
-                $data = Student::with('school')->get();
-                break;
-            case 'results':
-                $data = Result::with('student.school')->get();
-                break;
-            case 'questions':
-                $data = Question::with('questionOptions')->get();
-                break;
-            default:
-                return back()->with('error', 'Tipe laporan tidak valid');
-        }
+        try {
+            // Debug: log request data
+            Log::info('Download report request:', $request->all());
+            
+            $request->validate([
+                'type' => 'required|in:schools,students,results,questions',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+            ]);
 
-        // Generate CSV/Excel report
-        // Implementation depends on your preferred export library
-        
-        return back()->with('success', 'Laporan berhasil diunduh');
+            $type = $request->type;
+            $startDate = $request->start_date;
+            $endDate = $request->end_date;
+            
+            Log::info('Download report type:', ['type' => $type, 'start_date' => $startDate, 'end_date' => $endDate]);
+            
+            switch ($type) {
+                case 'schools':
+                    $query = School::withCount('students');
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    }
+                    $data = $query->get();
+                    $filename = 'Laporan_Sekolah_' . date('Y-m-d') . '.csv';
+                    break;
+                    
+                case 'students':
+                    $query = Student::with('school');
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    }
+                    $data = $query->get();
+                    $filename = 'Laporan_Siswa_' . date('Y-m-d') . '.csv';
+                    break;
+                    
+                case 'results':
+                    $query = Result::with('student.school');
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    }
+                    $data = $query->get();
+                    $filename = 'Laporan_Hasil_Ujian_' . date('Y-m-d') . '.csv';
+                    break;
+                    
+                case 'questions':
+                    $query = Question::with('questionOptions');
+                    if ($startDate && $endDate) {
+                        $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                    }
+                    $data = $query->get();
+                    $filename = 'Laporan_Bank_Soal_' . date('Y-m-d') . '.csv';
+                    break;
+                    
+                default:
+                    return response()->json(['error' => 'Tipe laporan tidak valid'], 400);
+            }
+
+            // Generate CSV report dengan delimiter yang benar untuk Excel
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control' => 'no-cache, must-revalidate',
+                'Pragma' => 'no-cache',
+            ];
+
+            $callback = function() use ($data, $type) {
+                $file = fopen('php://output', 'w');
+                
+                // Add BOM for UTF-8
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+                
+                // Tambahkan header dengan styling yang lebih rapi
+                fprintf($file, "LAPORAN " . strtoupper($type) . "\n");
+                fprintf($file, "Tanggal Generate: " . date('d/m/Y H:i:s') . "\n");
+                fprintf($file, "Total Data: " . $data->count() . " record(s)\n");
+                fprintf($file, "\n");
+                
+                switch ($type) {
+                    case 'schools':
+                        // Gunakan semicolon sebagai delimiter untuk Excel
+                        fwrite($file, "No;NPSN;Nama Sekolah;Alamat;Jumlah Siswa;Tanggal Terdaftar\n");
+                        foreach ($data as $index => $school) {
+                            $row = [
+                                $index + 1,
+                                $school->npsn,
+                                $school->name,
+                                $school->address ?? 'N/A',
+                                $school->students_count,
+                                $school->created_at ? $school->created_at->format('d/m/Y H:i') : 'N/A'
+                            ];
+                            fwrite($file, implode(';', $row) . "\n");
+                        }
+                        break;
+                        
+                    case 'students':
+                        fwrite($file, "No;NISN;Nama Lengkap;Sekolah;Kelas;Jenis Kelamin;Email;Telepon;Alamat;Tanggal Terdaftar\n");
+                        foreach ($data as $index => $student) {
+                            $row = [
+                                $index + 1,
+                                $student->nisn,
+                                $student->name,
+                                $student->school ? $student->school->name : 'N/A',
+                                $student->kelas,
+                                $student->gender ?? 'N/A',
+                                $student->email,
+                                $student->phone,
+                                $student->address ?? 'N/A',
+                                $student->created_at ? $student->created_at->format('d/m/Y H:i') : 'N/A'
+                            ];
+                            fwrite($file, implode(';', $row) . "\n");
+                        }
+                        break;
+                        
+                    case 'results':
+                        fwrite($file, "No;Nama Siswa;NISN;Sekolah;Mata Pelajaran;Skor;Status;Tanggal Ujian\n");
+                        foreach ($data as $index => $result) {
+                            // Tentukan status berdasarkan skor
+                            $status = '';
+                            if ($result->score >= 85) {
+                                $status = 'Sangat Baik';
+                            } elseif ($result->score >= 75) {
+                                $status = 'Baik';
+                            } elseif ($result->score >= 65) {
+                                $status = 'Cukup';
+                            } else {
+                                $status = 'Kurang';
+                            }
+                            
+                            $row = [
+                                $index + 1,
+                                $result->student ? $result->student->name : 'N/A',
+                                $result->student ? $result->student->nisn : 'N/A',
+                                $result->student && $result->student->school ? $result->student->school->name : 'N/A',
+                                $result->subject,
+                                $result->score,
+                                $status,
+                                $result->created_at ? $result->created_at->format('d/m/Y H:i') : 'N/A'
+                            ];
+                            fwrite($file, implode(';', $row) . "\n");
+                        }
+                        break;
+                        
+                    case 'questions':
+                        fwrite($file, "No;Mata Pelajaran;Tipe;Soal;Media;Opsi A;Opsi B;Opsi C;Opsi D;Jawaban Benar;Tanggal Dibuat\n");
+                        foreach ($data as $index => $question) {
+                            // Ambil opsi jawaban dan urutkan
+                            $options = $question->questionOptions->sortBy('id')->values();
+                            
+                            // Siapkan opsi A, B, C, D dengan default kosong
+                            $optionA = $options->get(0) ? $options->get(0)->option_text : '';
+                            $optionB = $options->get(1) ? $options->get(1)->option_text : '';
+                            $optionC = $options->get(2) ? $options->get(2)->option_text : '';
+                            $optionD = $options->get(3) ? $options->get(3)->option_text : '';
+                            
+                            // Tentukan jawaban benar (A, B, C, atau D)
+                            $correctAnswer = '';
+                            foreach ($options as $key => $option) {
+                                if ($option->is_correct) {
+                                    $correctAnswer = chr(65 + $key); // 65 = ASCII 'A'
+                                    break;
+                                }
+                            }
+                            
+                            // Format media yang lebih jelas
+                            $media = 'Tidak ada';
+                            if ($question->media_url && !empty($question->media_url)) {
+                                $media = 'Ya';
+                            }
+                            
+                            $row = [
+                                $index + 1,
+                                $question->subject,
+                                $question->type,
+                                $question->content,
+                                $media,
+                                $optionA,
+                                $optionB,
+                                $optionC,
+                                $optionD,
+                                $correctAnswer,
+                                $question->created_at ? $question->created_at->format('d/m/Y H:i') : 'N/A'
+                            ];
+                            fwrite($file, implode(';', $row) . "\n");
+                        }
+                        break;
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+            
+        } catch (\Exception $e) {
+            Log::error('Download report error: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan saat mengunduh laporan: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Test method untuk debugging download
+    public function testDownload()
+    {
+        try {
+            $data = School::withCount('students')->get();
+            
+            $filename = 'test_laporan_sekolah.csv';
+            $headers = [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($data) {
+                $file = fopen('php://output', 'w');
+                fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // BOM UTF-8
+                
+                fputcsv($file, ['ID', 'NPSN', 'Nama Sekolah', 'Jumlah Siswa', 'Tanggal Dibuat']);
+                foreach ($data as $school) {
+                    fputcsv($file, [
+                        $school->id,
+                        $school->npsn,
+                        $school->name,
+                        $school->students_count,
+                        $school->created_at ? $school->created_at->format('Y-m-d H:i:s') : 'N/A'
+                    ]);
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Test error: ' . $e->getMessage()], 500);
+        }
     }
 
     public function logout(Request $request)

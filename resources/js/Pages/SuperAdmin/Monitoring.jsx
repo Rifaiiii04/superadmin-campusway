@@ -56,51 +56,12 @@ export default function Monitoring({
     const defaultSchoolPerformance =
         Array.isArray(schoolPerformance) && schoolPerformance.length > 0
             ? schoolPerformance
-            : [
-                  {
-                      id: 1,
-                      name: "SMA Negeri 1 Jakarta",
-                      students_count: 18,
-                      avg_score: 84.17,
-                  },
-                  {
-                      id: 2,
-                      name: "SMA Negeri 2 Bandung",
-                      students_count: 12,
-                      avg_score: 86.75,
-                  },
-                  {
-                      id: 6,
-                      name: "SMA Negeri 3 Surabaya",
-                      students_count: 12,
-                      avg_score: 84.92,
-                  },
-                  {
-                      id: 7,
-                      name: "SMA Negeri 4 Medan",
-                      students_count: 8,
-                      avg_score: 85.0,
-                  },
-                  {
-                      id: 8,
-                      name: "SMA Negeri 5 Semarang",
-                      students_count: 4,
-                      avg_score: 90.25,
-                  },
-              ];
+            : [];
 
     const defaultSubjectPerformance =
         Array.isArray(subjectPerformance) && subjectPerformance.length > 0
             ? subjectPerformance
-            : [
-                  {
-                      subject: "Matematika",
-                      total_students: 12,
-                      avg_score: 85.5,
-                  },
-                  { subject: "Fisika", total_students: 10, avg_score: 82.0 },
-                  { subject: "Biologi", total_students: 8, avg_score: 88.5 },
-              ];
+            : [];
 
     // Chart data untuk distribusi skor nasional
     const scoreDistributionData = {
@@ -108,7 +69,7 @@ export default function Monitoring({
         datasets: [
             {
                 label: "Jumlah Siswa",
-                data: [2, 3, 4, 8, 5], // Data dummy, bisa disesuaikan
+                data: [0, 0, 0, 0, 0], // Data akan diisi dari database
                 backgroundColor: [
                     "rgba(239, 68, 68, 0.8)", // Red
                     "rgba(245, 158, 11, 0.8)", // Yellow
@@ -303,9 +264,15 @@ export default function Monitoring({
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-gray-500 text-center py-4">
-                                    Belum ada data performa sekolah
-                                </p>
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500 mb-2">
+                                        Belum ada data performa sekolah
+                                    </p>
+                                    <p className="text-sm text-gray-400">
+                                        Data akan muncul setelah ada siswa yang
+                                        mengikuti ujian
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>
@@ -348,118 +315,131 @@ export default function Monitoring({
                                     )}
                                 </div>
                             ) : (
-                                <p className="text-gray-500 text-center py-4">
-                                    Belum ada data performa mata pelajaran
-                                </p>
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500 mb-2">
+                                        Belum ada data performa mata pelajaran
+                                    </p>
+                                    <p className="text-sm text-gray-400">
+                                        Data akan muncul setelah ada siswa yang
+                                        mengikuti ujian
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
 
                 {/* Charts Section */}
-                <div className="mt-8">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                        Grafik Performa
-                    </h2>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Distribusi Skor Nasional
-                            </h3>
-                            <div className="h-64">
-                                <Doughnut
-                                    data={scoreDistributionData}
-                                    options={doughnutOptions}
-                                />
+                {defaultSchoolPerformance.length > 0 && (
+                    <div className="mt-8">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                            Grafik Performa
+                        </h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                    Distribusi Skor Nasional
+                                </h3>
+                                <div className="h-64">
+                                    <Doughnut
+                                        data={scoreDistributionData}
+                                        options={doughnutOptions}
+                                    />
+                                </div>
                             </div>
-                        </div>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Perbandingan Antar Sekolah
-                            </h3>
-                            <div className="h-64">
-                                <Bar
-                                    data={schoolComparisonData}
-                                    options={chartOptions}
-                                />
+                            <div className="bg-white rounded-lg shadow-sm border p-6">
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                    Perbandingan Antar Sekolah
+                                </h3>
+                                <div className="h-64">
+                                    <Bar
+                                        data={schoolComparisonData}
+                                        options={chartOptions}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Additional Charts */}
-                <div className="mt-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Performa Mata Pelajaran
-                            </h3>
-                            <div className="h-64">
-                                <Bar
-                                    data={{
-                                        labels: defaultSubjectPerformance.map(
-                                            (s) => s.subject
-                                        ),
-                                        datasets: [
-                                            {
-                                                label: "Rata-rata Skor",
-                                                data: defaultSubjectPerformance.map(
-                                                    (s) =>
-                                                        parseFloat(
-                                                            s.avg_score
-                                                        ) || 0
+                {defaultSchoolPerformance.length > 0 &&
+                    defaultSubjectPerformance.length > 0 && (
+                        <div className="mt-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div className="bg-white rounded-lg shadow-sm border p-6">
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                        Performa Mata Pelajaran
+                                    </h3>
+                                    <div className="h-64">
+                                        <Bar
+                                            data={{
+                                                labels: defaultSubjectPerformance.map(
+                                                    (s) => s.subject
                                                 ),
-                                                backgroundColor:
-                                                    "rgba(34, 197, 94, 0.8)",
-                                                borderColor:
-                                                    "rgba(34, 197, 94, 1)",
-                                                borderWidth: 2,
-                                                borderRadius: 8,
-                                            },
-                                        ],
-                                    }}
-                                    options={chartOptions}
-                                />
+                                                datasets: [
+                                                    {
+                                                        label: "Rata-rata Skor",
+                                                        data: defaultSubjectPerformance.map(
+                                                            (s) =>
+                                                                parseFloat(
+                                                                    s.avg_score
+                                                                ) || 0
+                                                        ),
+                                                        backgroundColor:
+                                                            "rgba(34, 197, 94, 0.8)",
+                                                        borderColor:
+                                                            "rgba(34, 197, 94, 1)",
+                                                        borderWidth: 2,
+                                                        borderRadius: 8,
+                                                    },
+                                                ],
+                                            }}
+                                            options={chartOptions}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="bg-white rounded-lg shadow-sm border p-6">
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                        Jumlah Siswa per Sekolah
+                                    </h3>
+                                    <div className="h-64">
+                                        <Bar
+                                            data={{
+                                                labels: defaultSchoolPerformance.map(
+                                                    (s) => s.name
+                                                ),
+                                                datasets: [
+                                                    {
+                                                        label: "Jumlah Siswa",
+                                                        data: defaultSchoolPerformance.map(
+                                                            (s) =>
+                                                                s.students_count ||
+                                                                0
+                                                        ),
+                                                        backgroundColor:
+                                                            "rgba(245, 158, 11, 0.8)",
+                                                        borderColor:
+                                                            "rgba(245, 158, 11, 1)",
+                                                        borderWidth: 2,
+                                                        borderRadius: 8,
+                                                    },
+                                                ],
+                                            }}
+                                            options={{
+                                                ...chartOptions,
+                                                scales: {
+                                                    y: {
+                                                        beginAtZero: true,
+                                                    },
+                                                },
+                                            }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-lg shadow-sm border p-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                Jumlah Siswa per Sekolah
-                            </h3>
-                            <div className="h-64">
-                                <Bar
-                                    data={{
-                                        labels: defaultSchoolPerformance.map(
-                                            (s) => s.name
-                                        ),
-                                        datasets: [
-                                            {
-                                                label: "Jumlah Siswa",
-                                                data: defaultSchoolPerformance.map(
-                                                    (s) => s.students_count || 0
-                                                ),
-                                                backgroundColor:
-                                                    "rgba(245, 158, 11, 0.8)",
-                                                borderColor:
-                                                    "rgba(245, 158, 11, 1)",
-                                                borderWidth: 2,
-                                                borderRadius: 8,
-                                            },
-                                        ],
-                                    }}
-                                    options={{
-                                        ...chartOptions,
-                                        scales: {
-                                            y: {
-                                                beginAtZero: true,
-                                            },
-                                        },
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    )}
             </div>
         </SuperAdminLayout>
     );

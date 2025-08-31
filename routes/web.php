@@ -60,6 +60,7 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/monitoring', [SuperAdminController::class, 'monitoring'])->name('monitoring');
                         Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
                 Route::post('/reports/download', [SuperAdminController::class, 'downloadReport'])->name('reports.download');
+                Route::get('/reports/test', [SuperAdminController::class, 'testDownload'])->name('reports.test');
                                 Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
                 
                 // Media upload route
