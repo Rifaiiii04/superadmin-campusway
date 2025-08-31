@@ -96,11 +96,7 @@ class SuperAdminController extends Controller
         return back()->with('success', 'Sekolah berhasil ditambahkan');
     }
 
-    public function importSchools(Request $request)
-    {
-        // Excel import functionality will be implemented later
-        return back()->with('info', 'Fitur import Excel akan segera tersedia');
-    }
+
 
     public function updateSchool(Request $request, School $school)
     {
@@ -766,6 +762,230 @@ class SuperAdminController extends Controller
             }
             
             return back()->withErrors(['file' => 'Terjadi kesalahan saat import: ' . $e->getMessage()]);
+        }
+    }
+
+    public function importSchools(Request $request)
+    {
+        try {
+            // Debug: log request data
+            Log::info('Import schools request received', [
+                'all_data' => $request->all(),
+                'has_file' => $request->hasFile('file'),
+                'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'no file',
+                'file_size' => $request->file('file') ? $request->file('file')->getSize() : 'no file'
+            ]);
+
+            $request->validate([
+                'file' => 'required|file|mimes:csv,txt|max:2048',
+            ]);
+
+            $file = $request->file('file');
+            $content = file_get_contents($file->getPathname());
+            $lines = explode("\n", $content);
+            
+            // Debug: log file content
+            Log::info('File content analysis', [
+                'total_lines' => count($lines),
+                'first_line' => $lines[0] ?? 'empty',
+                'second_line' => $lines[1] ?? 'empty',
+                'content_preview' => substr($content, 0, 500)
+            ]);
+            
+            // Skip header
+            $headers = array_map('trim', explode(';', $lines[0]));
+            $requiredHeaders = ['NPSN', 'Nama Sekolah', 'Password'];
+            $optionalHeaders = ['Alamat', 'Email', 'Telepon'];
+            
+            Log::info('Headers analysis', [
+                'found_headers' => $headers,
+                'required_headers' => $requiredHeaders,
+                'missing_headers' => array_diff($requiredHeaders, $headers)
+            ]);
+            
+            // Validate required headers
+            $missingRequiredHeaders = array_diff($requiredHeaders, $headers);
+            if (!empty($missingRequiredHeaders)) {
+                Log::warning('Import schools failed - missing required headers', ['missing' => $missingRequiredHeaders]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Header wajib tidak ditemukan: ' . implode(', ', $missingRequiredHeaders),
+                    'errors' => ['file' => 'Header wajib tidak ditemukan: ' . implode(', ', $missingRequiredHeaders)]
+                ], 422);
+            }
+            
+            $imported = 0;
+            $errors = [];
+            $processedRows = 0;
+            
+            // Process data rows
+            for ($i = 1; $i < count($lines); $i++) {
+                if (empty(trim($lines[$i]))) {
+                    Log::info("Skipping empty line at index {$i}");
+                    continue;
+                }
+                
+                $values = array_map('trim', explode(';', $lines[$i]));
+                Log::info("Processing row {$i}", [
+                    'values' => $values,
+                    'values_count' => count($values),
+                    'line_content' => $lines[$i]
+                ]);
+                
+                if (count($values) < 3) {
+                    Log::warning("Row {$i} has insufficient values", ['values_count' => count($values), 'min_required' => 3]);
+                    continue;
+                }
+                
+                $processedRows++;
+                
+                // Create row data with available headers
+                $rowData = [];
+                foreach ($headers as $index => $header) {
+                    $rowData[$header] = isset($values[$index]) ? $values[$index] : '';
+                }
+                
+                Log::info("Row {$i} data parsed", ['row_data' => $rowData]);
+                
+                // Validate required fields
+                if (empty($rowData['NPSN']) || empty($rowData['Nama Sekolah']) || empty($rowData['Password'])) {
+                    $errorMsg = "Baris " . ($i + 1) . ": NPSN, Nama Sekolah, dan Password wajib diisi";
+                    Log::warning("Row {$i} validation failed - missing required fields", [
+                        'npsn' => $rowData['NPSN'],
+                        'nama_sekolah' => $rowData['Nama Sekolah'],
+                        'password' => $rowData['Password']
+                    ]);
+                    $errors[] = $errorMsg;
+                    continue;
+                }
+                
+                // Validate NPSN format (8 digit angka)
+                if (!preg_match('/^\d{8}$/', $rowData['NPSN'])) {
+                    $errorMsg = "Baris " . ($i + 1) . ": NPSN harus 8 digit angka";
+                    Log::warning("Row {$i} validation failed - invalid NPSN format", ['npsn' => $rowData['NPSN']]);
+                    $errors[] = $errorMsg;
+                    continue;
+                }
+                
+                // Check if NPSN already exists
+                $existingSchool = School::where('npsn', $rowData['NPSN'])->first();
+                if ($existingSchool) {
+                    $errorMsg = "Baris " . ($i + 1) . ": NPSN {$rowData['NPSN']} sudah ada (ID: {$existingSchool->id})";
+                    Log::warning("Row {$i} validation failed - NPSN already exists", [
+                        'npsn' => $rowData['NPSN'],
+                        'existing_school_id' => $existingSchool->id,
+                        'existing_school_name' => $existingSchool->name
+                    ]);
+                    $errors[] = $errorMsg;
+                    continue;
+                }
+                
+                try {
+                    // Create school
+                    $school = School::create([
+                        'npsn' => $rowData['NPSN'],
+                        'name' => trim($rowData['Nama Sekolah']),
+                        'password_hash' => Hash::make($rowData['Password']),
+                    ]);
+                    
+                    $imported++;
+                    Log::info('School imported successfully', ['school_id' => $school->id, 'npsn' => $school->npsn, 'name' => $school->name]);
+                    
+                } catch (\Exception $e) {
+                    Log::error('Failed to import school at row ' . ($i + 1), ['error' => $e->getMessage(), 'data' => $rowData]);
+                    $errors[] = "Baris " . ($i + 1) . ": " . $e->getMessage();
+                }
+            }
+            
+            // Log final summary
+            Log::info('Import schools processing completed', [
+                'total_lines' => count($lines),
+                'processed_rows' => $processedRows,
+                'imported' => $imported,
+                'errors_count' => count($errors),
+                'errors' => $errors
+            ]);
+
+            if ($imported > 0) {
+                $message = "Berhasil mengimport {$imported} sekolah.";
+                if (count($errors) > 0) {
+                    $message .= " Terdapat " . count($errors) . " error yang di-skip.";
+                }
+
+                Log::info('Import schools completed successfully', [
+                    'imported' => $imported,
+                    'errors_count' => count($errors),
+                    'message' => $message
+                ]);
+
+                // Return JSON response untuk AJAX request
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'imported' => $imported,
+                        'errors_count' => count($errors)
+                    ]);
+                }
+
+                return back()->with('success', $message);
+            } else {
+                Log::warning('Import schools failed - no schools imported', [
+                    'total_lines' => count($lines),
+                    'processed_rows' => $processedRows,
+                    'errors' => $errors
+                ]);
+
+                // Return JSON response untuk AJAX request
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak ada sekolah yang berhasil diimport. Periksa format file dan log untuk detail error.',
+                        'errors' => ['file' => 'Tidak ada sekolah yang berhasil diimport. Periksa format file dan log untuk detail error.']
+                    ], 422);
+                }
+
+                return back()->withErrors(['file' => 'Tidak ada sekolah yang berhasil diimport. Periksa format file dan log untuk detail error.']);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Import schools error: ' . $e->getMessage());
+
+            // Return JSON response untuk AJAX request
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat import: ' . $e->getMessage(),
+                    'errors' => ['file' => 'Terjadi kesalahan saat import: ' . $e->getMessage()]
+                ], 500);
+            }
+
+            return back()->withErrors(['file' => 'Terjadi kesalahan saat import: ' . $e->getMessage()]);
+        }
+    }
+
+    public function importSchoolsTest()
+    {
+        // Test method untuk debug
+        $testData = [
+            'npsn' => '12345678',
+            'name' => 'Test School',
+            'password_hash' => Hash::make('test123')
+        ];
+        
+        try {
+            $school = School::create($testData);
+            return response()->json([
+                'success' => true,
+                'message' => 'Test school created successfully',
+                'school' => $school
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Test failed: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { Head, useForm, Link } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { Building2, Plus, Edit, Trash2, Upload, Search } from "lucide-react";
+import ImportSchoolsModal from "./components/ImportSchoolsModal";
 
 export default function Schools({ schools }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
     const [editingSchool, setEditingSchool] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -66,13 +68,22 @@ export default function Schools({ schools }) {
                                     Daftar dan kelola semua sekolah terdaftar
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Tambah Sekolah
-                            </button>
+                            <div className="flex space-x-3">
+                                <button
+                                    onClick={() => setShowImportModal(true)}
+                                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                                >
+                                    <Upload className="h-4 w-4 mr-2" />
+                                    Import CSV
+                                </button>
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Tambah Sekolah
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -315,6 +326,15 @@ export default function Schools({ schools }) {
                         </div>
                     </div>
                 )}
+
+                {/* Import Schools Modal */}
+                <ImportSchoolsModal
+                    isOpen={showImportModal}
+                    onClose={() => setShowImportModal(false)}
+                    onSuccess={() => {
+                        window.location.reload();
+                    }}
+                />
             </div>
         </SuperAdminLayout>
     );

@@ -51,11 +51,13 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::put('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('schools.update');
         Route::delete('/schools/{school}', [SuperAdminController::class, 'deleteSchool'])->name('schools.delete');
         Route::post('/schools/import', [SuperAdminController::class, 'importSchools'])->name('schools.import');
+        Route::get('/schools/import-test', [SuperAdminController::class, 'importSchoolsTest'])->name('schools.import.test');
 
         Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
         Route::post('/questions', [SuperAdminController::class, 'storeQuestion'])->name('questions.store');
         Route::post('/questions/import', [SuperAdminController::class, 'importQuestions'])->name('questions.import');
         Route::get('/questions/import-test', [SuperAdminController::class, 'importTest'])->name('questions.import.test');
+
         Route::put('/questions/{question}', [SuperAdminController::class, 'updateQuestion'])->name('questions.update');
         Route::delete('/questions/{question}', [SuperAdminController::class, 'deleteQuestion'])->name('questions.delete');
 
