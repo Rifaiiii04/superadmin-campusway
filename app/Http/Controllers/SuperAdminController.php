@@ -97,6 +97,9 @@ class SuperAdminController extends Controller
     {
         $school = School::with(['students.majorChoices.major'])->findOrFail($id);
         
+        // Add students count
+        $school->students_count = $school->students->count();
+        
         return inertia('SuperAdmin/SchoolDetail', [
             'school' => $school,
             'auth' => [
@@ -267,38 +270,31 @@ class SuperAdminController extends Controller
     public function monitoring()
     {
         try {
-            // Get all completed test results
-            $testResults = \App\Models\TestResult::with(['student.school'])
-                ->where('status', 'completed')
+            // Get all student choices
+            $studentChoices = \App\Models\StudentChoice::with(['student.school', 'major'])
                 ->get();
 
             // Calculate national statistics
             $totalSchools = \App\Models\School::count();
             $totalStudents = \App\Models\Student::count();
-            $totalTests = $testResults->count();
+            $totalChoices = $studentChoices->count();
             
-            // Calculate average score from all completed tests
-            $totalScore = $testResults->sum('total_score');
-            $averageScore = $totalTests > 0 ? round($totalScore / $totalTests, 2) : 0;
-            
-            // Count total recommendations
-            $totalRecommendations = $testResults->whereNotNull('recommendations')->count();
+            // Count total students with choices
+            $studentsWithChoices = $studentChoices->unique('student_id')->count();
 
             // Calculate school performance
             $schoolPerformance = \App\Models\School::withCount('students')
                 ->get()
-                ->map(function ($school) use ($testResults) {
-                    $schoolTests = $testResults->where('student.school_id', $school->id);
-                    $avgScore = $schoolTests->count() > 0 
-                        ? round($schoolTests->avg('total_score'), 2) 
-                        : 0;
+                ->map(function ($school) use ($studentChoices) {
+                    $schoolChoices = $studentChoices->where('student.school_id', $school->id);
+                    $studentsWithChoices = $schoolChoices->unique('student_id')->count();
                     
                     return [
                         'id' => $school->id,
                         'name' => $school->name,
                         'students_count' => $school->students_count,
-                        'avg_score' => $avgScore,
-                        'tests_count' => $schoolTests->count()
+                        'students_with_choices' => $studentsWithChoices,
+                        'choices_count' => $schoolChoices->count()
                     ];
                 })
                 ->filter(function ($school) {
@@ -306,84 +302,55 @@ class SuperAdminController extends Controller
                 })
                 ->values();
 
-            // Calculate subject performance
-            $subjectPerformance = [];
-            $subjectScores = [];
-            
-            foreach ($testResults as $test) {
-                $scores = is_string($test->scores) ? json_decode($test->scores, true) : $test->scores;
-                
-                if (is_array($scores)) {
-                    foreach ($scores as $score) {
-                        if (isset($score['subject']) && isset($score['score'])) {
-                            $subject = $score['subject'];
-                            if (!isset($subjectScores[$subject])) {
-                                $subjectScores[$subject] = [];
-                            }
-                            $subjectScores[$subject][] = $score['score'];
-                        }
-                    }
+            // Calculate major popularity
+            $majorPopularity = [];
+            foreach ($studentChoices as $choice) {
+                $majorName = $choice->major->major_name ?? 'Unknown';
+                if (!isset($majorPopularity[$majorName])) {
+                    $majorPopularity[$majorName] = 0;
                 }
+                $majorPopularity[$majorName]++;
             }
-            
-            foreach ($subjectScores as $subject => $scores) {
-                $avgScore = count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0;
-                $subjectPerformance[] = [
-                    'subject' => $subject,
-                    'total_students' => count($scores),
-                    'avg_score' => $avgScore
+
+            // Convert to array and sort by popularity
+            $majorPopularityArray = [];
+            foreach ($majorPopularity as $major => $count) {
+                $majorPopularityArray[] = [
+                    'major' => $major,
+                    'total_students' => $count
                 ];
             }
-
-            // Sort by average score descending
-            usort($subjectPerformance, function ($a, $b) {
-                return $b['avg_score'] <=> $a['avg_score'];
+            usort($majorPopularityArray, function ($a, $b) {
+                return $b['total_students'] <=> $a['total_students'];
             });
-
-            // Calculate score distribution
-            $scoreDistribution = [0, 0, 0, 0, 0]; // 0-60, 61-70, 71-80, 81-90, 91-100
-            foreach ($testResults as $test) {
-                $score = floatval($test->total_score);
-                if ($score <= 60) $scoreDistribution[0]++;
-                elseif ($score <= 70) $scoreDistribution[1]++;
-                elseif ($score <= 80) $scoreDistribution[2]++;
-                elseif ($score <= 90) $scoreDistribution[3]++;
-                else $scoreDistribution[4]++;
-            }
 
             return inertia('SuperAdmin/Monitoring', [
                 'nationalStats' => [
                     'total_schools' => $totalSchools,
                     'total_students' => $totalStudents,
-                    'total_tests' => $totalTests,
-                    'average_score' => $averageScore,
-                    'total_recommendations' => $totalRecommendations
+                    'total_choices' => $totalChoices,
+                    'students_with_choices' => $studentsWithChoices
                 ],
                 'schoolPerformance' => $schoolPerformance,
-                'subjectPerformance' => $subjectPerformance,
-                'scoreDistribution' => $scoreDistribution,
+                'majorPopularity' => array_slice($majorPopularityArray, 0, 10), // Top 10 majors
                 'auth' => [
                     'user' => Auth::guard('admin')->user()
                 ]
             ]);
-
         } catch (\Exception $e) {
-            // Fallback to default data if there's an error
+            Log::error('Error in monitoring: ' . $e->getMessage());
             return inertia('SuperAdmin/Monitoring', [
                 'nationalStats' => [
                     'total_schools' => 0,
                     'total_students' => 0,
-                    'total_tests' => 0,
-                    'average_score' => 0,
-                    'total_recommendations' => 0,
+                    'total_choices' => 0,
+                    'students_with_choices' => 0
                 ],
                 'schoolPerformance' => [],
-                'subjectPerformance' => [],
-                'scoreDistribution' => [0, 0, 0, 0, 0],
+                'majorPopularity' => [],
                 'auth' => [
                     'user' => Auth::guard('admin')->user()
-                ],
-                'error' => $e->getMessage()
+                ]
             ]);
         }
     }
