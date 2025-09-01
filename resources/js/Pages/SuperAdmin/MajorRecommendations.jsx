@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Head, useForm } from "@inertiajs/react";
+import { Head, useForm, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import {
     Plus,
@@ -97,7 +97,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
 
     const handleToggleStatus = (id) => {
         // Use Inertia patch for toggle
-        window.location.href = `/super-admin/major-recommendations/${id}/toggle`;
+        router.patch(`/super-admin/major-recommendations/${id}/toggle`);
     };
 
     const openEditModal = (major) => {
@@ -372,13 +372,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                 {/* Add Major Modal */}
                 {showAddModal && (
                     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
                             <div className="mt-3">
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                                     Tambah Jurusan Baru
                                 </h3>
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Nama Jurusan
@@ -420,60 +420,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Skor Minimum
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={data.min_score}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "min_score",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                                                min="0"
-                                                max="100"
-                                            />
-                                            {errors.min_score && (
-                                                <p className="text-red-500 text-xs mt-1">
-                                                    {errors.min_score}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">
-                                                Skor Maksimum
-                                            </label>
-                                            <input
-                                                type="number"
-                                                value={data.max_score}
-                                                onChange={(e) =>
-                                                    setData(
-                                                        "max_score",
-                                                        e.target.value
-                                                    )
-                                                }
-                                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                                                min="0"
-                                                max="100"
-                                            />
-                                            {errors.max_score && (
-                                                <p className="text-red-500 text-xs mt-1">
-                                                    {errors.max_score}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -506,7 +457,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -539,7 +490,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum Merdeka
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -572,7 +523,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - IPA
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -605,7 +556,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - IPS
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -638,7 +589,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - Bahasa
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -726,13 +677,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                 {/* Edit Major Modal */}
                 {showEditModal && editingMajor && (
                     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                        <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
                             <div className="mt-3">
                                 <h3 className="text-lg font-medium text-gray-900 mb-4">
                                     Edit Jurusan: {editingMajor.major_name}
                                 </h3>
 
-                                <div className="space-y-4">
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Nama Jurusan
@@ -776,7 +727,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -809,7 +760,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -842,7 +793,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum Merdeka
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -875,7 +826,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - IPA
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -908,7 +859,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - IPS
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
@@ -941,7 +892,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Kurikulum 2013 - Bahasa
                                         </label>
-                                        <div className="mt-2 grid grid-cols-3 gap-2">
+                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
                                                 (subject) => (
                                                     <label
