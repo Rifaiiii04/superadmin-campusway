@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\StudentApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,4 +17,37 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Student Testing API Routes
+Route::prefix('student')->group(function () {
+    // Test endpoint untuk debugging
+    Route::get('/test', [StudentApiController::class, 'testEndpoint']);
+    
+    // Get daftar mata pelajaran
+    Route::get('/subjects', [StudentApiController::class, 'getAvailableSubjects']);
+    
+    // Get daftar sekolah
+    Route::get('/schools', [StudentApiController::class, 'getAvailableSchools']);
+    
+    // Get status siswa berdasarkan NISN
+    Route::get('/student-status/{nisn}', [StudentApiController::class, 'getStudentStatus']);
+    
+    // Registrasi siswa
+    Route::post('/register', [StudentApiController::class, 'registerStudent']);
+    
+    // Ambil soal tes
+    Route::post('/questions', [StudentApiController::class, 'getQuestions']);
+    
+    // Submit jawaban
+    Route::post('/submit-answers', [StudentApiController::class, 'submitAnswers']);
+    
+    // Auto-save jawaban
+    Route::post('/auto-save', [StudentApiController::class, 'autoSaveAnswer']);
+    
+    // Lihat hasil tes
+    Route::get('/results/{testId}', [StudentApiController::class, 'getResults']);
+    
+    // Export PDF hasil
+    Route::get('/export-pdf/{testId}', [StudentApiController::class, 'exportPdf']);
 });
