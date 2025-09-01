@@ -105,9 +105,6 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
         fetch("/super-admin/schools/import", {
             method: "POST",
             headers: {
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute("content"),
                 Accept: "application/json",
             },
             body: formData,

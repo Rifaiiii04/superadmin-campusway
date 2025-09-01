@@ -24,6 +24,12 @@ Route::prefix('student')->group(function () {
     // Test endpoint untuk debugging
     Route::get('/test', [StudentApiController::class, 'testEndpoint']);
     
+    // Test endpoint untuk debugging school data
+    Route::get('/test-school-data', [StudentApiController::class, 'testSchoolData']);
+    
+    // Test endpoint untuk debugging registration
+    Route::get('/test-registration', [StudentApiController::class, 'testRegistration']);
+    
     // Get daftar mata pelajaran
     Route::get('/subjects', [StudentApiController::class, 'getAvailableSubjects']);
     

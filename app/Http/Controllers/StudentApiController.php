@@ -24,6 +24,15 @@ class StudentApiController extends Controller
     public function registerStudent(Request $request)
     {
         try {
+            // Debug: log semua data yang diterima
+            Log::info('Student registration request received', [
+                'all_data' => $request->all(),
+                'query_params' => $request->query(),
+                'json_body' => $request->json(),
+                'content_type' => $request->header('Content-Type'),
+                'accept' => $request->header('Accept')
+            ]);
+
             $validator = Validator::make($request->all(), [
                 'nama_lengkap' => 'required|string|max:255',
                 'nisn' => 'required|string|unique:students,nisn|max:20',
@@ -48,28 +57,58 @@ class StudentApiController extends Controller
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'NPSN sekolah tidak ditemukan'
+                    'message' => 'NPSN sekolah tidak ditemukan',
+                    'debug' => [
+                        'requested_npsn' => $request->npsn_sekolah,
+                        'available_npsn' => School::pluck('npsn')->toArray()
+                    ]
                 ], 404);
             }
 
-            if (strtolower($school->nama_sekolah) !== strtolower($request->nama_sekolah)) {
+            // Debug: log untuk troubleshooting
+            Log::info('School validation debug', [
+                'request_nama_sekolah' => $request->nama_sekolah,
+                'db_school_name' => $school->name,
+                'request_npsn' => $request->npsn_sekolah,
+                'db_school_npsn' => $school->npsn,
+                'comparison' => [
+                    'exact_match' => $request->nama_sekolah === $school->name,
+                    'trimmed_match' => trim($request->nama_sekolah) === trim($school->name),
+                    'lowercase_match' => strtolower(trim($request->nama_sekolah)) === strtolower(trim($school->name)),
+                    'length_request' => strlen($request->nama_sekolah),
+                    'length_db' => strlen($school->name)
+                ]
+            ]);
+
+            if (strtolower(trim($school->name)) !== strtolower(trim($request->nama_sekolah))) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'NPSN tidak cocok dengan nama sekolah'
+                    'message' => 'NPSN tidak cocok dengan nama sekolah',
+                    'debug' => [
+                        'request_nama_sekolah' => $request->nama_sekolah,
+                        'db_school_name' => $school->name,
+                        'request_npsn' => $request->npsn_sekolah,
+                        'db_school_npsn' => $school->npsn,
+                        'comparison' => [
+                            'exact_match' => $request->nama_sekolah === $school->name,
+                            'trimmed_match' => trim($request->nama_sekolah) === trim($school->name),
+                            'lowercase_match' => strtolower(trim($request->nama_sekolah)) === strtolower(trim($school->name)),
+                            'length_request' => strlen($request->nama_sekolah),
+                            'length_db' => strlen($school->name)
+                        ]
+                    ]
                 ], 422);
             }
 
-            // Buat siswa baru
+            // Buat siswa baru dengan mapping kolom yang benar
             $student = Student::create([
-                'nama_lengkap' => $request->nama_lengkap,
-                'nisn' => $request->nisn,
-                'npsn_sekolah' => $request->npsn_sekolah,
-                'nama_sekolah' => $request->nama_sekolah,
-                'kelas' => $request->kelas,
-                'no_handphone' => $request->no_handphone,
-                'email' => $request->email,
-                'no_orang_tua' => $request->no_orang_tua,
-                'status' => 'registered'
+                'name' => $request->nama_lengkap,           // nama_lengkap → name
+                'nisn' => $request->nisn,                  // nisn → nisn
+                'school_id' => $school->id,                // npsn_sekolah → school_id (foreign key)
+                'kelas' => $request->kelas,                // kelas → kelas
+                'phone' => $request->no_handphone,         // no_handphone → phone
+                'email' => $request->email,                // email → email
+                'status' => 'registered'                   // status default
             ]);
 
             return response()->json([
@@ -77,9 +116,10 @@ class StudentApiController extends Controller
                 'message' => 'Registrasi siswa berhasil',
                 'data' => [
                     'student_id' => $student->id,
-                    'nama_lengkap' => $student->nama_lengkap,
+                    'nama_lengkap' => $student->name,
                     'nisn' => $student->nisn,
-                    'nama_sekolah' => $student->nama_sekolah
+                    'nama_sekolah' => $school->name,
+                    'school_id' => $student->school_id
                 ]
             ], 201);
 
@@ -281,9 +321,9 @@ class StudentApiController extends Controller
                 'message' => 'Hasil tes berhasil diambil',
                 'data' => [
                     'student' => [
-                        'nama_lengkap' => $testResult->student->nama_lengkap,
+                        'nama_lengkap' => $testResult->student->name, // Changed from nama_lengkap to name
                         'nisn' => $testResult->student->nisn,
-                        'nama_sekolah' => $testResult->student->nama_sekolah,
+                        'nama_sekolah' => $testResult->student->school->name, // Changed from nama_sekolah to school->name
                         'kelas' => $testResult->student->kelas
                     ],
                     'test_info' => [
@@ -432,6 +472,138 @@ class StudentApiController extends Controller
     }
 
     /**
+     * Test endpoint untuk debugging school data
+     */
+    public function testSchoolData()
+    {
+        try {
+            $schools = School::select('id', 'npsn', 'name')->get();
+            
+            // Test validation logic
+            $testNPSN = '12345678';
+            $testNamaSekolah = 'SMA Negeri 1 Jakarta';
+            
+            $school = School::where('npsn', $testNPSN)->first();
+            $validationResult = null;
+            
+            if ($school) {
+                $validationResult = [
+                    'request_nama_sekolah' => $testNamaSekolah,
+                    'db_school_name' => $school->name,
+                    'request_npsn' => $testNPSN,
+                    'db_school_npsn' => $school->npsn,
+                    'comparison' => [
+                        'request_trimmed' => trim($testNamaSekolah),
+                        'db_trimmed' => trim($school->name),
+                        'request_lower' => strtolower(trim($testNamaSekolah)),
+                        'db_lower' => strtolower(trim($school->name)),
+                        'exact_match' => $testNamaSekolah === $school->name,
+                        'trimmed_match' => trim($testNamaSekolah) === trim($school->name),
+                        'lowercase_match' => strtolower(trim($testNamaSekolah)) === strtolower(trim($school->name)),
+                        'length_request' => strlen($testNamaSekolah),
+                        'length_db' => strlen($school->name),
+                        'length_request_trimmed' => strlen(trim($testNamaSekolah)),
+                        'length_db_trimmed' => strlen(trim($school->name))
+                    ]
+                ];
+            }
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'School data retrieved successfully',
+                'data' => [
+                    'total_schools' => $schools->count(),
+                    'schools' => $schools,
+                    'test_validation' => $validationResult,
+                    'raw_data' => [
+                        'test_npsn' => $testNPSN,
+                        'test_nama_sekolah' => $testNamaSekolah,
+                        'school_found' => $school ? true : false
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Test endpoint untuk debugging registration
+     */
+    public function testRegistration(Request $request)
+    {
+        try {
+            // Simulate the exact validation logic from registerStudent
+            $testData = [
+                'nama_lengkap' => 'Ahmad Fadhillah',
+                'nisn' => '123445667',
+                'npsn_sekolah' => '12345678',
+                'nama_sekolah' => 'SMA Negeri 1 Jakarta',
+                'kelas' => 'XII IPA',
+                'no_handphone' => '081234567890',
+                'email' => 'ahmad@email.com',
+                'no_orang_tua' => '081234567891'
+            ];
+
+            // Test validation step by step
+            $school = School::where('npsn', $testData['npsn_sekolah'])->first();
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'NPSN sekolah tidak ditemukan',
+                    'debug' => [
+                        'requested_npsn' => $testData['npsn_sekolah'],
+                        'available_npsn' => School::pluck('npsn')->toArray()
+                    ]
+                ], 404);
+            }
+
+            // Test name comparison
+            $comparison = [
+                'request_nama_sekolah' => $testData['nama_sekolah'],
+                'db_school_name' => $school->name,
+                'request_npsn' => $testData['npsn_sekolah'],
+                'db_school_npsn' => $school->npsn,
+                'comparison' => [
+                    'exact_match' => $testData['nama_sekolah'] === $school->name,
+                    'trimmed_match' => trim($testData['nama_sekolah']) === trim($school->name),
+                    'lowercase_match' => strtolower(trim($testData['nama_sekolah'])) === strtolower(trim($school->name)),
+                    'length_request' => strlen($testData['nama_sekolah']),
+                    'length_db' => strlen($school->name),
+                    'request_trimmed' => trim($testData['nama_sekolah']),
+                    'db_trimmed' => trim($school->name),
+                    'request_lower' => strtolower(trim($testData['nama_sekolah'])),
+                    'db_lower' => strtolower(trim($school->name))
+                ]
+            ];
+
+            $validationPassed = strtolower(trim($school->name)) === strtolower(trim($testData['nama_sekolah']));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration test completed',
+                'data' => [
+                    'test_data' => $testData,
+                    'school_found' => true,
+                    'validation_passed' => $validationPassed,
+                    'comparison' => $comparison,
+                    'available_schools' => School::select('id', 'npsn', 'name')->get()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get daftar mata pelajaran yang tersedia
      */
     public function getAvailableSubjects()
@@ -490,7 +662,7 @@ class StudentApiController extends Controller
     {
         try {
             $student = Student::where('nisn', $nisn)
-                ->select('id', 'nama_lengkap', 'nisn', 'nama_sekolah', 'kelas', 'status')
+                ->select('id', 'name', 'nisn', 'school_id', 'kelas', 'status') // Changed from nama_lengkap to name
                 ->first();
 
             if (!$student) {

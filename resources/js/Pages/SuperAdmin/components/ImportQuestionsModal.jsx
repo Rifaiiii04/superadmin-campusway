@@ -105,9 +105,6 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
         fetch("/super-admin/questions/import", {
             method: "POST",
             headers: {
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    ?.getAttribute("content"),
                 Accept: "application/json",
             },
             body: formData,

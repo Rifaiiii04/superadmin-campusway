@@ -43,6 +43,12 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/login', [SuperAdminController::class, 'showLogin'])->name('login');
     Route::post('/login', [SuperAdminController::class, 'login'])->name('login.post');
     
+    // Import routes (no CSRF required, but still protected by admin auth)
+    Route::middleware(['admin.auth.nocsrf'])->group(function () {
+        Route::post('/questions/import', [SuperAdminController::class, 'importQuestions'])->name('questions.import');
+        Route::post('/schools/import', [SuperAdminController::class, 'importSchools'])->name('schools.import');
+    });
+    
     // Protected routes (require auth)
     Route::middleware(['admin.auth'])->group(function () {
         Route::get('/', [SuperAdminController::class, 'dashboard'])->name('dashboard');
@@ -50,26 +56,24 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::post('/schools', [SuperAdminController::class, 'storeSchool'])->name('schools.store');
         Route::put('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('schools.update');
         Route::delete('/schools/{school}', [SuperAdminController::class, 'deleteSchool'])->name('schools.delete');
-        Route::post('/schools/import', [SuperAdminController::class, 'importSchools'])->name('schools.import');
         Route::get('/schools/import-test', [SuperAdminController::class, 'importSchoolsTest'])->name('schools.import.test');
 
         Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
         Route::post('/questions', [SuperAdminController::class, 'storeQuestion'])->name('questions.store');
-        Route::post('/questions/import', [SuperAdminController::class, 'importQuestions'])->name('questions.import');
         Route::get('/questions/import-test', [SuperAdminController::class, 'importTest'])->name('questions.import.test');
 
         Route::put('/questions/{question}', [SuperAdminController::class, 'updateQuestion'])->name('questions.update');
         Route::delete('/questions/{question}', [SuperAdminController::class, 'deleteQuestion'])->name('questions.delete');
 
         Route::get('/monitoring', [SuperAdminController::class, 'monitoring'])->name('monitoring');
-                        Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
-                Route::post('/reports/download', [SuperAdminController::class, 'downloadReport'])->name('reports.download');
-                Route::get('/reports/test', [SuperAdminController::class, 'testDownload'])->name('reports.test');
-                                Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
-                
-                // Media upload route
-                Route::post('/upload-media', [MediaController::class, 'upload'])->name('media.upload');
-            });
-        });
+        Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
+        Route::post('/reports/download', [SuperAdminController::class, 'downloadReport'])->name('reports.download');
+        Route::get('/reports/test', [SuperAdminController::class, 'testDownload'])->name('reports.test');
+        Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
+        
+        // Media upload route
+        Route::post('/upload-media', [MediaController::class, 'upload'])->name('media.upload');
+    });
+});
 
 require __DIR__.'/auth.php';
