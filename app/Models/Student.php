@@ -16,6 +16,7 @@ class Student extends Model
         'kelas',
         'email',
         'phone',
+        'password',
     ];
 
     /**

@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StudentApiController;
+use App\Http\Controllers\StudentWebController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,59 +19,37 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Student Testing API Routes
-Route::prefix('student')->group(function () {
+
+
+// Student Web API Routes (for TKA Web)
+Route::prefix('web')->group(function () {
+    // Student registration
+    Route::post('/register-student', [StudentWebController::class, 'register']);
+    
+    // Student login
+    Route::post('/login', [StudentWebController::class, 'login']);
+    
+    // Get available schools
+    Route::get('/schools', [StudentWebController::class, 'getSchools']);
+    
+    // Get all active majors
+    Route::get('/majors', [StudentWebController::class, 'getMajors']);
+    
+    // Get major details
+    Route::get('/majors/{id}', [StudentWebController::class, 'getMajorDetails']);
+    
+    // Student choose major
+    Route::post('/choose-major', [StudentWebController::class, 'chooseMajor']);
+    
+    // Get student's chosen major
+    Route::get('/student-choice/{studentId}', [StudentWebController::class, 'getStudentChoice']);
+    
+    // Change student's major choice
+    Route::post('/change-major', [StudentWebController::class, 'changeMajor']);
+    
+    // Get student profile
+    Route::get('/student-profile/{studentId}', [StudentWebController::class, 'getStudentProfile']);
+    
     // Test endpoint untuk debugging
-    Route::get('/test', [StudentApiController::class, 'testEndpoint']);
-    
-    // Test endpoint untuk debugging school data
-    Route::get('/test-school-data', [StudentApiController::class, 'testSchoolData']);
-    
-    // Test endpoint untuk debugging registration
-    Route::get('/test-registration', [StudentApiController::class, 'testRegistration']);
-    
-    // Test submit answers
-    Route::get('/test-submit-answers', [StudentApiController::class, 'testSubmitAnswers']);
-    
-    // Test results
-    Route::get('/test-results/{testId}', [StudentApiController::class, 'testResults']);
-    
-    // Simple test
-    Route::get('/simple-test', [StudentApiController::class, 'simpleTest']);
-    
-    // Working results
-    Route::get('/working-results/{testId}', [StudentApiController::class, 'workingResults']);
-    
-    // Check existing test data
-    Route::get('/check-test-data', [StudentApiController::class, 'checkTestData']);
-    
-    // Get daftar mata pelajaran
-    Route::get('/subjects', [StudentApiController::class, 'getAvailableSubjects']);
-    
-    // Get daftar sekolah
-    Route::get('/schools', [StudentApiController::class, 'getAvailableSchools']);
-    
-    // Get status siswa berdasarkan NISN
-    Route::get('/student-status/{nisn}', [StudentApiController::class, 'getStudentStatus']);
-    
-    // Registrasi siswa
-    Route::post('/register', [StudentApiController::class, 'registerStudent']);
-    
-    // Ambil soal tes
-    Route::post('/questions', [StudentApiController::class, 'getQuestions']);
-    
-    // Submit jawaban
-    Route::post('/submit-answers', [StudentApiController::class, 'submitAnswers']);
-    
-    // Auto-save jawaban
-    Route::post('/auto-save', [StudentApiController::class, 'autoSaveAnswer']);
-    
-    // Lihat hasil tes
-    Route::get('/results/{testId}', [StudentApiController::class, 'getResults']);
-    
-    // Export PDF hasil
-    Route::get('/export-pdf/{testId}', [StudentApiController::class, 'exportPdf']);
-    
-    // Check major recommendations from database
-    Route::get('/check-major-recommendations', [StudentApiController::class, 'checkMajorRecommendations']);
+    Route::post('/test-choose-major', [StudentWebController::class, 'testChooseMajor']);
 });
