@@ -1188,7 +1188,15 @@ class SuperAdminController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        \App\Models\MajorRecommendation::create($request->all());
+        // Set required subjects to be the same for all majors
+        $data = $request->all();
+        $data['required_subjects'] = [
+            'Matematika',
+            'Bahasa Inggris',
+            'Bahasa Indonesia'
+        ];
+
+        \App\Models\MajorRecommendation::create($data);
 
         return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
     }
@@ -1219,7 +1227,15 @@ class SuperAdminController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        $major->update($request->all());
+        // Set required subjects to be the same for all majors
+        $data = $request->all();
+        $data['required_subjects'] = [
+            'Matematika',
+            'Bahasa Inggris',
+            'Bahasa Indonesia'
+        ];
+
+        $major->update($data);
 
         return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diupdate');
     }

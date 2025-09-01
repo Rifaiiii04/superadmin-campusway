@@ -32,7 +32,7 @@ export default function SuperAdminLogin() {
                 </div>
 
                 <div className="mt-6 sm:mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                    <div className="bg-white py-6 sm:py-8 px-4 sm:px-6 shadow sm:rounded-lg sm:px-10">
+                    <div className="bg-white py-6 sm:py-8 px-4  shadow sm:rounded-lg sm:px-10">
                         <form
                             className="space-y-4 sm:space-y-6"
                             onSubmit={handleSubmit}

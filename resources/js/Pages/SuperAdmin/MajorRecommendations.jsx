@@ -565,41 +565,30 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             placeholder="Deskripsi singkat jurusan"
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                            {availableSubjects.map(
-                                                (subject) => (
-                                                    <label
-                                                        key={subject}
-                                                        className="flex items-center"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={data.required_subjects?.includes(
-                                                                subject
-                                                            )}
-                                                            onChange={() =>
-                                                                toggleSubject(
-                                                                    subject,
-                                                                    "required_subjects"
-                                                                )
-                                                            }
-                                                            className="rounded border-gray-300 text-blue-600"
-                                                        />
-                                                        <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
-                                                        </span>
-                                                    </label>
-                                                )
-                                            )}
+                                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                            <p className="text-sm text-blue-800 mb-2">
+                                                <strong>Mata pelajaran wajib untuk semua jurusan:</strong>
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Matematika
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Bahasa Inggris
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Bahasa Indonesia
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-blue-600 mt-2">
+                                                Mata pelajaran wajib ini akan otomatis ditambahkan untuk semua jurusan.
+                                            </p>
                                         </div>
-                                    </div>
-
-                                    <div>
+                                    </div><div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
@@ -868,41 +857,30 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                         />
                                     </div>
-
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                            {availableSubjects.map(
-                                                (subject) => (
-                                                    <label
-                                                        key={subject}
-                                                        className="flex items-center"
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={data.required_subjects?.includes(
-                                                                subject
-                                                            )}
-                                                            onChange={() =>
-                                                                toggleSubject(
-                                                                    subject,
-                                                                    "required_subjects"
-                                                                )
-                                                            }
-                                                            className="rounded border-gray-300 text-blue-600"
-                                                        />
-                                                        <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
-                                                        </span>
-                                                    </label>
-                                                )
-                                            )}
+                                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                            <p className="text-sm text-blue-800 mb-2">
+                                                <strong>Mata pelajaran wajib untuk semua jurusan:</strong>
+                                            </p>
+                                            <div className="flex flex-wrap gap-2">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Matematika
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Bahasa Inggris
+                                                </span>
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Bahasa Indonesia
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-blue-600 mt-2">
+                                                Mata pelajaran wajib ini akan otomatis ditambahkan untuk semua jurusan.
+                                            </p>
                                         </div>
-                                    </div>
-
-                                    <div>
+                                    </div><div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
