@@ -9,6 +9,7 @@ import {
     Menu,
     X,
     Home,
+    GraduationCap,
 } from "lucide-react";
 
 export default function SuperAdminLayout({ children }) {
@@ -18,17 +19,17 @@ export default function SuperAdminLayout({ children }) {
     const navigation = [
         { name: "Dashboard", href: "/super-admin", icon: Home },
         {
-            name: "Kelola Sekolah",
+            name: "Sekolah",
             href: "/super-admin/schools",
             icon: Building2,
         },
-        { name: "Bank Soal", href: "/super-admin/questions", icon: BookOpen },
         {
-            name: "Monitoring",
-            href: "/super-admin/monitoring",
-            icon: BarChart3,
+            name: "Jurusan",
+            href: "/super-admin/major-recommendations",
+            icon: GraduationCap,
         },
-        { name: "Laporan", href: "/super-admin/reports", icon: FileText },
+        { name: "Bank Soal", href: "/super-admin/questions", icon: BookOpen },
+        { name: "Hasil Tes", href: "/super-admin/results", icon: FileText },
     ];
 
     const toggleSidebar = () => {

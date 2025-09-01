@@ -53,6 +53,7 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
     Route::middleware(['admin.auth'])->group(function () {
         Route::get('/', [SuperAdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/schools', [SuperAdminController::class, 'schools'])->name('schools');
+        Route::get('/schools/{id}', [SuperAdminController::class, 'schoolDetail'])->name('schools.detail');
         Route::post('/schools', [SuperAdminController::class, 'storeSchool'])->name('schools.store');
         Route::put('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('schools.update');
         Route::delete('/schools/{school}', [SuperAdminController::class, 'deleteSchool'])->name('schools.delete');
@@ -66,9 +67,23 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::delete('/questions/{question}', [SuperAdminController::class, 'deleteQuestion'])->name('questions.delete');
 
         Route::get('/monitoring', [SuperAdminController::class, 'monitoring'])->name('monitoring');
+        Route::get('/monitoring/data', [SuperAdminController::class, 'getMonitoringData'])->name('monitoring.data');
         Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
         Route::post('/reports/download', [SuperAdminController::class, 'downloadReport'])->name('reports.download');
         Route::get('/reports/test', [SuperAdminController::class, 'testDownload'])->name('reports.test');
+        
+        // Major Recommendations
+        Route::get('/major-recommendations', [SuperAdminController::class, 'majorRecommendations'])->name('major-recommendations');
+        Route::post('/major-recommendations', [SuperAdminController::class, 'storeMajorRecommendation'])->name('major-recommendations.store');
+        
+        // Coming Soon Pages
+        Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
+        Route::get('/results', [SuperAdminController::class, 'results'])->name('results');
+        Route::put('/major-recommendations/{id}', [SuperAdminController::class, 'updateMajorRecommendation'])->name('major-recommendations.update');
+        Route::delete('/major-recommendations/{id}', [SuperAdminController::class, 'deleteMajorRecommendation'])->name('major-recommendations.delete');
+        Route::patch('/major-recommendations/{id}/toggle', [SuperAdminController::class, 'toggleMajorRecommendation'])->name('major-recommendations.toggle');
+        Route::get('/major-recommendations/export', [SuperAdminController::class, 'exportMajorRecommendations'])->name('major-recommendations.export');
+        
         Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
         
         // Media upload route

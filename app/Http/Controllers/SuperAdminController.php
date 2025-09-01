@@ -8,6 +8,7 @@ use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\Result;
 use App\Models\Recommendation;
+use App\Models\MajorRecommendation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -43,20 +44,34 @@ class SuperAdminController extends Controller
 
     public function dashboard()
     {
+        // Get real data from database
         $stats = [
             'total_schools' => School::count(),
             'total_students' => Student::count(),
-            'total_questions' => Question::count(),
-            'total_results' => Result::count(),
+            'total_majors' => \App\Models\MajorRecommendation::where('is_active', true)->count(),
         ];
 
+        // Get recent schools and students
         $recent_schools = School::latest()->take(5)->get();
         $recent_students = Student::with('school')->latest()->take(5)->get();
+
+        // Get students per major for chart
+        $studentsPerMajor = \App\Models\StudentChoice::with(['student.school', 'major'])
+            ->selectRaw('major_id, COUNT(*) as student_count')
+            ->groupBy('major_id')
+            ->get()
+            ->map(function($item) {
+                return [
+                    'major_name' => $item->major->major_name ?? 'Unknown',
+                    'student_count' => $item->student_count
+                ];
+            });
 
         return inertia('SuperAdmin/Dashboard', [
             'stats' => $stats,
             'recent_schools' => $recent_schools,
             'recent_students' => $recent_students,
+            'studentsPerMajor' => $studentsPerMajor,
             'auth' => [
                 'user' => Auth::guard('admin')->user()
             ]
@@ -69,6 +84,45 @@ class SuperAdminController extends Controller
         $schools = School::withCount('students')->paginate(10);
         return inertia('SuperAdmin/Schools', [
             'schools' => $schools,
+            'auth' => [
+                'user' => Auth::guard('admin')->user()
+            ]
+        ]);
+    }
+
+    /**
+     * Show school detail with students and their major choices
+     */
+    public function schoolDetail($id)
+    {
+        $school = School::with(['students.majorChoices.major'])->findOrFail($id);
+        
+        return inertia('SuperAdmin/SchoolDetail', [
+            'school' => $school,
+            'auth' => [
+                'user' => Auth::guard('admin')->user()
+            ]
+        ]);
+    }
+
+    /**
+     * Show questions page (Coming Soon)
+     */
+    public function questions()
+    {
+        return inertia('SuperAdmin/Questions', [
+            'auth' => [
+                'user' => Auth::guard('admin')->user()
+            ]
+        ]);
+    }
+
+    /**
+     * Show results page (Coming Soon)
+     */
+    public function results()
+    {
+        return inertia('SuperAdmin/Results', [
             'auth' => [
                 'user' => Auth::guard('admin')->user()
             ]
@@ -130,76 +184,7 @@ class SuperAdminController extends Controller
         return back()->with('success', 'Sekolah berhasil dihapus');
     }
 
-    // Question Bank Management
-    public function questions(Request $request)
-    {
-        $query = Question::with('questionOptions');
-        
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('subject', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%")
-                  ->orWhereHas('questionOptions', function($subQ) use ($search) {
-                      $subQ->where('option_text', 'like', "%{$search}%");
-                  });
-            });
-        }
-        
-        // Filter by subject
-        if ($request->filled('subject')) {
-            $query->where('subject', $request->subject);
-        }
-        
-        // Filter by type
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
-        }
-        
-        // Get unique subjects for filter dropdown
-        $subjects = Question::distinct()->pluck('subject')->filter()->values();
-        
-        // Sorting
-        $sortBy = $request->get('sort_by', 'subject'); // Default sort by subject
-        $sortOrder = $request->get('sort_order', 'asc'); // Default ascending
-        
-        switch ($sortBy) {
-            case 'subject':
-                $query->orderBy('subject', $sortOrder);
-                break;
-            case 'created_at':
-                $query->orderBy('created_at', $sortOrder);
-                break;
-            case 'type':
-                $query->orderBy('type', $sortOrder);
-                break;
-            default:
-                $query->orderBy('subject', 'asc'); // Fallback to subject ASC
-        }
-        
-        $questions = $query->paginate(10);
-        
-        return inertia('SuperAdmin/QuestionsFixed', [
-            'questions' => $questions,
-            'subjects' => $subjects,
-            'filters' => [
-                'search' => $request->search,
-                'subject' => $request->subject,
-                'type' => $request->type,
-                'sort_by' => $request->get('sort_by', 'subject'),
-                'sort_order' => $request->get('sort_order', 'asc'),
-            ],
-            'auth' => [
-                'user' => Auth::guard('admin')->user()
-            ],
-            'errors' => session('errors'),
-            'flash' => [
-                'success' => session('success'),
-                'error' => session('error'),
-            ]
-        ]);
-    }
+
 
     public function storeQuestion(Request $request)
     {
@@ -281,74 +266,240 @@ class SuperAdminController extends Controller
     // Global Monitoring
     public function monitoring()
     {
-        // National Statistics
-        $nationalStats = [
-            'total_students' => Student::count(),
-            'total_schools' => School::count(),
-            'average_score' => Result::avg('score') ?? 0,
-            'total_recommendations' => Recommendation::count(),
-        ];
+        try {
+            // Get all completed test results
+            $testResults = \App\Models\TestResult::with(['student.school'])
+                ->where('status', 'completed')
+                ->get();
 
-        // School Performance - Get schools with student count and average scores
-        $schoolPerformance = School::withCount('students')
-            ->with(['students.results'])
-            ->get()
-            ->map(function ($school) {
-                $avgScore = 0;
-                if ($school->students_count > 0) {
-                    $totalScore = 0;
-                    $totalResults = 0;
+            // Calculate national statistics
+            $totalSchools = \App\Models\School::count();
+            $totalStudents = \App\Models\Student::count();
+            $totalTests = $testResults->count();
+            
+            // Calculate average score from all completed tests
+            $totalScore = $testResults->sum('total_score');
+            $averageScore = $totalTests > 0 ? round($totalScore / $totalTests, 2) : 0;
+            
+            // Count total recommendations
+            $totalRecommendations = $testResults->whereNotNull('recommendations')->count();
+
+            // Calculate school performance
+            $schoolPerformance = \App\Models\School::withCount('students')
+                ->get()
+                ->map(function ($school) use ($testResults) {
+                    $schoolTests = $testResults->where('student.school_id', $school->id);
+                    $avgScore = $schoolTests->count() > 0 
+                        ? round($schoolTests->avg('total_score'), 2) 
+                        : 0;
                     
-                    foreach ($school->students as $student) {
-                        if ($student->results->count() > 0) {
-                            $totalScore += $student->results->sum('score');
-                            $totalResults += $student->results->count();
+                    return [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'students_count' => $school->students_count,
+                        'avg_score' => $avgScore,
+                        'tests_count' => $schoolTests->count()
+                    ];
+                })
+                ->filter(function ($school) {
+                    return $school['students_count'] > 0; // Only show schools with students
+                })
+                ->values();
+
+            // Calculate subject performance
+            $subjectPerformance = [];
+            $subjectScores = [];
+            
+            foreach ($testResults as $test) {
+                $scores = is_string($test->scores) ? json_decode($test->scores, true) : $test->scores;
+                
+                if (is_array($scores)) {
+                    foreach ($scores as $score) {
+                        if (isset($score['subject']) && isset($score['score'])) {
+                            $subject = $score['subject'];
+                            if (!isset($subjectScores[$subject])) {
+                                $subjectScores[$subject] = [];
+                            }
+                            $subjectScores[$subject][] = $score['score'];
                         }
                     }
-                    
-                    if ($totalResults > 0) {
-                        $avgScore = round($totalScore / $totalResults, 2);
-                    }
                 }
-                
-                return [
-                    'id' => $school->id,
-                    'name' => $school->name,
-                    'students_count' => $school->students_count,
-                    'avg_score' => $avgScore,
+            }
+            
+            foreach ($subjectScores as $subject => $scores) {
+                $avgScore = count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0;
+                $subjectPerformance[] = [
+                    'subject' => $subject,
+                    'total_students' => count($scores),
+                    'avg_score' => $avgScore
                 ];
-            })
-            ->filter(function ($school) {
-                return $school['students_count'] > 0; // Only show schools with students
-            })
-            ->values();
+            }
 
-        // Subject Performance - Get subjects with average scores and student counts
-        $subjectPerformance = Result::selectRaw('
-                subject, 
-                ROUND(AVG(CAST(score AS DECIMAL(5,2))), 2) as avg_score, 
-                COUNT(DISTINCT student_id) as total_students
-            ')
-            ->whereNotNull('subject')
-            ->where('subject', '!=', '')
-            ->groupBy('subject')
-            ->get()
-            ->map(function ($subject) {
-                return [
-                    'subject' => $subject->subject,
-                    'total_students' => $subject->total_students,
-                    'avg_score' => round($subject->avg_score, 2),
-                ];
+            // Sort by average score descending
+            usort($subjectPerformance, function ($a, $b) {
+                return $b['avg_score'] <=> $a['avg_score'];
             });
 
-        return inertia('SuperAdmin/Monitoring', [
-            'nationalStats' => $nationalStats,
-            'schoolPerformance' => $schoolPerformance,
-            'subjectPerformance' => $subjectPerformance,
-            'auth' => [
-                'user' => Auth::guard('admin')->user()
-            ]
-        ]);
+            // Calculate score distribution
+            $scoreDistribution = [0, 0, 0, 0, 0]; // 0-60, 61-70, 71-80, 81-90, 91-100
+            foreach ($testResults as $test) {
+                $score = floatval($test->total_score);
+                if ($score <= 60) $scoreDistribution[0]++;
+                elseif ($score <= 70) $scoreDistribution[1]++;
+                elseif ($score <= 80) $scoreDistribution[2]++;
+                elseif ($score <= 90) $scoreDistribution[3]++;
+                else $scoreDistribution[4]++;
+            }
+
+            return inertia('SuperAdmin/Monitoring', [
+                'nationalStats' => [
+                    'total_schools' => $totalSchools,
+                    'total_students' => $totalStudents,
+                    'total_tests' => $totalTests,
+                    'average_score' => $averageScore,
+                    'total_recommendations' => $totalRecommendations
+                ],
+                'schoolPerformance' => $schoolPerformance,
+                'subjectPerformance' => $subjectPerformance,
+                'scoreDistribution' => $scoreDistribution,
+                'auth' => [
+                    'user' => Auth::guard('admin')->user()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            // Fallback to default data if there's an error
+            return inertia('SuperAdmin/Monitoring', [
+                'nationalStats' => [
+                    'total_schools' => 0,
+                    'total_students' => 0,
+                    'total_tests' => 0,
+                    'average_score' => 0,
+                    'total_recommendations' => 0,
+                ],
+                'schoolPerformance' => [],
+                'subjectPerformance' => [],
+                'scoreDistribution' => [0, 0, 0, 0, 0],
+                'auth' => [
+                    'user' => Auth::guard('admin')->user()
+                ],
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Get monitoring data from test results
+     */
+    public function getMonitoringData()
+    {
+        try {
+            // Get all completed test results
+            $testResults = \App\Models\TestResult::with(['student.school'])
+                ->where('status', 'completed')
+                ->get();
+
+            // Calculate national statistics
+            $totalSchools = \App\Models\School::count();
+            $totalStudents = \App\Models\Student::count();
+            $totalTests = $testResults->count();
+            
+            // Calculate average score from all completed tests
+            $totalScore = $testResults->sum('total_score');
+            $averageScore = $totalTests > 0 ? round($totalScore / $totalTests, 2) : 0;
+            
+            // Count total recommendations
+            $totalRecommendations = $testResults->whereNotNull('recommendations')->count();
+
+            // Calculate school performance
+            $schoolPerformance = \App\Models\School::withCount('students')
+                ->get()
+                ->map(function ($school) use ($testResults) {
+                    $schoolTests = $testResults->where('student.school_id', $school->id);
+                    $avgScore = $schoolTests->count() > 0 
+                        ? round($schoolTests->avg('total_score'), 2) 
+                        : 0;
+                    
+                    return [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'students_count' => $school->students_count,
+                        'avg_score' => $avgScore,
+                        'tests_count' => $schoolTests->count()
+                    ];
+                })
+                ->filter(function ($school) {
+                    return $school['tests_count'] > 0; // Only show schools with test results
+                })
+                ->values();
+
+            // Calculate subject performance
+            $subjectPerformance = [];
+            $subjectScores = [];
+            
+            foreach ($testResults as $test) {
+                $scores = is_string($test->scores) ? json_decode($test->scores, true) : $test->scores;
+                
+                if (is_array($scores)) {
+                    foreach ($scores as $score) {
+                        if (isset($score['subject']) && isset($score['score'])) {
+                            $subject = $score['subject'];
+                            if (!isset($subjectScores[$subject])) {
+                                $subjectScores[$subject] = [];
+                            }
+                            $subjectScores[$subject][] = $score['score'];
+                        }
+                    }
+                }
+            }
+            
+            foreach ($subjectScores as $subject => $scores) {
+                $avgScore = count($scores) > 0 ? round(array_sum($scores) / count($scores), 2) : 0;
+                $subjectPerformance[] = [
+                    'subject' => $subject,
+                    'total_students' => count($scores),
+                    'avg_score' => $avgScore
+                ];
+            }
+
+            // Sort by average score descending
+            usort($subjectPerformance, function ($a, $b) {
+                return $b['avg_score'] <=> $a['avg_score'];
+            });
+
+            // Calculate score distribution
+            $scoreDistribution = [0, 0, 0, 0, 0]; // 0-60, 61-70, 71-80, 81-90, 91-100
+            foreach ($testResults as $test) {
+                $score = floatval($test->total_score);
+                if ($score <= 60) $scoreDistribution[0]++;
+                elseif ($score <= 70) $scoreDistribution[1]++;
+                elseif ($score <= 80) $scoreDistribution[2]++;
+                elseif ($score <= 90) $scoreDistribution[3]++;
+                else $scoreDistribution[4]++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'national_stats' => [
+                        'total_schools' => $totalSchools,
+                        'total_students' => $totalStudents,
+                        'total_tests' => $totalTests,
+                        'average_score' => $averageScore,
+                        'total_recommendations' => $totalRecommendations
+                    ],
+                    'school_performance' => $schoolPerformance,
+                    'subject_performance' => $subjectPerformance,
+                    'score_distribution' => $scoreDistribution
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting monitoring data: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Reports
@@ -996,5 +1147,161 @@ class SuperAdminController extends Controller
         $request->session()->regenerateToken();
         
         return redirect('/super-admin/login');
+    }
+
+    /**
+     * Show major recommendations management page
+     */
+    public function majorRecommendations()
+    {
+        $majorRecommendations = \App\Models\MajorRecommendation::orderBy('major_name')->get();
+        
+        return inertia('SuperAdmin/MajorRecommendations', [
+            'majorRecommendations' => $majorRecommendations,
+            'auth' => [
+                'user' => Auth::guard('admin')->user()
+            ]
+        ]);
+    }
+
+    /**
+     * Store new major recommendation
+     */
+    public function storeMajorRecommendation(Request $request)
+    {
+        $request->validate([
+            'major_name' => 'required|string|max:255|unique:major_recommendations,major_name',
+            'description' => 'nullable|string',
+            'required_subjects' => 'nullable|array',
+            'required_subjects.*' => 'string',
+            'preferred_subjects' => 'nullable|array',
+            'preferred_subjects.*' => 'string',
+            'kurikulum_merdeka_subjects' => 'nullable|array',
+            'kurikulum_merdeka_subjects.*' => 'string',
+            'kurikulum_2013_ipa_subjects' => 'nullable|array',
+            'kurikulum_2013_ipa_subjects.*' => 'string',
+            'kurikulum_2013_ips_subjects' => 'nullable|array',
+            'kurikulum_2013_ips_subjects.*' => 'string',
+            'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+            'kurikulum_2013_bahasa_subjects.*' => 'string',
+            'career_prospects' => 'nullable|string',
+            'is_active' => 'boolean'
+        ]);
+
+        \App\Models\MajorRecommendation::create($request->all());
+
+        return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
+    }
+
+    /**
+     * Update major recommendation
+     */
+    public function updateMajorRecommendation(Request $request, $id)
+    {
+        $major = \App\Models\MajorRecommendation::findOrFail($id);
+        
+        $request->validate([
+            'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
+            'description' => 'nullable|string',
+            'required_subjects' => 'nullable|array',
+            'required_subjects.*' => 'string',
+            'preferred_subjects' => 'nullable|array',
+            'preferred_subjects.*' => 'string',
+            'kurikulum_merdeka_subjects' => 'nullable|array',
+            'kurikulum_merdeka_subjects.*' => 'string',
+            'kurikulum_2013_ipa_subjects' => 'nullable|array',
+            'kurikulum_2013_ipa_subjects.*' => 'string',
+            'kurikulum_2013_ips_subjects' => 'nullable|array',
+            'kurikulum_2013_ips_subjects.*' => 'string',
+            'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+            'kurikulum_2013_bahasa_subjects.*' => 'string',
+            'career_prospects' => 'nullable|string',
+            'is_active' => 'boolean'
+        ]);
+
+        $major->update($request->all());
+
+        return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diupdate');
+    }
+
+    /**
+     * Delete major recommendation
+     */
+    public function deleteMajorRecommendation($id)
+    {
+        $major = \App\Models\MajorRecommendation::findOrFail($id);
+        $major->delete();
+
+        return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil dihapus');
+    }
+
+    /**
+     * Toggle major recommendation status
+     */
+    public function toggleMajorRecommendation($id)
+    {
+        $major = \App\Models\MajorRecommendation::findOrFail($id);
+        $major->update(['is_active' => !$major->is_active]);
+
+        return redirect()->back()->with('success', 'Status rekomendasi jurusan berhasil diubah');
+    }
+
+    /**
+     * Export major recommendations to CSV
+     */
+    public function exportMajorRecommendations()
+    {
+        $majorRecommendations = \App\Models\MajorRecommendation::all();
+
+        $filename = 'major_recommendations_' . date('Ymd_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($majorRecommendations) {
+            $file = fopen('php://output', 'w');
+            // Add UTF-8 BOM for Excel compatibility
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Headers
+            fputcsv($file, [
+                'ID',
+                'Nama Jurusan',
+                'Deskripsi',
+                'Mata Pelajaran Wajib',
+                'Mata Pelajaran Preferensi',
+                'Kurikulum Merdeka',
+                'Kurikulum 2013 - IPA',
+                'Kurikulum 2013 - IPS',
+                'Kurikulum 2013 - Bahasa',
+                'Prospek Karir',
+                'Aktif',
+                'Dibuat Pada',
+                'Diperbarui Pada'
+            ], ';'); // Use semicolon as delimiter
+
+            // Data
+            foreach ($majorRecommendations as $major) {
+                fputcsv($file, [
+                    $major->id,
+                    $major->major_name,
+                    $major->description,
+                    implode(', ', $major->required_subjects ?? []),
+                    implode(', ', $major->preferred_subjects ?? []),
+                    implode(', ', $major->kurikulum_merdeka_subjects ?? []),
+                    implode(', ', $major->kurikulum_2013_ipa_subjects ?? []),
+                    implode(', ', $major->kurikulum_2013_ips_subjects ?? []),
+                    implode(', ', $major->kurikulum_2013_bahasa_subjects ?? []),
+                    $major->career_prospects,
+                    $major->is_active ? 'Ya' : 'Tidak',
+                    $major->created_at,
+                    $major->updated_at
+                ], ';'); // Use semicolon as delimiter
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

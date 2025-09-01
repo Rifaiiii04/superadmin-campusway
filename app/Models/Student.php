@@ -18,9 +18,20 @@ class Student extends Model
         'phone',
     ];
 
+    /**
+     * Get the school that owns the student
+     */
     public function school()
     {
         return $this->belongsTo(School::class);
+    }
+
+    /**
+     * Get the major choices for the student
+     */
+    public function majorChoices()
+    {
+        return $this->hasMany(StudentChoice::class);
     }
 
     public function studentSubjects()

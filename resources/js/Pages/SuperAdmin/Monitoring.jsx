@@ -29,6 +29,7 @@ export default function Monitoring({
     nationalStats = {},
     schoolPerformance = [],
     subjectPerformance = [],
+    scoreDistribution = [0, 0, 0, 0, 0],
 }) {
     // Helper function untuk format score dengan safety check
     const formatScore = (score) => {
@@ -69,7 +70,7 @@ export default function Monitoring({
         datasets: [
             {
                 label: "Jumlah Siswa",
-                data: [0, 0, 0, 0, 0], // Data akan diisi dari database
+                data: scoreDistribution, // Data dari database
                 backgroundColor: [
                     "rgba(239, 68, 68, 0.8)", // Red
                     "rgba(245, 158, 11, 0.8)", // Yellow
@@ -161,7 +162,7 @@ export default function Monitoring({
                     <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
                         Statistik Nasional
                     </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                         <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
                                 <div className="p-2 sm:p-3 rounded-lg bg-blue-500">
@@ -213,6 +214,21 @@ export default function Monitoring({
                             <div className="flex items-center">
                                 <div className="p-2 sm:p-3 rounded-lg bg-orange-500">
                                     <School className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                                </div>
+                                <div className="ml-3 sm:ml-4">
+                                    <p className="text-xs sm:text-sm font-medium text-gray-600">
+                                        Total Test Selesai
+                                    </p>
+                                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                                        {nationalStats.total_tests || 0}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+                            <div className="flex items-center">
+                                <div className="p-2 sm:p-3 rounded-lg bg-indigo-500">
+                                    <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
                                 <div className="ml-3 sm:ml-4">
                                     <p className="text-xs sm:text-sm font-medium text-gray-600">

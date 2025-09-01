@@ -30,6 +30,21 @@ Route::prefix('student')->group(function () {
     // Test endpoint untuk debugging registration
     Route::get('/test-registration', [StudentApiController::class, 'testRegistration']);
     
+    // Test submit answers
+    Route::get('/test-submit-answers', [StudentApiController::class, 'testSubmitAnswers']);
+    
+    // Test results
+    Route::get('/test-results/{testId}', [StudentApiController::class, 'testResults']);
+    
+    // Simple test
+    Route::get('/simple-test', [StudentApiController::class, 'simpleTest']);
+    
+    // Working results
+    Route::get('/working-results/{testId}', [StudentApiController::class, 'workingResults']);
+    
+    // Check existing test data
+    Route::get('/check-test-data', [StudentApiController::class, 'checkTestData']);
+    
     // Get daftar mata pelajaran
     Route::get('/subjects', [StudentApiController::class, 'getAvailableSubjects']);
     
@@ -56,4 +71,7 @@ Route::prefix('student')->group(function () {
     
     // Export PDF hasil
     Route::get('/export-pdf/{testId}', [StudentApiController::class, 'exportPdf']);
+    
+    // Check major recommendations from database
+    Route::get('/check-major-recommendations', [StudentApiController::class, 'checkMajorRecommendations']);
 });

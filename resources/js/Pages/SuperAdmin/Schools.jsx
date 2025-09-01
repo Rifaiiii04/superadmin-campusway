@@ -131,23 +131,27 @@ export default function Schools({ schools }) {
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2 sm:space-x-3">
+                                            <Link
+                                                href={`/super-admin/schools/${school.id}`}
+                                                className="text-indigo-600 hover:text-indigo-900"
+                                            >
+                                                Lihat Detail
+                                            </Link>
                                             <button
                                                 onClick={() =>
                                                     openEditModal(school)
                                                 }
-                                                className="text-blue-600 hover:text-blue-900 p-1 sm:p-2 rounded-md hover:bg-blue-50"
-                                                title="Edit Sekolah"
+                                                className="text-blue-600 hover:text-blue-900"
                                             >
-                                                <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                <Edit className="h-4 w-4" />
                                             </button>
                                             <Link
                                                 href={`/super-admin/schools/${school.id}`}
                                                 method="delete"
                                                 as="button"
-                                                className="text-red-600 hover:text-red-900 p-1 sm:p-2 rounded-md hover:bg-red-50"
-                                                title="Hapus Sekolah"
+                                                className="text-red-600 hover:text-red-900"
                                             >
-                                                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                                                <Trash2 className="h-4 w-4" />
                                             </Link>
                                         </div>
                                     </div>

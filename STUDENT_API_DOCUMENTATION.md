@@ -169,7 +169,7 @@ http://127.0.0.1:8000/api/student
     "answers": [
         {
             "question_id": 1,
-            "selected_option_id": 1
+            "selected_option_id": 2
         },
         {
             "question_id": 2,
@@ -430,6 +430,68 @@ http://127.0.0.1:8000/api/student
 }
 ```
 
+#### **Check Test Data**
+
+**GET** `/check-test-data`
+
+**Deskripsi:** Melihat semua data test yang ada (test_results + test_answers)
+
+**Response:**
+
+```json
+{
+    "success": true,
+    "message": "Test data retrieved successfully",
+    "data": {
+        "summary": {
+            "total_tests": 2,
+            "total_answers": 40,
+            "last_test_id": 2,
+            "next_test_id_will_be": 3
+        },
+        "test_results": [
+            {
+                "test_id": 1,
+                "student_id": 1,
+                "subjects": [
+                    "Bahasa Indonesia",
+                    "Matematika",
+                    "Bahasa Inggris",
+                    "Fisika",
+                    "Biologi"
+                ],
+                "status": "completed",
+                "total_score": 425.5,
+                "start_time": "2025-01-01T10:00:00.000000Z",
+                "end_time": "2025-01-01T12:00:00.000000Z",
+                "total_answers": 20,
+                "answers": [
+                    {
+                        "id": 1,
+                        "test_result_id": 1,
+                        "question_id": 1,
+                        "selected_option_id": 1,
+                        "answered_at": "2025-01-01T10:05:00.000000Z"
+                    }
+                ]
+            }
+        ],
+        "explanation": {
+            "data_flow": [
+                "1. POST /questions → Creates record in test_results table",
+                "2. POST /submit-answers → Creates records in test_answers table",
+                "3. test_id → References test_results.id",
+                "4. Each answer → Creates 1 row in test_answers table"
+            ],
+            "table_structure": [
+                "test_results → Main test session data",
+                "test_answers → Individual student answers"
+            ]
+        }
+    }
+}
+```
+
 ---
 
 ## 🗄️ **Database Schema (Updated)**
@@ -463,15 +525,15 @@ http://127.0.0.1:8000/api/student
 ### **Tabel: test_results**
 
 ```sql
-- id (bigint, primary key)
-- student_id (bigint, foreign key)
-- subjects (json) - Array mata pelajaran
-- start_time (datetime)
-- end_time (datetime, nullable)
+- id (bigint, primary key)         -- test_id yang dikirim di submit-answers
+- student_id (bigint, foreign key) -- ID siswa
+- subjects (json)                   -- Array mata pelajaran
+- start_time (datetime)             -- Waktu mulai tes
+- end_time (datetime, nullable)     -- Waktu selesai tes (diisi saat submit)
 - status (enum: ongoing, completed, expired)
-- scores (json, nullable) - Skor per mata pelajaran
-- total_score (decimal, nullable)
-- recommendations (json, nullable)
+- scores (json, nullable)           -- Skor per mata pelajaran
+- total_score (decimal, nullable)   -- Total skor
+- recommendations (json, nullable)  -- Rekomendasi jurusan
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -479,11 +541,11 @@ http://127.0.0.1:8000/api/student
 ### **Tabel: test_answers**
 
 ```sql
-- id (bigint, primary key)
-- test_result_id (bigint, foreign key)
-- question_id (bigint, foreign key)
-- selected_option_id (bigint, foreign key)
-- answered_at (datetime)
+- id (bigint, primary key)         -- ID unik untuk setiap jawaban
+- test_result_id (bigint, foreign key) -- test_id dari test_results
+- question_id (bigint, foreign key)    -- ID soal yang dijawab
+- selected_option_id (bigint, foreign key) -- ID opsi yang dipilih
+- answered_at (datetime)            -- Waktu jawaban
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
@@ -500,6 +562,118 @@ http://127.0.0.1:8000/api/student
 - created_at (timestamp)
 - updated_at (timestamp)
 ```
+
+---
+
+## 📊 **Data Flow - Bagaimana Data Mengalir:**
+
+### **🔄 Alur Lengkap dari Registrasi sampai Hasil:**
+
+#### **1. Registrasi Siswa (`POST /register`):**
+
+```
+Request: JSON dengan data siswa
+↓
+Validasi: NISN unik, NPSN cocok dengan nama sekolah
+↓
+INSERT ke table: students
+- name: "Ahmad Fadillah"
+- nisn: "1234567890"
+- school_id: 1 (dari schools.id)
+- kelas: "XII IPA"
+- email: "ahmad@email.com"
+- phone: "081234567890"
+- status: "registered"
+↓
+Response: student_id = 1
+```
+
+#### **2. Ambil Soal Tes (`POST /questions`):**
+
+```
+Request: JSON dengan student_id dan subjects
+↓
+Validasi: Siswa belum tes, subjects valid
+↓
+INSERT ke table: test_results
+- id: 1 (akan jadi test_id)
+- student_id: 1
+- subjects: ["Bahasa Indonesia", "Matematika", "Bahasa Inggris", "Fisika", "Biologi"]
+- start_time: "2025-01-01T10:00:00.000000Z"
+- status: "ongoing"
+↓
+Response: test_id = 1, soal + timer
+```
+
+#### **3. Submit Jawaban (`POST /submit-answers`):**
+
+```
+Request: JSON dengan test_id dan array answers
+↓
+Validasi: test_id valid, answers lengkap
+↓
+UPDATE table: test_results (id = test_id)
+- end_time: "2025-01-01T12:00:00.000000Z"
+- status: "ongoing" → "completed"
+- scores: JSON skor per mata pelajaran
+- total_score: 425.5
+- recommendations: JSON rekomendasi jurusan
+
+INSERT ke table: test_answers (1 row per jawaban)
+- Row 1: test_result_id=1, question_id=1, selected_option_id=1
+- Row 2: test_result_id=1, question_id=2, selected_option_id=3
+- Row 3: test_result_id=1, question_id=3, selected_option_id=2
+- ... dst untuk semua 100 jawaban (5 subjects × 20 questions)
+↓
+Response: Skor lengkap + rekomendasi
+```
+
+---
+
+### **🔗 Relasi Antar Tabel:**
+
+```
+students (1) ←→ (1) test_results
+    ↓                    ↓
+schools              test_answers (1) ←→ (many)
+    ↓                    ↓
+questions ←→ (1) question_options
+```
+
+**Penjelasan Relasi:**
+
+-   **1 siswa** bisa punya **1 test session** (test_results)
+-   **1 test session** bisa punya **banyak jawaban** (test_answers)
+-   **1 soal** bisa punya **banyak opsi jawaban** (question_options)
+-   **1 siswa** terhubung ke **1 sekolah** (schools)
+
+---
+
+### **📋 Cara Cek Data yang Ada:**
+
+#### **1. Cek Semua Test:**
+
+```bash
+GET /api/student/check-test-data
+```
+
+**Response:** Semua test_results + test_answers yang ada
+
+#### **2. Cek Test Tertentu:**
+
+```bash
+GET /api/student/results/{testId}
+```
+
+**Response:** Detail lengkap test + skor + rekomendasi
+
+#### **3. Cek Status Siswa:**
+
+```bash
+GET /api/student/student-status/{nisn}
+```
+
+**Response:** Status siswa + apakah sudah tes
 
 ---
 
