@@ -11,6 +11,7 @@ import {
     Target,
     Users,
     Download,
+    Search,
 } from "lucide-react";
 
 export default function MajorRecommendations({ majorRecommendations = [] }) {
@@ -19,6 +20,8 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedMajor, setSelectedMajor] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
 
     const {
         data,
@@ -99,6 +102,41 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         // Use Inertia patch for toggle
         router.patch(`/super-admin/major-recommendations/${id}/toggle`);
     };
+
+    // Filter majors based on search term and status
+    const filteredMajors = majorRecommendations.filter((major) => {
+        const matchesSearch =
+            searchTerm === "" ||
+            major.major_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            major.description
+                ?.toLowerCase()
+                .includes(searchTerm.toLowerCase()) ||
+            major.required_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            major.preferred_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            major.kurikulum_merdeka_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            major.kurikulum_2013_ipa_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            major.kurikulum_2013_ips_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            major.kurikulum_2013_bahasa_subjects?.some((subject) =>
+                subject.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+        const matchesStatus =
+            statusFilter === "all" ||
+            (statusFilter === "active" && major.is_active) ||
+            (statusFilter === "inactive" && !major.is_active);
+
+        return matchesSearch && matchesStatus;
+    });
 
     const openEditModal = (major) => {
         setEditingMajor(major);
@@ -234,12 +272,91 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                     </div>
                 </div>
 
+                {/* Filtered Results Summary */}
+                {(searchTerm !== "" || statusFilter !== "all") && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-blue-500">
+                                <Search className="h-5 w-5 text-white" />
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-blue-800">
+                                    Hasil Pencarian
+                                </p>
+                                <p className="text-lg font-bold text-blue-900">
+                                    {filteredMajors.length} jurusan ditemukan
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Major Recommendations Table */}
                 <div className="bg-white shadow-sm border rounded-lg">
                     <div className="px-4 sm:px-6 py-4 border-b">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                            Daftar Rekomendasi Jurusan
-                        </h3>
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                                Daftar Rekomendasi Jurusan
+                            </h3>
+
+                            {/* Search and Filter */}
+                            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                {/* Search Bar */}
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <Search className="h-4 w-4 text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Cari jurusan, mata pelajaran..."
+                                        value={searchTerm}
+                                        onChange={(e) =>
+                                            setSearchTerm(e.target.value)
+                                        }
+                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    />
+                                </div>
+
+                                {/* Status Filter */}
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) =>
+                                        setStatusFilter(e.target.value)
+                                    }
+                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                                    <option value="all">Semua Status</option>
+                                    <option value="active">Aktif</option>
+                                    <option value="inactive">Non-Aktif</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Search Results Info */}
+                        {searchTerm !== "" || statusFilter !== "all" ? (
+                            <div className="mt-3 text-sm text-gray-600">
+                                Menampilkan {filteredMajors.length} dari{" "}
+                                {majorRecommendations.length} jurusan
+                                {searchTerm !== "" && (
+                                    <span className="ml-2">
+                                        untuk pencarian:{" "}
+                                        <span className="font-medium">
+                                            "{searchTerm}"
+                                        </span>
+                                    </span>
+                                )}
+                                {statusFilter !== "all" && (
+                                    <span className="ml-2">
+                                        dengan status:{" "}
+                                        <span className="font-medium">
+                                            {statusFilter === "active"
+                                                ? "Aktif"
+                                                : "Non-Aktif"}
+                                        </span>
+                                    </span>
+                                )}
+                            </div>
+                        ) : null}
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -263,7 +380,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {majorRecommendations.map((major) => (
+                                {filteredMajors.map((major) => (
                                     <tr key={major.id}>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div>
@@ -366,6 +483,35 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                 ))}
                             </tbody>
                         </table>
+
+                        {/* No Results Message */}
+                        {filteredMajors.length === 0 && (
+                            <div className="text-center py-12">
+                                <div className="text-gray-500">
+                                    <Search className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                        Tidak ada hasil ditemukan
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                        {searchTerm !== ""
+                                            ? `Tidak ada jurusan yang cocok dengan pencarian "${searchTerm}"`
+                                            : "Tidak ada jurusan dengan status yang dipilih"}
+                                    </p>
+                                    {(searchTerm !== "" ||
+                                        statusFilter !== "all") && (
+                                        <button
+                                            onClick={() => {
+                                                setSearchTerm("");
+                                                setStatusFilter("all");
+                                            }}
+                                            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+                                        >
+                                            Reset Filter
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
