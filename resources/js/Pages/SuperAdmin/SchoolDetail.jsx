@@ -97,6 +97,9 @@ export default function SchoolDetail({ school }) {
                                         Kontak
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        No. Orang Tua
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -133,6 +136,11 @@ export default function SchoolDetail({ school }) {
                                                 </div>
                                                 <div className="text-sm text-gray-500">
                                                     {student.phone || "N/A"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-gray-900">
+                                                    {student.parent_phone || "N/A"}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -182,7 +190,7 @@ export default function SchoolDetail({ school }) {
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan="6"
+                                            colSpan="7"
                                             className="px-6 py-4 text-center text-gray-500"
                                         >
                                             Belum ada siswa terdaftar di sekolah
