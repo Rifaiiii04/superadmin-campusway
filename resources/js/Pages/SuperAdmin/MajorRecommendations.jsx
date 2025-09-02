@@ -12,6 +12,7 @@ import {
     Users,
     Download,
     Search,
+    Upload,
 } from "lucide-react";
 
 export default function MajorRecommendations({ majorRecommendations = [] }) {
@@ -20,8 +21,19 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedMajor, setSelectedMajor] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importing, setImporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
+
+    // Function to truncate text to specified number of words
+    const truncateText = (text, maxWords = 15) => {
+        if (!text) return "";
+        const words = text.split(" ");
+        if (words.length <= maxWords) return text;
+        return words.slice(0, maxWords).join(" ") + "...";
+    };
 
     const {
         data,
@@ -101,6 +113,47 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const handleToggleStatus = (id) => {
         // Use Inertia patch for toggle
         router.patch(`/super-admin/major-recommendations/${id}/toggle`);
+    };
+
+    const handleImport = async () => {
+        if (!importFile) {
+            alert("Pilih file CSV terlebih dahulu");
+            return;
+        }
+
+        setImporting(true);
+        const formData = new FormData();
+        formData.append("file", importFile);
+
+        try {
+            const response = await fetch(
+                "/super-admin/major-recommendations/import",
+                {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                    },
+                }
+            );
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(result.message);
+                setShowImportModal(false);
+                setImportFile(null);
+                // Refresh the page to show new data
+                window.location.reload();
+            } else {
+                alert(result.message || "Terjadi kesalahan saat import");
+            }
+        } catch (error) {
+            console.error("Import error:", error);
+            alert("Terjadi kesalahan saat import");
+        } finally {
+            setImporting(false);
+        }
     };
 
     // Filter majors based on search term and status
@@ -202,6 +255,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                 >
                                     <Download className="h-4 w-4" />
                                     Export CSV
+                                </button>
+                                <button
+                                    onClick={() => setShowImportModal(true)}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    Import CSV
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
@@ -362,13 +422,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                                         Jurusan
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                                         Mata Pelajaran Wajib
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                                         Mata Pelajaran Referensi
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -382,13 +442,19 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredMajors.map((major) => (
                                     <tr key={major.id}>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-6 py-4">
                                             <div>
                                                 <div className="text-sm font-medium text-gray-900">
                                                     {major.major_name}
                                                 </div>
-                                                <div className="text-sm text-gray-500">
-                                                    {major.description}
+                                                <div
+                                                    className="text-sm text-gray-500 cursor-help max-w-xs break-words"
+                                                    title={major.description}
+                                                >
+                                                    {truncateText(
+                                                        major.description,
+                                                        15
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>
@@ -571,7 +637,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </label>
                                         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                                             <p className="text-sm text-blue-800 mb-2">
-                                                <strong>Mata pelajaran wajib untuk semua jurusan:</strong>
+                                                <strong>
+                                                    Mata pelajaran wajib untuk
+                                                    semua jurusan:
+                                                </strong>
                                             </p>
                                             <div className="flex flex-wrap gap-2">
                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -585,10 +654,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                 </span>
                                             </div>
                                             <p className="text-xs text-blue-600 mt-2">
-                                                Mata pelajaran wajib ini akan otomatis ditambahkan untuk semua jurusan.
+                                                Mata pelajaran wajib ini akan
+                                                otomatis ditambahkan untuk semua
+                                                jurusan.
                                             </p>
                                         </div>
-                                    </div><div>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
@@ -863,7 +935,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </label>
                                         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
                                             <p className="text-sm text-blue-800 mb-2">
-                                                <strong>Mata pelajaran wajib untuk semua jurusan:</strong>
+                                                <strong>
+                                                    Mata pelajaran wajib untuk
+                                                    semua jurusan:
+                                                </strong>
                                             </p>
                                             <div className="flex flex-wrap gap-2">
                                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -877,10 +952,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                 </span>
                                             </div>
                                             <p className="text-xs text-blue-600 mt-2">
-                                                Mata pelajaran wajib ini akan otomatis ditambahkan untuk semua jurusan.
+                                                Mata pelajaran wajib ini akan
+                                                otomatis ditambahkan untuk semua
+                                                jurusan.
                                             </p>
                                         </div>
-                                    </div><div>
+                                    </div>
+                                    <div>
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Preferensi
                                         </label>
@@ -1288,6 +1366,168 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         Tutup
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Import Modal */}
+                {showImportModal && (
+                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                        <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+                            <div className="mt-3">
+                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                    Import Jurusan dari CSV
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Pilih File CSV
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept=".csv,.txt"
+                                            onChange={(e) =>
+                                                setImportFile(e.target.files[0])
+                                            }
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            Format CSV dengan delimiter
+                                            semicolon (;). Maksimal 2MB.
+                                        </p>
+                                    </div>
+
+                                    <div className="bg-blue-50 p-4 rounded-lg">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="text-sm font-medium text-blue-800">
+                                                Format CSV yang Diperlukan:
+                                            </h4>
+                                            <button
+                                                onClick={() => {
+                                                    // Create template CSV content
+                                                    const templateContent = `Nama Jurusan;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
+Teknik Informatika;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
+Teknik Sipil;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
+Kedokteran;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya`;
+
+                                                    // Create blob and download
+                                                    const blob = new Blob(
+                                                        [templateContent],
+                                                        {
+                                                            type: "text/csv;charset=utf-8;",
+                                                        }
+                                                    );
+                                                    const link =
+                                                        document.createElement(
+                                                            "a"
+                                                        );
+                                                    const url =
+                                                        URL.createObjectURL(
+                                                            blob
+                                                        );
+                                                    link.setAttribute(
+                                                        "href",
+                                                        url
+                                                    );
+                                                    link.setAttribute(
+                                                        "download",
+                                                        "template_import_jurusan.csv"
+                                                    );
+                                                    link.style.visibility =
+                                                        "hidden";
+                                                    document.body.appendChild(
+                                                        link
+                                                    );
+                                                    link.click();
+                                                    document.body.removeChild(
+                                                        link
+                                                    );
+                                                }}
+                                                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            >
+                                                <Download className="h-3 w-3 mr-1" />
+                                                Download Template
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-blue-700 space-y-1">
+                                            <p>
+                                                <strong>Kolom 1:</strong> Nama
+                                                Jurusan (wajib)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 2:</strong>{" "}
+                                                Deskripsi
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 3:</strong> Mata
+                                                Pelajaran Wajib (dipisah koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 4:</strong> Mata
+                                                Pelajaran Preferensi (dipisah
+                                                koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 5:</strong>{" "}
+                                                Kurikulum Merdeka (dipisah koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 6:</strong>{" "}
+                                                Kurikulum 2013 - IPA (dipisah
+                                                koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 7:</strong>{" "}
+                                                Kurikulum 2013 - IPS (dipisah
+                                                koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 8:</strong>{" "}
+                                                Kurikulum 2013 - Bahasa (dipisah
+                                                koma)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 9:</strong>{" "}
+                                                Prospek Karir
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 10:</strong> Aktif
+                                                (Ya/Tidak)
+                                            </p>
+                                        </div>
+                                        <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200">
+                                            <p className="text-xs text-blue-800">
+                                                <strong>Tips:</strong> Klik
+                                                "Download Template" untuk
+                                                mendapatkan file CSV contoh yang
+                                                sudah sesuai format. Edit file
+                                                tersebut sesuai kebutuhan, lalu
+                                                upload kembali.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                <button
+                                    onClick={handleImport}
+                                    disabled={!importFile || importing}
+                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {importing ? "Mengimport..." : "Import"}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowImportModal(false);
+                                        setImportFile(null);
+                                    }}
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                                >
+                                    Batal
+                                </button>
                             </div>
                         </div>
                     </div>

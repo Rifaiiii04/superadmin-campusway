@@ -284,7 +284,7 @@ class SuperAdminController extends Controller
 
             // Calculate school performance
             $schoolPerformance = \App\Models\School::withCount('students')
-                ->get()
+            ->get()
                 ->map(function ($school) use ($studentChoices) {
                     $schoolChoices = $studentChoices->where('student.school_id', $school->id);
                     $studentsWithChoices = $schoolChoices->unique('student_id')->count();
@@ -324,14 +324,14 @@ class SuperAdminController extends Controller
                 return $b['total_students'] <=> $a['total_students'];
             });
 
-            return inertia('SuperAdmin/Monitoring', [
+        return inertia('SuperAdmin/Monitoring', [
                 'nationalStats' => [
                     'total_schools' => $totalSchools,
                     'total_students' => $totalStudents,
                     'total_choices' => $totalChoices,
                     'students_with_choices' => $studentsWithChoices
                 ],
-                'schoolPerformance' => $schoolPerformance,
+            'schoolPerformance' => $schoolPerformance,
                 'majorPopularity' => array_slice($majorPopularityArray, 0, 10), // Top 10 majors
                 'auth' => [
                     'user' => Auth::guard('admin')->user()
@@ -348,10 +348,10 @@ class SuperAdminController extends Controller
                 ],
                 'schoolPerformance' => [],
                 'majorPopularity' => [],
-                'auth' => [
-                    'user' => Auth::guard('admin')->user()
-                ]
-            ]);
+            'auth' => [
+                'user' => Auth::guard('admin')->user()
+            ]
+        ]);
         }
     }
 
@@ -361,9 +361,8 @@ class SuperAdminController extends Controller
     public function getMonitoringData()
     {
         try {
-            // Get all completed test results
-            $testResults = \App\Models\TestResult::with(['student.school'])
-                ->where('status', 'completed')
+            // Get all completed test results - using StudentChoice instead
+            $testResults = \App\Models\StudentChoice::with(['student.school'])
                 ->get();
 
             // Calculate national statistics
@@ -496,50 +495,50 @@ class SuperAdminController extends Controller
                 'end_date' => 'nullable|date|after_or_equal:start_date',
             ]);
 
-            $type = $request->type;
+        $type = $request->type;
             $startDate = $request->start_date;
             $endDate = $request->end_date;
             
             Log::info('Download report type:', ['type' => $type, 'start_date' => $startDate, 'end_date' => $endDate]);
-            
-            switch ($type) {
-                case 'schools':
+        
+        switch ($type) {
+            case 'schools':
                     $query = School::withCount('students');
                     if ($startDate && $endDate) {
                         $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     }
                     $data = $query->get();
                     $filename = 'Laporan_Sekolah_' . date('Y-m-d') . '.csv';
-                    break;
+                break;
                     
-                case 'students':
+            case 'students':
                     $query = Student::with('school');
                     if ($startDate && $endDate) {
                         $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     }
                     $data = $query->get();
                     $filename = 'Laporan_Siswa_' . date('Y-m-d') . '.csv';
-                    break;
+                break;
                     
-                case 'results':
+            case 'results':
                     $query = Result::with('student.school');
                     if ($startDate && $endDate) {
                         $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     }
                     $data = $query->get();
                     $filename = 'Laporan_Hasil_Ujian_' . date('Y-m-d') . '.csv';
-                    break;
+                break;
                     
-                case 'questions':
+            case 'questions':
                     $query = Question::with('questionOptions');
                     if ($startDate && $endDate) {
                         $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
                     }
                     $data = $query->get();
                     $filename = 'Laporan_Bank_Soal_' . date('Y-m-d') . '.csv';
-                    break;
+                break;
                     
-                default:
+            default:
                     return response()->json(['error' => 'Tipe laporan tidak valid'], 400);
             }
 
@@ -1136,36 +1135,44 @@ class SuperAdminController extends Controller
      */
     public function storeMajorRecommendation(Request $request)
     {
-        $request->validate([
-            'major_name' => 'required|string|max:255|unique:major_recommendations,major_name',
-            'description' => 'nullable|string',
-            'required_subjects' => 'nullable|array',
-            'required_subjects.*' => 'string',
-            'preferred_subjects' => 'nullable|array',
-            'preferred_subjects.*' => 'string',
-            'kurikulum_merdeka_subjects' => 'nullable|array',
-            'kurikulum_merdeka_subjects.*' => 'string',
-            'kurikulum_2013_ipa_subjects' => 'nullable|array',
-            'kurikulum_2013_ipa_subjects.*' => 'string',
-            'kurikulum_2013_ips_subjects' => 'nullable|array',
-            'kurikulum_2013_ips_subjects.*' => 'string',
-            'kurikulum_2013_bahasa_subjects' => 'nullable|array',
-            'kurikulum_2013_bahasa_subjects.*' => 'string',
-            'career_prospects' => 'nullable|string',
-            'is_active' => 'boolean'
-        ]);
+        try {
+            $request->validate([
+                'major_name' => 'required|string|max:255|unique:major_recommendations,major_name',
+                'description' => 'nullable|string',
+                'required_subjects' => 'nullable|array',
+                'required_subjects.*' => 'string',
+                'preferred_subjects' => 'nullable|array',
+                'preferred_subjects.*' => 'string',
+                'kurikulum_merdeka_subjects' => 'nullable|array',
+                'kurikulum_merdeka_subjects.*' => 'string',
+                'kurikulum_2013_ipa_subjects' => 'nullable|array',
+                'kurikulum_2013_ipa_subjects.*' => 'string',
+                'kurikulum_2013_ips_subjects' => 'nullable|array',
+                'kurikulum_2013_ips_subjects.*' => 'string',
+                'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+                'kurikulum_2013_bahasa_subjects.*' => 'string',
+                'career_prospects' => 'nullable|string',
+                'is_active' => 'boolean'
+            ]);
 
-        // Set required subjects to be the same for all majors
-        $data = $request->all();
-        $data['required_subjects'] = [
-            'Matematika',
-            'Bahasa Inggris',
-            'Bahasa Indonesia'
-        ];
+            // Set required subjects to be the same for all majors
+            $data = $request->all();
+            $data['required_subjects'] = [
+                'Matematika',
+                'Bahasa Inggris',
+                'Bahasa Indonesia'
+            ];
 
-        \App\Models\MajorRecommendation::create($data);
+            \App\Models\MajorRecommendation::create($data);
 
-        return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
+            return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in storeMajorRecommendation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan database. Silakan coba lagi.');
+        } catch (\Exception $e) {
+            Log::error('Error in storeMajorRecommendation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan. Silakan coba lagi.');
+        }
     }
 
     /**
@@ -1173,38 +1180,46 @@ class SuperAdminController extends Controller
      */
     public function updateMajorRecommendation(Request $request, $id)
     {
-        $major = \App\Models\MajorRecommendation::findOrFail($id);
-        
-        $request->validate([
-            'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
-            'description' => 'nullable|string',
-            'required_subjects' => 'nullable|array',
-            'required_subjects.*' => 'string',
-            'preferred_subjects' => 'nullable|array',
-            'preferred_subjects.*' => 'string',
-            'kurikulum_merdeka_subjects' => 'nullable|array',
-            'kurikulum_merdeka_subjects.*' => 'string',
-            'kurikulum_2013_ipa_subjects' => 'nullable|array',
-            'kurikulum_2013_ipa_subjects.*' => 'string',
-            'kurikulum_2013_ips_subjects' => 'nullable|array',
-            'kurikulum_2013_ips_subjects.*' => 'string',
-            'kurikulum_2013_bahasa_subjects' => 'nullable|array',
-            'kurikulum_2013_bahasa_subjects.*' => 'string',
-            'career_prospects' => 'nullable|string',
-            'is_active' => 'boolean'
-        ]);
+        try {
+            $major = \App\Models\MajorRecommendation::findOrFail($id);
+            
+            $request->validate([
+                'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
+                'description' => 'nullable|string',
+                'required_subjects' => 'nullable|array',
+                'required_subjects.*' => 'string',
+                'preferred_subjects' => 'nullable|array',
+                'preferred_subjects.*' => 'string',
+                'kurikulum_merdeka_subjects' => 'nullable|array',
+                'kurikulum_merdeka_subjects.*' => 'string',
+                'kurikulum_2013_ipa_subjects' => 'nullable|array',
+                'kurikulum_2013_ipa_subjects.*' => 'string',
+                'kurikulum_2013_ips_subjects' => 'nullable|array',
+                'kurikulum_2013_ips_subjects.*' => 'string',
+                'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+                'kurikulum_2013_bahasa_subjects.*' => 'string',
+                'career_prospects' => 'nullable|string',
+                'is_active' => 'boolean'
+            ]);
 
-        // Set required subjects to be the same for all majors
-        $data = $request->all();
-        $data['required_subjects'] = [
-            'Matematika',
-            'Bahasa Inggris',
-            'Bahasa Indonesia'
-        ];
+            // Set required subjects to be the same for all majors
+            $data = $request->all();
+            $data['required_subjects'] = [
+                'Matematika',
+                'Bahasa Inggris',
+                'Bahasa Indonesia'
+            ];
 
-        $major->update($data);
+            $major->update($data);
 
-        return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diupdate');
+            return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diupdate');
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in updateMajorRecommendation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan database. Silakan coba lagi.');
+        } catch (\Exception $e) {
+            Log::error('Error in updateMajorRecommendation: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan. Silakan coba lagi.');
+        }
     }
 
     /**
@@ -1286,5 +1301,142 @@ class SuperAdminController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Import major recommendations from CSV
+     */
+    public function importMajorRecommendations(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:csv,txt|max:2048'
+            ]);
+
+            $file = $request->file('file');
+            $handle = fopen($file->getPathname(), 'r');
+            
+            if (!$handle) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal membaca file CSV'
+                ], 400);
+            }
+
+            $imported = 0;
+            $updated = 0;
+            $errors = [];
+            $lineNumber = 0;
+
+            // Skip header row
+            $header = fgetcsv($handle, 0, ';');
+            if (!$header) {
+                fclose($handle);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File CSV kosong atau tidak valid'
+                ], 400);
+            }
+
+            while (($data = fgetcsv($handle, 0, ';')) !== false) {
+                $lineNumber++;
+                
+                try {
+                    // Validate required fields - sekarang dimulai dari kolom 0 (tanpa ID)
+                    if (count($data) < 1) {
+                        $errors[] = "Baris {$lineNumber}: Data tidak lengkap";
+                        continue;
+                    }
+
+                    $majorName = trim($data[0] ?? ''); // Column 0: Nama Jurusan (tanpa ID)
+                    $description = trim($data[1] ?? ''); // Column 1: Deskripsi
+                    $careerProspects = trim($data[8] ?? ''); // Column 8: Prospek Karir
+                    $isActive = strtolower(trim($data[9] ?? 'ya')) === 'ya'; // Column 9: Aktif
+
+                    if (empty($majorName)) {
+                        $errors[] = "Baris {$lineNumber}: Nama jurusan tidak boleh kosong";
+                        continue;
+                    }
+
+                    // Check if major already exists - jika ada, update data yang ada
+                    $existingMajor = \App\Models\MajorRecommendation::where('major_name', $majorName)->first();
+
+                    // Parse subjects (comma separated) - sesuaikan dengan kolom baru (tanpa ID)
+                    $requiredSubjects = !empty($data[2]) ? array_map('trim', explode(',', $data[2])) : [];
+                    $preferredSubjects = !empty($data[3]) ? array_map('trim', explode(',', $data[3])) : [];
+                    $kurikulumMerdeka = !empty($data[4]) ? array_map('trim', explode(',', $data[4])) : [];
+                    $kurikulum2013Ipa = !empty($data[5]) ? array_map('trim', explode(',', $data[5])) : [];
+                    $kurikulum2013Ips = !empty($data[6]) ? array_map('trim', explode(',', $data[6])) : [];
+                    $kurikulum2013Bahasa = !empty($data[7]) ? array_map('trim', explode(',', $data[7])) : [];
+
+                    // Set required subjects to be the same for all majors
+                    $requiredSubjects = [
+                        'Matematika',
+                        'Bahasa Inggris',
+                        'Bahasa Indonesia'
+                    ];
+
+                    $majorData = [
+                        'major_name' => $majorName,
+                        'description' => $description,
+                        'required_subjects' => $requiredSubjects,
+                        'preferred_subjects' => $preferredSubjects,
+                        'kurikulum_merdeka_subjects' => $kurikulumMerdeka,
+                        'kurikulum_2013_ipa_subjects' => $kurikulum2013Ipa,
+                        'kurikulum_2013_ips_subjects' => $kurikulum2013Ips,
+                        'kurikulum_2013_bahasa_subjects' => $kurikulum2013Bahasa,
+                        'career_prospects' => $careerProspects,
+                        'is_active' => $isActive
+                    ];
+
+                    if ($existingMajor) {
+                        // Update existing major
+                        $existingMajor->update($majorData);
+                        $updated++;
+                    } else {
+                        // Create new major recommendation
+                        \App\Models\MajorRecommendation::create($majorData);
+                        $imported++;
+                    }
+
+                } catch (\Exception $e) {
+                    $errors[] = "Baris {$lineNumber}: " . $e->getMessage();
+                }
+            }
+
+            fclose($handle);
+
+            $message = "Berhasil mengimport {$imported} jurusan baru dan mengupdate {$updated} jurusan yang sudah ada.";
+            if (count($errors) > 0) {
+                $message .= " Terdapat " . count($errors) . " error yang di-skip.";
+            }
+
+            Log::info('Import major recommendations completed', [
+                'imported' => $imported,
+                'updated' => $updated,
+                'errors_count' => count($errors),
+                'message' => $message
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'imported' => $imported,
+                'errors' => $errors
+            ]);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            Log::error('Database error in importMajorRecommendations: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan database. Silakan coba lagi.'
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error('Error in importMajorRecommendations: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan. Silakan coba lagi.'
+            ], 500);
+        }
     }
 }
