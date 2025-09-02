@@ -27,6 +27,7 @@ http://127.0.0.1:8000/api/web
     "kelas": "XII IPA 1",
     "email": "john@example.com",
     "phone": "081234567890",
+    "parent_phone": "081234567891",
     "password": "password_siswa"
 }
 ```
@@ -45,6 +46,7 @@ http://127.0.0.1:8000/api/web
             "kelas": "XII IPA 1",
             "email": "john@example.com",
             "phone": "081234567890",
+            "parent_phone": "081234567891",
             "school_name": "SMA Negeri 1 Jakarta",
             "has_choice": false
         }
@@ -147,6 +149,7 @@ http://127.0.0.1:8000/api/web
             "kelas": "XII IPA 1",
             "email": "john@example.com",
             "phone": "081234567890",
+            "parent_phone": "081234567891",
             "school_name": "SMA Negeri 1 Jakarta",
             "has_choice": false
         }
@@ -188,13 +191,15 @@ http://127.0.0.1:8000/api/web
             "id": 1,
             "major_name": "Teknik Informatika",
             "description": "Jurusan yang mempelajari teknologi informasi",
-            "career_prospects": "Software Engineer, Data Scientist, Web Developer"
+            "career_prospects": "Software Engineer, Data Scientist, Web Developer",
+            "category": "Saintek"
         },
         {
             "id": 2,
             "major_name": "Ekonomi",
             "description": "Jurusan yang mempelajari ilmu ekonomi",
-            "career_prospects": "Ekonom, Analis Keuangan, Konsultan"
+            "career_prospects": "Ekonom, Analis Keuangan, Konsultan",
+            "category": "Soshum"
         }
     ]
 }
@@ -216,6 +221,7 @@ http://127.0.0.1:8000/api/web
         "major_name": "Teknik Informatika",
         "description": "Jurusan yang mempelajari teknologi informasi",
         "career_prospects": "Software Engineer, Data Scientist, Web Developer",
+        "category": "Saintek",
         "subjects": {
             "required": ["Matematika", "Bahasa Inggris", "Bahasa Indonesia"],
             "preferred": ["Matematika Tingkat Lanjut", "Fisika", "Kimia"],
@@ -300,6 +306,7 @@ http://127.0.0.1:8000/api/web
             "major_name": "Teknik Informatika",
             "description": "Jurusan yang mempelajari teknologi informasi",
             "career_prospects": "Software Engineer, Data Scientist, Web Developer",
+            "category": "Saintek",
             "subjects": {
                 "required": [
                     "Matematika",
@@ -381,6 +388,7 @@ http://127.0.0.1:8000/api/web
         "kelas": "XII IPA 1",
         "email": "john@example.com",
         "phone": "081234567890",
+        "parent_phone": "081234567891",
         "status": "active",
         "school": {
             "id": 1,
@@ -390,6 +398,7 @@ http://127.0.0.1:8000/api/web
         "major_choice": {
             "id": 1,
             "major_name": "Teknik Informatika",
+            "category": "Saintek",
             "chosen_at": "2025-01-01T10:00:00.000000Z"
         }
     }
@@ -460,6 +469,7 @@ Content-Type: application/json
     "kelas": "XII IPA 1",
     "email": "john@example.com",
     "phone": "081234567890",
+    "parent_phone": "081234567891",
     "password": "password_siswa"
 }
 ```

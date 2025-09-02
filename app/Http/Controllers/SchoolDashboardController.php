@@ -51,6 +51,7 @@ class SchoolDashboardController extends Controller
                 return [
                     'major_id' => $choice->major_id,
                     'major_name' => $choice->major->major_name ?? 'Jurusan Tidak Ditemukan',
+                    'category' => $choice->major->category ?? 'Saintek',
                     'student_count' => $choice->student_count
                 ];
             });
@@ -117,10 +118,12 @@ class SchoolDashboardController extends Controller
                         'class' => $student->kelas,
                         'email' => $student->email,
                         'phone' => $student->phone,
+                        'parent_phone' => $student->parent_phone,
                         'has_choice' => $student->studentChoice ? true : false,
                         'chosen_major' => $student->studentChoice ? [
                             'id' => $student->studentChoice->major->id,
-                            'name' => $student->studentChoice->major->major_name
+                            'name' => $student->studentChoice->major->major_name,
+                            'category' => $student->studentChoice->major->category ?? 'Saintek'
                         ] : null,
                         'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
                     ];
@@ -182,6 +185,7 @@ class SchoolDashboardController extends Controller
                 'class' => $student->kelas,
                 'email' => $student->email,
                 'phone' => $student->phone,
+                'parent_phone' => $student->parent_phone,
                 'created_at' => $student->created_at,
                 'updated_at' => $student->updated_at,
                 'has_choice' => $student->studentChoice ? true : false
@@ -193,6 +197,7 @@ class SchoolDashboardController extends Controller
                     'name' => $student->studentChoice->major->major_name,
                     'description' => $student->studentChoice->major->description,
                     'career_prospects' => $student->studentChoice->major->career_prospects,
+                    'category' => $student->studentChoice->major->category ?? 'Saintek',
                     'choice_date' => $student->studentChoice->created_at
                 ];
             }
@@ -247,6 +252,7 @@ class SchoolDashboardController extends Controller
                     'major_id' => $choice->major_id,
                     'major_name' => $choice->major->major_name ?? 'Jurusan Tidak Ditemukan',
                     'description' => $choice->major->description ?? '',
+                    'category' => $choice->major->category ?? 'Saintek',
                     'student_count' => $choice->student_count,
                     'percentage' => 0 // Akan dihitung setelah semua data terkumpul
                 ];
@@ -310,7 +316,8 @@ class SchoolDashboardController extends Controller
                         'name' => $student->name,
                         'class' => $student->kelas,
                         'email' => $student->email,
-                        'phone' => $student->phone
+                        'phone' => $student->phone,
+                        'parent_phone' => $student->parent_phone
                     ];
                 });
 

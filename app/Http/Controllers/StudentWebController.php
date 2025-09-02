@@ -26,6 +26,7 @@ class StudentWebController extends Controller
             'kelas' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:255',
+            'parent_phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:6'
         ]);
 
@@ -55,6 +56,7 @@ class StudentWebController extends Controller
             'kelas' => $request->kelas,
             'email' => $request->email,
             'phone' => $request->phone,
+            'parent_phone' => $request->parent_phone,
             'password' => Hash::make($request->password),
             'status' => 'active'
         ]);
@@ -70,6 +72,7 @@ class StudentWebController extends Controller
                     'kelas' => $student->kelas,
                     'email' => $student->email,
                     'phone' => $student->phone,
+                    'parent_phone' => $student->parent_phone,
                     'school_name' => $school->name,
                     'has_choice' => false
                 ]
@@ -128,6 +131,7 @@ class StudentWebController extends Controller
                     'kelas' => $student->kelas,
                     'email' => $student->email,
                     'phone' => $student->phone,
+                    'parent_phone' => $student->parent_phone,
                     'school_name' => $school->name,
                     'has_choice' => $hasChoice
                 ]
@@ -156,7 +160,7 @@ class StudentWebController extends Controller
     public function getMajors()
     {
         $majors = MajorRecommendation::where('is_active', true)
-            ->select('id', 'major_name', 'description', 'career_prospects')
+            ->select('id', 'major_name', 'description', 'career_prospects', 'category')
             ->get();
 
         return response()->json([
@@ -188,6 +192,7 @@ class StudentWebController extends Controller
                 'major_name' => $major->major_name,
                 'description' => $major->description,
                 'career_prospects' => $major->career_prospects,
+                'category' => $major->category,
                 'subjects' => [
                     'required' => $major->required_subjects,
                     'preferred' => $major->preferred_subjects,
@@ -285,6 +290,7 @@ class StudentWebController extends Controller
                     'major_name' => $choice->major->major_name,
                     'description' => $choice->major->description,
                     'career_prospects' => $choice->major->career_prospects,
+                    'category' => $choice->major->category,
                     'subjects' => [
                         'required' => $choice->major->required_subjects,
                         'preferred' => $choice->major->preferred_subjects,
@@ -391,6 +397,7 @@ class StudentWebController extends Controller
                 'kelas' => $student->kelas,
                 'email' => $student->email,
                 'phone' => $student->phone,
+                'parent_phone' => $student->parent_phone,
                 'status' => $student->status,
                 'school' => [
                     'id' => $student->school->id,

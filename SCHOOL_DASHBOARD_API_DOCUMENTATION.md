@@ -3,34 +3,41 @@
 API untuk dashboard sekolah yang memungkinkan sekolah untuk melihat data siswa dan jurusan yang diminati siswa mereka.
 
 ## Base URL
+
 ```
 http://127.0.0.1:8000/api/school
 ```
 
 ## Authentication
+
 Sekolah login menggunakan NPSN (8 digit) dan password. Setelah login berhasil, akan mendapatkan token yang harus digunakan untuk mengakses endpoint yang memerlukan autentikasi.
 
 ### Default Login Credentials (untuk testing)
-| NPSN | Nama Sekolah | Password |
-|------|--------------|----------|
-| 12345678 | SMA Negeri 1 Jakarta | password123 |
-| 87654321 | SMA Negeri 2 Bandung | password123 |
+
+| NPSN     | Nama Sekolah          | Password    |
+| -------- | --------------------- | ----------- |
+| 12345678 | SMA Negeri 1 Jakarta  | password123 |
+| 87654321 | SMA Negeri 2 Bandung  | password123 |
 | 11223344 | SMA Negeri 3 Surabaya | password123 |
 
 ### Token Format
+
 Token adalah base64 encoded string dengan format: `school_id|timestamp|npsn`
 
 ### Token Expiry
+
 Token berlaku selama 24 jam dari waktu login.
 
 ## Endpoints
 
 ### 1. Login Sekolah
+
 **POST** `/login`
 
 Login sekolah menggunakan NPSN dan password.
 
 **Request Body:**
+
 ```json
 {
     "npsn": "12345678",
@@ -39,6 +46,7 @@ Login sekolah menggunakan NPSN dan password.
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -55,6 +63,7 @@ Login sekolah menggunakan NPSN dan password.
 ```
 
 **Response Error (404):**
+
 ```json
 {
     "success": false,
@@ -63,6 +72,7 @@ Login sekolah menggunakan NPSN dan password.
 ```
 
 **Response Error (401):**
+
 ```json
 {
     "success": false,
@@ -71,16 +81,19 @@ Login sekolah menggunakan NPSN dan password.
 ```
 
 ### 2. Logout Sekolah
+
 **POST** `/logout`
 
 Logout sekolah (menghapus session).
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -89,16 +102,19 @@ Authorization: <token>
 ```
 
 ### 3. Profile Sekolah
+
 **GET** `/profile`
 
 Mendapatkan informasi profile sekolah yang sedang login.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -113,16 +129,19 @@ Authorization: <token>
 ```
 
 ### 4. Dashboard Overview
+
 **GET** `/dashboard`
 
 Mendapatkan data overview dashboard sekolah termasuk statistik siswa dan jurusan yang diminati.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -142,11 +161,13 @@ Authorization: <token>
             {
                 "major_id": "22",
                 "major_name": "Seni",
+                "category": "Soshum",
                 "student_count": 1
             },
             {
                 "major_id": "23",
                 "major_name": "Teknik Informatika",
+                "category": "Saintek",
                 "student_count": 1
             }
         ],
@@ -161,16 +182,19 @@ Authorization: <token>
 ```
 
 ### 5. Daftar Semua Siswa
+
 **GET** `/students`
 
 Mendapatkan daftar semua siswa di sekolah beserta informasi jurusan yang dipilih.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -188,10 +212,12 @@ Authorization: <token>
                 "class": "XII IPA 1",
                 "email": "john@example.com",
                 "phone": "081234567890",
+                "parent_phone": "081234567891",
                 "has_choice": true,
                 "chosen_major": {
                     "id": 22,
-                    "name": "Seni"
+                    "name": "Seni",
+                    "category": "Soshum"
                 },
                 "choice_date": "2025-09-01T07:20:00.000000Z"
             },
@@ -202,10 +228,12 @@ Authorization: <token>
                 "class": "XII IPA 1",
                 "email": "jane@example.com",
                 "phone": "081234567891",
+                "parent_phone": "081234567892",
                 "has_choice": true,
                 "chosen_major": {
                     "id": 23,
-                    "name": "Teknik Informatika"
+                    "name": "Teknik Informatika",
+                    "category": "Saintek"
                 },
                 "choice_date": "2025-09-01T07:21:00.000000Z"
             }
@@ -216,16 +244,19 @@ Authorization: <token>
 ```
 
 ### 6. Detail Siswa
+
 **GET** `/students/{studentId}`
 
 Mendapatkan detail informasi siswa tertentu.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -242,6 +273,7 @@ Authorization: <token>
             "class": "XII IPA 1",
             "email": "john@example.com",
             "phone": "081234567890",
+            "parent_phone": "081234567891",
             "created_at": "2025-09-01T07:19:30.000000Z",
             "updated_at": "2025-09-01T07:19:30.000000Z",
             "has_choice": true,
@@ -250,6 +282,7 @@ Authorization: <token>
                 "name": "Seni",
                 "description": "Program studi yang mempelajari seni dan kreativitas...",
                 "career_prospects": "Seniman, Desainer, Kurator...",
+                "category": "Soshum",
                 "choice_date": "2025-09-01T07:20:00.000000Z"
             }
         }
@@ -258,6 +291,7 @@ Authorization: <token>
 ```
 
 **Response Error (404):**
+
 ```json
 {
     "success": false,
@@ -266,16 +300,19 @@ Authorization: <token>
 ```
 
 ### 7. Statistik Jurusan
+
 **GET** `/major-statistics`
 
 Mendapatkan statistik jurusan yang diminati siswa dengan persentase.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -291,6 +328,7 @@ Authorization: <token>
                 "major_id": "22",
                 "major_name": "Seni",
                 "description": "Program studi yang mempelajari seni dan kreativitas...",
+                "category": "Soshum",
                 "student_count": 1,
                 "percentage": 50.0
             },
@@ -298,6 +336,7 @@ Authorization: <token>
                 "major_id": "23",
                 "major_name": "Teknik Informatika",
                 "description": "Program studi yang mempelajari teknologi komputer...",
+                "category": "Saintek",
                 "student_count": 1,
                 "percentage": 50.0
             }
@@ -307,16 +346,19 @@ Authorization: <token>
 ```
 
 ### 8. Siswa yang Belum Memilih Jurusan
+
 **GET** `/students-without-choice`
 
 Mendapatkan daftar siswa yang belum memilih jurusan.
 
 **Headers:**
+
 ```
 Authorization: <token>
 ```
 
 **Response Success (200):**
+
 ```json
 {
     "success": true,
@@ -335,6 +377,7 @@ Authorization: <token>
 ## Error Responses
 
 ### 401 Unauthorized
+
 ```json
 {
     "success": false,
@@ -343,6 +386,7 @@ Authorization: <token>
 ```
 
 ### 401 Token Expired
+
 ```json
 {
     "success": false,
@@ -351,6 +395,7 @@ Authorization: <token>
 ```
 
 ### 404 Not Found
+
 ```json
 {
     "success": false,
@@ -359,6 +404,7 @@ Authorization: <token>
 ```
 
 ### 422 Validation Error
+
 ```json
 {
     "success": false,
@@ -371,6 +417,7 @@ Authorization: <token>
 ```
 
 ### 500 Server Error
+
 ```json
 {
     "success": false,
@@ -381,6 +428,7 @@ Authorization: <token>
 ## Usage Examples
 
 ### Login dan Akses Dashboard
+
 ```bash
 # 1. Login
 curl -X POST http://127.0.0.1:8000/api/school/login \
@@ -393,28 +441,32 @@ curl -X GET http://127.0.0.1:8000/api/school/dashboard \
 ```
 
 ### JavaScript/Fetch Example
+
 ```javascript
 // Login
-const loginResponse = await fetch('http://127.0.0.1:8000/api/school/login', {
-    method: 'POST',
+const loginResponse = await fetch("http://127.0.0.1:8000/api/school/login", {
+    method: "POST",
     headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
     },
     body: JSON.stringify({
-        npsn: '12345678',
-        password: 'password123'
-    })
+        npsn: "12345678",
+        password: "password123",
+    }),
 });
 
 const loginData = await loginResponse.json();
 const token = loginData.data.token;
 
 // Akses dashboard
-const dashboardResponse = await fetch('http://127.0.0.1:8000/api/school/dashboard', {
-    headers: {
-        'Authorization': token
+const dashboardResponse = await fetch(
+    "http://127.0.0.1:8000/api/school/dashboard",
+    {
+        headers: {
+            Authorization: token,
+        },
     }
-});
+);
 
 const dashboardData = await dashboardResponse.json();
 console.log(dashboardData);
@@ -431,7 +483,7 @@ console.log(dashboardData);
 
 ## Database Tables Used
 
-- `schools`: Data sekolah
-- `students`: Data siswa
-- `student_choices`: Pilihan jurusan siswa
-- `major_recommendations`: Data jurusan/rekomendasi
+-   `schools`: Data sekolah
+-   `students`: Data siswa
+-   `student_choices`: Pilihan jurusan siswa
+-   `major_recommendations`: Data jurusan/rekomendasi
