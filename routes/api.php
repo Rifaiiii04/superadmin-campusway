@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentWebController;
+use App\Http\Controllers\SchoolAuthController;
+use App\Http\Controllers\SchoolDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,4 +54,28 @@ Route::prefix('web')->group(function () {
     
     // Test endpoint untuk debugging
     Route::post('/test-choose-major', [StudentWebController::class, 'testChooseMajor']);
+});
+
+// School Dashboard API Routes
+Route::prefix('school')->group(function () {
+    // Authentication routes (tidak perlu middleware)
+    Route::post('/login', [SchoolAuthController::class, 'login']);
+    Route::post('/logout', [SchoolAuthController::class, 'logout']);
+    
+    // Protected routes (perlu authentication)
+    Route::middleware('school.auth')->group(function () {
+        // Profile sekolah
+        Route::get('/profile', [SchoolAuthController::class, 'profile']);
+        
+        // Dashboard overview
+        Route::get('/dashboard', [SchoolDashboardController::class, 'dashboard']);
+        
+        // Data siswa
+        Route::get('/students', [SchoolDashboardController::class, 'students']);
+        Route::get('/students/{studentId}', [SchoolDashboardController::class, 'studentDetail']);
+        Route::get('/students-without-choice', [SchoolDashboardController::class, 'studentsWithoutChoice']);
+        
+        // Statistik jurusan
+        Route::get('/major-statistics', [SchoolDashboardController::class, 'majorStatistics']);
+    });
 });

@@ -68,5 +68,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin.auth' => \App\Http\Middleware\AdminAuth::class,
         'admin.auth.nocsrf' => \App\Http\Middleware\AdminAuthWithoutCsrf::class,
+        'school.auth' => \App\Http\Middleware\SchoolAuth::class,
     ];
 }

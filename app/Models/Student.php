@@ -35,6 +35,14 @@ class Student extends Model
         return $this->hasMany(StudentChoice::class);
     }
 
+    /**
+     * Get the current major choice for the student (singular)
+     */
+    public function studentChoice()
+    {
+        return $this->hasOne(StudentChoice::class);
+    }
+
     public function studentSubjects()
     {
         return $this->hasMany(StudentSubject::class);
