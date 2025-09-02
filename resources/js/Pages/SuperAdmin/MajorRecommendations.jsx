@@ -26,6 +26,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const [importing, setImporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
+    const [categoryFilter, setCategoryFilter] = useState("all"); // all, saintek, soshum, campuran
 
     // Function to truncate text to specified number of words
     const truncateText = (text, maxWords = 15) => {
@@ -46,6 +47,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         reset,
     } = useForm({
         major_name: "",
+        category: "Saintek",
         description: "",
         required_subjects: [],
         preferred_subjects: [],
@@ -58,13 +60,14 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     });
 
     const availableSubjects = [
+        // Mata Pelajaran Wajib (Selalu ada untuk semua jurusan)
         "Bahasa Indonesia",
-        "Bahasa Indonesia Tingkat Lanjut",
-        "Bahasa Inggris",
-        "Bahasa Inggris Tingkat Lanjut",
-        "Bahasa Asing",
-        "Bahasa dan Sastra Inggris",
         "Matematika",
+        "Bahasa Inggris",
+
+        // Mata Pelajaran Kurikulum Merdeka
+        "Bahasa Indonesia Tingkat Lanjut",
+        "Bahasa Inggris Tingkat Lanjut",
         "Matematika Tingkat Lanjut",
         "Fisika",
         "Kimia",
@@ -79,6 +82,38 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         "Pendidikan Pancasila",
         "Seni Budaya",
         "PJOK",
+        "Informatika",
+        "Bahasa Asing",
+        "Bahasa dan Sastra Inggris",
+
+        // Mata Pelajaran Kurikulum 2013 - IPA
+        "Matematika Peminatan",
+        "Fisika Peminatan",
+        "Kimia Peminatan",
+        "Biologi Peminatan",
+
+        // Mata Pelajaran Kurikulum 2013 - IPS
+        "Ekonomi Peminatan",
+        "Geografi Peminatan",
+        "Sosiologi Peminatan",
+        "Sejarah Peminatan",
+
+        // Mata Pelajaran Kurikulum 2013 - Bahasa
+        "Bahasa Indonesia Peminatan",
+        "Bahasa Inggris Peminatan",
+        "Sastra Indonesia",
+        "Antropologi Peminatan",
+
+        // Mata Pelajaran Lainnya
+        "Agama",
+        "Pendidikan Kewarganegaraan",
+        "Pendidikan Jasmani",
+        "Seni Rupa",
+        "Seni Musik",
+        "Seni Tari",
+        "Seni Teater",
+        "Prakarya",
+        "Teknologi Informasi dan Komunikasi",
     ];
 
     const handleAddMajor = () => {
@@ -156,7 +191,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         }
     };
 
-    // Filter majors based on search term and status
+    // Filter majors based on search term, status, and category
     const filteredMajors = majorRecommendations.filter((major) => {
         const matchesSearch =
             searchTerm === "" ||
@@ -188,13 +223,20 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
             (statusFilter === "active" && major.is_active) ||
             (statusFilter === "inactive" && !major.is_active);
 
-        return matchesSearch && matchesStatus;
+        const matchesCategory =
+            categoryFilter === "all" ||
+            (categoryFilter === "saintek" && major.category === "Saintek") ||
+            (categoryFilter === "soshum" && major.category === "Soshum") ||
+            (categoryFilter === "campuran" && major.category === "Campuran");
+
+        return matchesSearch && matchesStatus && matchesCategory;
     });
 
     const openEditModal = (major) => {
         setEditingMajor(major);
         setData({
             major_name: major.major_name,
+            category: major.category || "Saintek",
             description: major.description,
             required_subjects: major.required_subjects || [],
             preferred_subjects: major.preferred_subjects || [],
@@ -276,10 +318,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow-sm border p-4">
                         <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-blue-500">
+                            <div className="p-2 rounded-lg bg-gray-500">
                                 <BookOpen className="h-5 w-5 text-white" />
                             </div>
                             <div className="ml-3">
@@ -288,6 +330,63 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
                                     {majorRecommendations.length}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-blue-500">
+                                <span className="text-white text-lg">🔵</span>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">
+                                    Saintek
+                                </p>
+                                <p className="text-xl font-bold text-gray-900">
+                                    {
+                                        majorRecommendations.filter(
+                                            (m) => m.category === "Saintek"
+                                        ).length
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-green-500">
+                                <span className="text-white text-lg">🟢</span>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">
+                                    Soshum
+                                </p>
+                                <p className="text-xl font-bold text-gray-900">
+                                    {
+                                        majorRecommendations.filter(
+                                            (m) => m.category === "Soshum"
+                                        ).length
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-purple-500">
+                                <span className="text-white text-lg">🟣</span>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">
+                                    Campuran
+                                </p>
+                                <p className="text-xl font-bold text-gray-900">
+                                    {
+                                        majorRecommendations.filter(
+                                            (m) => m.category === "Campuran"
+                                        ).length
+                                    }
                                 </p>
                             </div>
                         </div>
@@ -311,29 +410,12 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
-                        <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-purple-500">
-                                <Users className="h-5 w-5 text-white" />
-                            </div>
-                            <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
-                                    Jurusan Non-Aktif
-                                </p>
-                                <p className="text-xl font-bold text-gray-900">
-                                    {
-                                        majorRecommendations.filter(
-                                            (m) => !m.is_active
-                                        ).length
-                                    }
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Filtered Results Summary */}
-                {(searchTerm !== "" || statusFilter !== "all") && (
+                {(searchTerm !== "" ||
+                    statusFilter !== "all" ||
+                    categoryFilter !== "all") && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-blue-500">
@@ -341,7 +423,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             </div>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-blue-800">
-                                    Hasil Pencarian
+                                    Hasil Pencarian & Filter
                                 </p>
                                 <p className="text-lg font-bold text-blue-900">
                                     {filteredMajors.length} jurusan ditemukan
@@ -377,6 +459,22 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     />
                                 </div>
 
+                                {/* Category Filter */}
+                                <select
+                                    value={categoryFilter}
+                                    onChange={(e) =>
+                                        setCategoryFilter(e.target.value)
+                                    }
+                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                >
+                                    <option value="all">Semua Kategori</option>
+                                    <option value="saintek">🔵 Saintek</option>
+                                    <option value="soshum">🟢 Soshum</option>
+                                    <option value="campuran">
+                                        🟣 Campuran
+                                    </option>
+                                </select>
+
                                 {/* Status Filter */}
                                 <select
                                     value={statusFilter}
@@ -393,7 +491,9 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                         </div>
 
                         {/* Search Results Info */}
-                        {searchTerm !== "" || statusFilter !== "all" ? (
+                        {searchTerm !== "" ||
+                        statusFilter !== "all" ||
+                        categoryFilter !== "all" ? (
                             <div className="mt-3 text-sm text-gray-600">
                                 Menampilkan {filteredMajors.length} dari{" "}
                                 {majorRecommendations.length} jurusan
@@ -405,9 +505,23 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </span>
                                     </span>
                                 )}
+                                {categoryFilter !== "all" && (
+                                    <span className="ml-2">
+                                        kategori:{" "}
+                                        <span className="font-medium">
+                                            {categoryFilter === "saintek"
+                                                ? "🔵 Saintek"
+                                                : categoryFilter === "soshum"
+                                                ? "🟢 Soshum"
+                                                : categoryFilter === "campuran"
+                                                ? "🟣 Campuran"
+                                                : categoryFilter}
+                                        </span>
+                                    </span>
+                                )}
                                 {statusFilter !== "all" && (
                                     <span className="ml-2">
-                                        dengan status:{" "}
+                                        status:{" "}
                                         <span className="font-medium">
                                             {statusFilter === "active"
                                                 ? "Aktif"
@@ -422,13 +536,16 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                                         Jurusan
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                                        Kategori
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                                         Mata Pelajaran Wajib
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                                         Mata Pelajaran Referensi
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -457,6 +574,29 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                     )}
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span
+                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                    major.category === "Saintek"
+                                                        ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                                        : major.category ===
+                                                          "Soshum"
+                                                        ? "bg-green-100 text-green-800 border border-green-200"
+                                                        : "bg-purple-100 text-purple-800 border border-purple-200"
+                                                }`}
+                                            >
+                                                <span className="mr-1">
+                                                    {major.category ===
+                                                    "Saintek"
+                                                        ? "🔵"
+                                                        : major.category ===
+                                                          "Soshum"
+                                                        ? "🟢"
+                                                        : "🟣"}
+                                                </span>
+                                                {major.category || "Saintek"}
+                                            </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
@@ -564,11 +704,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             : "Tidak ada jurusan dengan status yang dipilih"}
                                     </p>
                                     {(searchTerm !== "" ||
-                                        statusFilter !== "all") && (
+                                        statusFilter !== "all" ||
+                                        categoryFilter !== "all") && (
                                         <button
                                             onClick={() => {
                                                 setSearchTerm("");
                                                 setStatusFilter("all");
+                                                setCategoryFilter("all");
                                             }}
                                             className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
                                         >
@@ -610,6 +752,37 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         {errors.major_name && (
                                             <p className="text-red-500 text-xs mt-1">
                                                 {errors.major_name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Kategori Jurusan
+                                        </label>
+                                        <select
+                                            value={data.category}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "category",
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                                        >
+                                            <option value="Saintek">
+                                                Saintek (Sains dan Teknologi)
+                                            </option>
+                                            <option value="Soshum">
+                                                Soshum (Sosial dan Humaniora)
+                                            </option>
+                                            <option value="Campuran">
+                                                Campuran (Saintek + Soshum)
+                                            </option>
+                                        </select>
+                                        {errors.category && (
+                                            <p className="text-red-500 text-xs mt-1">
+                                                {errors.category}
                                             </p>
                                         )}
                                     </div>
@@ -909,6 +1082,37 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         {errors.major_name && (
                                             <p className="text-red-500 text-xs mt-1">
                                                 {errors.major_name}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">
+                                            Kategori Jurusan
+                                        </label>
+                                        <select
+                                            value={data.category}
+                                            onChange={(e) =>
+                                                setData(
+                                                    "category",
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                                        >
+                                            <option value="Saintek">
+                                                Saintek (Sains dan Teknologi)
+                                            </option>
+                                            <option value="Soshum">
+                                                Soshum (Sosial dan Humaniora)
+                                            </option>
+                                            <option value="Campuran">
+                                                Campuran (Saintek + Soshum)
+                                            </option>
+                                        </select>
+                                        {errors.category && (
+                                            <p className="text-red-500 text-xs mt-1">
+                                                {errors.category}
                                             </p>
                                         )}
                                     </div>
@@ -1407,10 +1611,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             <button
                                                 onClick={() => {
                                                     // Create template CSV content
-                                                    const templateContent = `Nama Jurusan;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
-Teknik Informatika;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
-Teknik Sipil;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
-Kedokteran;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya`;
+                                                    const templateContent = `Nama Jurusan;Kategori;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
+Teknik Informatika;Saintek;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
+Teknik Sipil;Saintek;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
+Kedokteran;Saintek;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya
+Akuntansi;Soshum;Program studi yang mempelajari manajemen keuangan dan akuntansi bisnis;Matematika, Bahasa Inggris, Bahasa Indonesia;Ekonomi, Geografi;Matematika Tingkat Lanjut, Ekonomi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Akuntan, Auditor, Financial Analyst;Ya`;
 
                                                     // Create blob and download
                                                     const blob = new Blob(
@@ -1458,42 +1663,47 @@ Kedokteran;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matemati
                                             </p>
                                             <p>
                                                 <strong>Kolom 2:</strong>{" "}
+                                                Kategori
+                                                (Saintek/Soshum/Campuran)
+                                            </p>
+                                            <p>
+                                                <strong>Kolom 3:</strong>{" "}
                                                 Deskripsi
                                             </p>
                                             <p>
-                                                <strong>Kolom 3:</strong> Mata
+                                                <strong>Kolom 4:</strong> Mata
                                                 Pelajaran Wajib (dipisah koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 4:</strong> Mata
+                                                <strong>Kolom 5:</strong> Mata
                                                 Pelajaran Preferensi (dipisah
                                                 koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 5:</strong>{" "}
+                                                <strong>Kolom 6:</strong>{" "}
                                                 Kurikulum Merdeka (dipisah koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 6:</strong>{" "}
+                                                <strong>Kolom 7:</strong>{" "}
                                                 Kurikulum 2013 - IPA (dipisah
                                                 koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 7:</strong>{" "}
+                                                <strong>Kolom 8:</strong>{" "}
                                                 Kurikulum 2013 - IPS (dipisah
                                                 koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 8:</strong>{" "}
+                                                <strong>Kolom 9:</strong>{" "}
                                                 Kurikulum 2013 - Bahasa (dipisah
                                                 koma)
                                             </p>
                                             <p>
-                                                <strong>Kolom 9:</strong>{" "}
+                                                <strong>Kolom 10:</strong>{" "}
                                                 Prospek Karir
                                             </p>
                                             <p>
-                                                <strong>Kolom 10:</strong> Aktif
+                                                <strong>Kolom 11:</strong> Aktif
                                                 (Ya/Tidak)
                                             </p>
                                         </div>

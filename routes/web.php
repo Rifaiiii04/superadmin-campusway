@@ -62,10 +62,11 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
         Route::post('/questions', [SuperAdminController::class, 'storeQuestion'])->name('questions.store');
         Route::get('/questions/import-test', [SuperAdminController::class, 'importTest'])->name('questions.import.test');
-
         Route::put('/questions/{question}', [SuperAdminController::class, 'updateQuestion'])->name('questions.update');
         Route::delete('/questions/{question}', [SuperAdminController::class, 'deleteQuestion'])->name('questions.delete');
 
+        Route::get('/results', [SuperAdminController::class, 'results'])->name('results');
+        
         Route::get('/monitoring', [SuperAdminController::class, 'monitoring'])->name('monitoring');
         Route::get('/monitoring/data', [SuperAdminController::class, 'getMonitoringData'])->name('monitoring.data');
         Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
@@ -75,10 +76,6 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         // Major Recommendations
         Route::get('/major-recommendations', [SuperAdminController::class, 'majorRecommendations'])->name('major-recommendations');
         Route::post('/major-recommendations', [SuperAdminController::class, 'storeMajorRecommendation'])->name('major-recommendations.store');
-        
-        // Coming Soon Pages
-        Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
-        Route::get('/results', [SuperAdminController::class, 'results'])->name('results');
         Route::put('/major-recommendations/{id}', [SuperAdminController::class, 'updateMajorRecommendation'])->name('major-recommendations.update');
         Route::delete('/major-recommendations/{id}', [SuperAdminController::class, 'deleteMajorRecommendation'])->name('major-recommendations.delete');
         Route::patch('/major-recommendations/{id}/toggle', [SuperAdminController::class, 'toggleMajorRecommendation'])->name('major-recommendations.toggle');

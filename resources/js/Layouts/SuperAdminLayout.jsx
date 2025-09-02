@@ -57,10 +57,6 @@ export default function SuperAdminLayout({ children }) {
                         ? "translate-x-0"
                         : "-translate-x-full lg:translate-x-0"
                 }`}
-                style={{
-                    height: "100vh",
-                    minHeight: "100vh",
-                }}
             >
                 <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
                     <div className="flex items-center">
