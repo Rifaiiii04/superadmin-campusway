@@ -436,4 +436,89 @@ class SchoolDashboardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update data siswa
+     */
+    public function updateStudent(Request $request, $studentId)
+    {
+        try {
+            $school = School::find($request->school_id);
+
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Cari siswa yang akan diupdate
+            $student = Student::where('id', $studentId)
+                ->where('school_id', $school->id)
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan'
+                ], 404);
+            }
+
+            // Validasi input
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'nisn' => 'required|string|max:10|unique:students,nisn,' . $studentId,
+                'kelas' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'parent_phone' => 'nullable|string|max:20',
+                'password' => 'nullable|string|min:6'
+            ]);
+
+            // Update data siswa
+            $updateData = [
+                'name' => $request->name,
+                'nisn' => $request->nisn,
+                'kelas' => $request->kelas,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'parent_phone' => $request->parent_phone,
+            ];
+
+            // Jika ada password baru, hash password
+            if ($request->password) {
+                $updateData['password'] = bcrypt($request->password);
+            }
+
+            $student->update($updateData);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data siswa berhasil diperbarui',
+                'data' => [
+                    'id' => $student->id,
+                    'nisn' => $student->nisn,
+                    'name' => $student->name,
+                    'class' => $student->kelas,
+                    'email' => $student->email,
+                    'phone' => $student->phone,
+                    'parent_phone' => $student->parent_phone,
+                    'updated_at' => $student->updated_at
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating student: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
 }

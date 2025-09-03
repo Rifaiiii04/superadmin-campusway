@@ -77,6 +77,7 @@ Route::prefix('school')->group(function () {
         Route::get('/students', [SchoolDashboardController::class, 'students']);
         Route::post('/students', [SchoolDashboardController::class, 'addStudent']);
         Route::get('/students/{studentId}', [SchoolDashboardController::class, 'studentDetail']);
+        Route::put('/students/{studentId}', [SchoolDashboardController::class, 'updateStudent']);
         Route::get('/students-without-choice', [SchoolDashboardController::class, 'studentsWithoutChoice']);
         
         // Statistik jurusan

@@ -367,6 +367,76 @@ Authorization: <token>
 }
 ```
 
+### 7. Update Data Siswa
+
+**PUT** `/students/{studentId}`
+
+Memperbarui data siswa termasuk password.
+
+**Headers:**
+
+```
+Authorization: <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+    "name": "John Doe Updated",
+    "nisn": "1234567890",
+    "kelas": "XII IPA 2",
+    "email": "john.updated@example.com",
+    "phone": "081234567890",
+    "parent_phone": "081234567891",
+    "password": "new_password_123"
+}
+```
+
+**Response Success (200):**
+
+```json
+{
+    "success": true,
+    "message": "Data siswa berhasil diperbarui",
+    "data": {
+        "id": 1,
+        "nisn": "1234567890",
+        "name": "John Doe Updated",
+        "class": "XII IPA 2",
+        "email": "john.updated@example.com",
+        "phone": "081234567890",
+        "parent_phone": "081234567891",
+        "updated_at": "2025-01-01T10:00:00.000000Z"
+    }
+}
+```
+
+**Response Error (404):**
+
+```json
+{
+    "success": false,
+    "message": "Siswa tidak ditemukan"
+}
+```
+
+**Response Error (422):**
+
+```json
+{
+    "success": false,
+    "message": "Validasi gagal",
+    "errors": {
+        "nisn": ["NISN sudah digunakan"],
+        "password": ["Password minimal 6 karakter"]
+    }
+}
+```
+
+---
+
 ### 8. Siswa yang Belum Memilih Jurusan
 
 **GET** `/students-without-choice`
