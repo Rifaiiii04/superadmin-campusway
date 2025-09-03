@@ -306,6 +306,32 @@ class StudentWebController extends Controller
     }
 
     /**
+     * Check if student has chosen a major
+     */
+    public function checkMajorStatus($studentId)
+    {
+        $choice = StudentChoice::where('student_id', $studentId)->first();
+
+        if (!$choice) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'has_choice' => false,
+                    'selected_major_id' => null
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'has_choice' => true,
+                'selected_major_id' => $choice->major_id
+            ]
+        ]);
+    }
+
+    /**
      * Change student's major choice
      */
     public function changeMajor(Request $request)

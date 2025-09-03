@@ -123,7 +123,15 @@ class SchoolDashboardController extends Controller
                         'chosen_major' => $student->studentChoice ? [
                             'id' => $student->studentChoice->major->id,
                             'name' => $student->studentChoice->major->major_name,
-                            'category' => $student->studentChoice->major->category ?? 'Saintek'
+                            'description' => $student->studentChoice->major->description,
+                            'career_prospects' => $student->studentChoice->major->career_prospects,
+                            'category' => $student->studentChoice->major->category ?? 'Saintek',
+                            'required_subjects' => $student->studentChoice->major->required_subjects,
+                            'preferred_subjects' => $student->studentChoice->major->preferred_subjects,
+                            'kurikulum_merdeka_subjects' => $student->studentChoice->major->kurikulum_merdeka_subjects,
+                            'kurikulum_2013_ipa_subjects' => $student->studentChoice->major->kurikulum_2013_ipa_subjects,
+                            'kurikulum_2013_ips_subjects' => $student->studentChoice->major->kurikulum_2013_ips_subjects,
+                            'kurikulum_2013_bahasa_subjects' => $student->studentChoice->major->kurikulum_2013_bahasa_subjects
                         ] : null,
                         'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
                     ];
@@ -198,7 +206,13 @@ class SchoolDashboardController extends Controller
                     'description' => $student->studentChoice->major->description,
                     'career_prospects' => $student->studentChoice->major->career_prospects,
                     'category' => $student->studentChoice->major->category ?? 'Saintek',
-                    'choice_date' => $student->studentChoice->created_at
+                    'choice_date' => $student->studentChoice->created_at,
+                    'required_subjects' => $student->studentChoice->major->required_subjects,
+                    'preferred_subjects' => $student->studentChoice->major->preferred_subjects,
+                    'kurikulum_merdeka_subjects' => $student->studentChoice->major->kurikulum_merdeka_subjects,
+                    'kurikulum_2013_ipa_subjects' => $student->studentChoice->major->kurikulum_2013_ipa_subjects,
+                    'kurikulum_2013_ips_subjects' => $student->studentChoice->major->kurikulum_2013_ips_subjects,
+                    'kurikulum_2013_bahasa_subjects' => $student->studentChoice->major->kurikulum_2013_bahasa_subjects
                 ];
             }
 
@@ -283,6 +297,86 @@ class SchoolDashboardController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Get major statistics error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    /**
+     * Tambah siswa baru
+     */
+    public function addStudent(Request $request)
+    {
+        try {
+            $request->validate([
+                'nisn' => 'required|string|size:10|unique:students,nisn',
+                'name' => 'required|string|max:255',
+                'kelas' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:20',
+                'parent_phone' => 'nullable|string|max:20',
+                'password' => 'required|string|min:6',
+                'school_id' => 'required|exists:schools,id'
+            ]);
+
+            $school = School::find($request->school_id);
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Cek apakah NISN sudah ada
+            $existingStudent = Student::where('nisn', $request->nisn)->first();
+            if ($existingStudent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'NISN sudah terdaftar'
+                ], 400);
+            }
+
+            // Buat siswa baru
+            $student = Student::create([
+                'nisn' => $request->nisn,
+                'name' => $request->name,
+                'school_id' => $request->school_id,
+                'kelas' => $request->kelas,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'parent_phone' => $request->parent_phone,
+                'password' => bcrypt($request->password),
+                'status' => 'active'
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil ditambahkan',
+                'data' => [
+                    'student' => [
+                        'id' => $student->id,
+                        'nisn' => $student->nisn,
+                        'name' => $student->name,
+                        'kelas' => $student->kelas,
+                        'email' => $student->email,
+                        'phone' => $student->phone,
+                        'parent_phone' => $student->parent_phone,
+                        'status' => $student->status,
+                        'created_at' => $student->created_at
+                    ]
+                ]
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Add student error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan server'

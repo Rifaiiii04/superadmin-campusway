@@ -217,7 +217,15 @@ Authorization: <token>
                 "chosen_major": {
                     "id": 22,
                     "name": "Seni",
-                    "category": "Soshum"
+                    "description": "Program studi yang mempelajari seni dan kreativitas...",
+                    "career_prospects": "Seniman, Desainer, Kurator...",
+                    "category": "Soshum",
+                    "required_subjects": "Bahasa Indonesia, Matematika, Bahasa Inggris",
+                    "preferred_subjects": "Seni Rupa, Sejarah, Sosiologi",
+                    "kurikulum_merdeka_subjects": "Seni Rupa, Sejarah, Sosiologi, Antropologi",
+                    "kurikulum_2013_ipa_subjects": "Fisika, Kimia, Biologi",
+                    "kurikulum_2013_ips_subjects": "Ekonomi, Geografi, Sosiologi",
+                    "kurikulum_2013_bahasa_subjects": "Bahasa Indonesia, Bahasa Inggris, Sastra"
                 },
                 "choice_date": "2025-09-01T07:20:00.000000Z"
             },
@@ -233,7 +241,15 @@ Authorization: <token>
                 "chosen_major": {
                     "id": 23,
                     "name": "Teknik Informatika",
-                    "category": "Saintek"
+                    "description": "Program studi yang mempelajari teknologi informasi dan komputer...",
+                    "career_prospects": "Software Developer, System Analyst, Data Scientist...",
+                    "category": "Saintek",
+                    "required_subjects": "Bahasa Indonesia, Matematika, Bahasa Inggris",
+                    "preferred_subjects": "Fisika, Kimia, Biologi",
+                    "kurikulum_merdeka_subjects": "Fisika, Kimia, Biologi, Informatika",
+                    "kurikulum_2013_ipa_subjects": "Fisika, Kimia, Biologi",
+                    "kurikulum_2013_ips_subjects": "Ekonomi, Geografi, Sosiologi",
+                    "kurikulum_2013_bahasa_subjects": "Bahasa Indonesia, Bahasa Inggris, Sastra"
                 },
                 "choice_date": "2025-09-01T07:21:00.000000Z"
             }
@@ -283,7 +299,13 @@ Authorization: <token>
                 "description": "Program studi yang mempelajari seni dan kreativitas...",
                 "career_prospects": "Seniman, Desainer, Kurator...",
                 "category": "Soshum",
-                "choice_date": "2025-09-01T07:20:00.000000Z"
+                "choice_date": "2025-09-01T07:20:00.000000Z",
+                "required_subjects": "Bahasa Indonesia, Matematika, Bahasa Inggris",
+                "preferred_subjects": "Seni Rupa, Sejarah, Sosiologi",
+                "kurikulum_merdeka_subjects": "Seni Rupa, Sejarah, Sosiologi, Antropologi",
+                "kurikulum_2013_ipa_subjects": "Fisika, Kimia, Biologi",
+                "kurikulum_2013_ips_subjects": "Ekonomi, Geografi, Sosiologi",
+                "kurikulum_2013_bahasa_subjects": "Bahasa Indonesia, Bahasa Inggris, Sastra"
             }
         }
     }

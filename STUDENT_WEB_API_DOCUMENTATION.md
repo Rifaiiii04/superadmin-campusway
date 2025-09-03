@@ -290,7 +290,37 @@ http://127.0.0.1:8000/api/web
 
 ---
 
-### 7. 📖 Get Student's Chosen Major
+### 7. 🔍 Check Student's Major Status
+
+**GET** `/major-status/{studentId}`
+
+**Response Success (200):**
+
+```json
+{
+    "success": true,
+    "data": {
+        "has_choice": true,
+        "selected_major_id": 1
+    }
+}
+```
+
+**Response Success - No Choice (200):**
+
+```json
+{
+    "success": true,
+    "data": {
+        "has_choice": false,
+        "selected_major_id": null
+    }
+}
+```
+
+---
+
+### 8. 📖 Get Student's Chosen Major
 
 **GET** `/student-choice/{studentId}`
 
@@ -344,7 +374,7 @@ http://127.0.0.1:8000/api/web
 
 ---
 
-### 8. 🔄 Change Major Choice
+### 9. 🔄 Change Major Choice
 
 **POST** `/change-major`
 
@@ -445,7 +475,13 @@ Siswa → Klik jurusan → Get Major Details API → Response detail + mata pela
 Siswa → Pilih jurusan → Choose Major API → Response konfirmasi
 ```
 
-### 7. **Lihat Pilihan**
+### 7. **Cek Status Pilihan**
+
+```
+Siswa → Check Major Status API → Response status pilihan (true/false)
+```
+
+### 8. **Lihat Pilihan**
 
 ```
 Siswa → Get Student Choice API → Response pilihan jurusan + mata pelajaran

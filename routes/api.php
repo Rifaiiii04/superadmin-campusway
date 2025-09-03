@@ -46,6 +46,9 @@ Route::prefix('web')->group(function () {
     // Get student's chosen major
     Route::get('/student-choice/{studentId}', [StudentWebController::class, 'getStudentChoice']);
     
+    // Check student's major status
+    Route::get('/major-status/{studentId}', [StudentWebController::class, 'checkMajorStatus']);
+    
     // Change student's major choice
     Route::post('/change-major', [StudentWebController::class, 'changeMajor']);
     
@@ -72,6 +75,7 @@ Route::prefix('school')->group(function () {
         
         // Data siswa
         Route::get('/students', [SchoolDashboardController::class, 'students']);
+        Route::post('/students', [SchoolDashboardController::class, 'addStudent']);
         Route::get('/students/{studentId}', [SchoolDashboardController::class, 'studentDetail']);
         Route::get('/students-without-choice', [SchoolDashboardController::class, 'studentsWithoutChoice']);
         
