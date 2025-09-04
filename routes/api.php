@@ -7,6 +7,7 @@ use App\Http\Controllers\SchoolAuthController;
 use App\Http\Controllers\SchoolDashboardController;
 use App\Http\Controllers\OptimizedApiController;
 use App\Http\Controllers\SchoolLevelMajorController;
+use App\Http\Controllers\TkaScheduleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,6 +86,10 @@ Route::prefix('web')->group(function () {
     
     // Test endpoint untuk debugging
     Route::post('/test-choose-major', [StudentWebController::class, 'testChooseMajor']);
+    
+    // TKA Schedules for students
+    Route::get('/tka-schedules', [TkaScheduleController::class, 'index']);
+    Route::get('/tka-schedules/upcoming', [TkaScheduleController::class, 'upcoming']);
 });
 
 // School Dashboard API Routes
@@ -126,4 +131,18 @@ Route::prefix('school-level')->group(function () {
     
     // Get school level statistics
     Route::get('/stats', [SchoolLevelMajorController::class, 'getSchoolLevelStats']);
+});
+
+// TKA Schedule API Routes
+Route::prefix('tka-schedules')->group(function () {
+    // Public routes (for teacher and student dashboards)
+    Route::get('/', [TkaScheduleController::class, 'index']);
+    Route::get('/upcoming', [TkaScheduleController::class, 'upcoming']);
+    
+    // Admin routes (for super admin dashboard)
+    Route::post('/', [TkaScheduleController::class, 'store']);
+    Route::get('/{id}', [TkaScheduleController::class, 'show']);
+    Route::put('/{id}', [TkaScheduleController::class, 'update']);
+    Route::delete('/{id}', [TkaScheduleController::class, 'destroy']);
+    Route::post('/{id}/cancel', [TkaScheduleController::class, 'cancel']);
 });

@@ -10,6 +10,7 @@ import {
     X,
     Home,
     GraduationCap,
+    Calendar,
 } from "lucide-react";
 
 export default function SuperAdminLayout({ children }) {
@@ -30,6 +31,11 @@ export default function SuperAdminLayout({ children }) {
         },
         { name: "Bank Soal", href: "/super-admin/questions", icon: BookOpen },
         { name: "Hasil Tes", href: "/super-admin/results", icon: FileText },
+        {
+            name: "Jadwal TKA",
+            href: "/super-admin/tka-schedules",
+            icon: Calendar,
+        },
     ];
 
     const toggleSidebar = () => {

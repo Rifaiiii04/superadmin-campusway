@@ -31,6 +31,7 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -86,6 +87,30 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         
         // Media upload route
         Route::post('/upload-media', [MediaController::class, 'upload'])->name('media.upload');
+        
+        // TKA Schedules Management
+        // Web routes (return Inertia views)
+        Route::get('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index'])->name('tka-schedules');
+        
+        // TKA Schedules CRUD routes (return JSON) - with authentication
+        Route::post('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store'])->name('tka-schedules.store');
+        Route::get('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show'])->name('tka-schedules.show');
+        Route::put('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update'])->name('tka-schedules.update');
+        Route::delete('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy'])->name('tka-schedules.destroy');
+        Route::post('/tka-schedules/{id}/cancel', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel'])->name('tka-schedules.cancel');
+        Route::get('/tka-schedules/statistics', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'statistics'])->name('tka-schedules.statistics');
+        
+        // API routes (return JSON) - with authentication
+        Route::prefix('api')->middleware(['admin.auth'])->group(function () {
+            Route::get('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'apiIndex'])->name('tka-schedules.api.index');
+            Route::post('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store'])->name('tka-schedules.api.store');
+            Route::get('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show'])->name('tka-schedules.api.show');
+            Route::put('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update'])->name('tka-schedules.api.update');
+            Route::delete('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy'])->name('tka-schedules.api.destroy');
+            Route::post('/tka-schedules/{id}/cancel', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel'])->name('tka-schedules.api.cancel');
+            Route::get('/tka-schedules/statistics', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'statistics'])->name('tka-schedules.api.statistics');
+        });
+        
     });
 });
 
