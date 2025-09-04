@@ -60,8 +60,8 @@ class MajorRecommendation extends Model
         
         $averageScore = $totalScore / $subjectCount;
         
-        // Check if average score meets requirements
-        if ($averageScore < $this->min_score || $averageScore > $this->max_score) {
+        // Check if average score meets requirements (default range 70-100)
+        if ($averageScore < 70 || $averageScore > 100) {
             return false;
         }
         

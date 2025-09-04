@@ -14,6 +14,9 @@ class Subject extends Model
         'name',
         'code',
         'description',
+        'education_level',
+        'subject_type',
+        'subject_number',
         'is_required',
         'is_active'
     ];
@@ -45,5 +48,37 @@ class Subject extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for education level
+     */
+    public function scopeEducationLevel($query, $level)
+    {
+        return $query->where('education_level', $level);
+    }
+
+    /**
+     * Scope for subject type
+     */
+    public function scopeSubjectType($query, $type)
+    {
+        return $query->where('subject_type', $type);
+    }
+
+    /**
+     * Scope for SMK/MAK subjects
+     */
+    public function scopeSMKMAK($query)
+    {
+        return $query->where('education_level', 'SMK/MAK');
+    }
+
+    /**
+     * Scope for SMA/MA subjects
+     */
+    public function scopeSMAMA($query)
+    {
+        return $query->where('education_level', 'SMA/MA');
     }
 }

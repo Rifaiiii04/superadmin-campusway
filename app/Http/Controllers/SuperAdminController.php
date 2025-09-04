@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 // use Maatwebsite\Excel\Facades\Excel;
 // use App\Imports\SchoolsImport;
 
@@ -44,12 +46,14 @@ class SuperAdminController extends Controller
 
     public function dashboard()
     {
-        // Get real data from database
-        $stats = [
-            'total_schools' => School::count(),
-            'total_students' => Student::count(),
-            'total_majors' => \App\Models\MajorRecommendation::where('is_active', true)->count(),
-        ];
+        // Cache dashboard stats for 10 minutes
+        $stats = Cache::remember('superadmin_dashboard_stats', 600, function () {
+            return [
+                'total_schools' => School::count(),
+                'total_students' => Student::count(),
+                'total_majors' => \App\Models\MajorRecommendation::where('is_active', true)->count(),
+            ];
+        });
 
         // Get recent schools and students
         $recent_schools = School::latest()->take(5)->get();
@@ -79,9 +83,27 @@ class SuperAdminController extends Controller
     }
 
     // School Management
-    public function schools()
+    public function schools(Request $request)
     {
-        $schools = School::withCount('students')->paginate(10);
+        $page = $request->get('page', 1);
+        $search = $request->get('search', '');
+        
+        // Cache key based on page and search
+        $cacheKey = "schools_page_{$page}_search_{$search}";
+        
+        $schools = Cache::remember($cacheKey, 300, function () use ($search) {
+            $query = School::withCount('students');
+            
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('npsn', 'like', "%{$search}%");
+                });
+            }
+            
+            return $query->paginate(10);
+        });
+        
         return inertia('SuperAdmin/Schools', [
             'schools' => $schools,
             'auth' => [
@@ -111,9 +133,41 @@ class SuperAdminController extends Controller
     /**
      * Show questions page (Coming Soon)
      */
-    public function questions()
+    public function questions(Request $request)
     {
+        $page = $request->get('page', 1);
+        $search = $request->get('search', '');
+        $subject = $request->get('subject', '');
+        
+        // Cache key based on parameters
+        $cacheKey = "questions_page_{$page}_search_{$search}_subject_{$subject}";
+        
+        $questions = Cache::remember($cacheKey, 300, function () use ($search, $subject) {
+            $query = Question::with(['questionOptions'])
+                ->select(['id', 'subject', 'type', 'content', 'media_url', 'created_at']);
+            
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('subject', 'like', "%{$search}%")
+                      ->orWhere('content', 'like', "%{$search}%");
+                });
+            }
+            
+            if ($subject) {
+                $query->where('subject', $subject);
+            }
+            
+            return $query->paginate(20);
+        });
+        
+        // Get unique subjects for filter
+        $subjects = Cache::remember('question_subjects', 600, function () {
+            return Question::distinct()->pluck('subject')->sort()->values();
+        });
+        
         return inertia('SuperAdmin/Questions', [
+            'questions' => $questions,
+            'subjects' => $subjects,
             'auth' => [
                 'user' => Auth::guard('admin')->user()
             ]
@@ -149,6 +203,10 @@ class SuperAdminController extends Controller
             'name' => $request->name,
             'password_hash' => Hash::make($request->password),
         ]);
+
+        // Clear related caches
+        Cache::forget('superadmin_dashboard_stats');
+        Cache::flush(); // Clear all school-related caches
 
         return back()->with('success', 'Sekolah berhasil ditambahkan');
     }

@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentWebController;
 use App\Http\Controllers\SchoolAuthController;
 use App\Http\Controllers\SchoolDashboardController;
+use App\Http\Controllers\OptimizedApiController;
+use App\Http\Controllers\SchoolLevelMajorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +21,32 @@ use App\Http\Controllers\SchoolDashboardController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Optimized API Routes for better performance
+Route::prefix('optimized')->group(function () {
+    // Health check
+    Route::get('/health', [OptimizedApiController::class, 'health']);
+
+    // Cached endpoints
+    Route::get('/majors', [OptimizedApiController::class, 'getMajors']);
+    Route::get('/majors/{id}', [OptimizedApiController::class, 'getMajorDetails']);
+    Route::get('/schools', [OptimizedApiController::class, 'getSchools']);
+
+    // Optimized student endpoints
+    Route::post('/login', [OptimizedApiController::class, 'login']);
+    Route::get('/student-choice/{studentId}', [OptimizedApiController::class, 'getStudentChoice']);
+    Route::get('/major-status/{studentId}', [OptimizedApiController::class, 'checkMajorStatus']);
+
+    // Cache management
+    Route::post('/clear-cache', [OptimizedApiController::class, 'clearCache']);
+});
+
+// Performance monitoring routes
+Route::prefix('performance')->group(function () {
+    Route::get('/metrics', [App\Http\Controllers\PerformanceController::class, 'getMetrics']);
+    Route::post('/optimize', [App\Http\Controllers\PerformanceController::class, 'optimize']);
+    Route::get('/health', [App\Http\Controllers\PerformanceController::class, 'health']);
 });
 
 
@@ -82,5 +110,20 @@ Route::prefix('school')->group(function () {
         
         // Statistik jurusan
         Route::get('/major-statistics', [SchoolDashboardController::class, 'majorStatistics']);
+        
+        // Export data siswa
+        Route::get('/export-students', [SchoolDashboardController::class, 'exportStudents']);
     });
+});
+
+// School Level Major Recommendations API Routes
+Route::prefix('school-level')->group(function () {
+    // Get major recommendations by school level
+    Route::get('/majors', [SchoolLevelMajorController::class, 'getMajorsBySchoolLevel']);
+    
+    // Get subjects by school level
+    Route::get('/subjects', [SchoolLevelMajorController::class, 'getSubjectsBySchoolLevel']);
+    
+    // Get school level statistics
+    Route::get('/stats', [SchoolLevelMajorController::class, 'getSchoolLevelStats']);
 });

@@ -12,6 +12,7 @@ class School extends Model
     protected $fillable = [
         'npsn',
         'name',
+        'school_level',
         'password_hash',
     ];
 

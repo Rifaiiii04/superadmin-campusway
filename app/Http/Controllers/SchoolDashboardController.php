@@ -438,6 +438,93 @@ class SchoolDashboardController extends Controller
     }
 
     /**
+     * Export data siswa dengan detail jurusan dan mata pelajaran
+     */
+    public function exportStudents(Request $request)
+    {
+        try {
+            $school = School::find($request->school_id);
+
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Get semua siswa dengan detail jurusan dan mata pelajaran
+            $students = Student::where('school_id', $school->id)
+                ->with(['studentChoice.major'])
+                ->orderBy('name')
+                ->get()
+                ->map(function($student) {
+                    $exportData = [
+                        'nama_siswa' => $student->name,
+                        'nisn' => $student->nisn,
+                        'kelas' => $student->kelas,
+                        'email' => $student->email,
+                        'no_handphone' => $student->phone,
+                        'no_orang_tua' => $student->parent_phone,
+                        'status_pilihan_jurusan' => $student->studentChoice ? 'Sudah Memilih' : 'Belum Memilih',
+                        'tanggal_memilih' => $student->studentChoice ? $student->studentChoice->created_at->format('d/m/Y H:i') : '-'
+                    ];
+
+                    if ($student->studentChoice && $student->studentChoice->major) {
+                        $major = $student->studentChoice->major;
+                        $exportData = array_merge($exportData, [
+                            'nama_jurusan' => $major->major_name,
+                            'kategori_jurusan' => $major->category ?? 'Saintek',
+                            'prospek_karir' => $major->career_prospects ?? '-',
+                            'mata_pelajaran_wajib' => $major->required_subjects ? implode(', ', json_decode($major->required_subjects, true)) : '-',
+                            'mata_pelajaran_diutamakan' => $major->preferred_subjects ? implode(', ', json_decode($major->preferred_subjects, true)) : '-',
+                            'mata_pelajaran_kurikulum_merdeka' => $major->kurikulum_merdeka_subjects ? implode(', ', json_decode($major->kurikulum_merdeka_subjects, true)) : '-',
+                            'mata_pelajaran_kurikulum_2013_ipa' => $major->kurikulum_2013_ipa_subjects ? implode(', ', json_decode($major->kurikulum_2013_ipa_subjects, true)) : '-',
+                            'mata_pelajaran_kurikulum_2013_ips' => $major->kurikulum_2013_ips_subjects ? implode(', ', json_decode($major->kurikulum_2013_ips_subjects, true)) : '-',
+                            'mata_pelajaran_kurikulum_2013_bahasa' => $major->kurikulum_2013_bahasa_subjects ? implode(', ', json_decode($major->kurikulum_2013_bahasa_subjects, true)) : '-'
+                        ]);
+                    } else {
+                        $exportData = array_merge($exportData, [
+                            'nama_jurusan' => '-',
+                            'kategori_jurusan' => '-',
+                            'prospek_karir' => '-',
+                            'mata_pelajaran_wajib' => '-',
+                            'mata_pelajaran_diutamakan' => '-',
+                            'mata_pelajaran_kurikulum_merdeka' => '-',
+                            'mata_pelajaran_kurikulum_2013_ipa' => '-',
+                            'mata_pelajaran_kurikulum_2013_ips' => '-',
+                            'mata_pelajaran_kurikulum_2013_bahasa' => '-'
+                        ]);
+                    }
+
+                    return $exportData;
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'npsn' => $school->npsn,
+                        'name' => $school->name
+                    ],
+                    'export_data' => $students,
+                    'total_students' => $students->count(),
+                    'students_with_choice' => $students->where('status_pilihan_jurusan', 'Sudah Memilih')->count(),
+                    'students_without_choice' => $students->where('status_pilihan_jurusan', 'Belum Memilih')->count(),
+                    'export_date' => now()->format('d/m/Y H:i:s')
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Export students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    /**
      * Update data siswa
      */
     public function updateStudent(Request $request, $studentId)

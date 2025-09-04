@@ -65,7 +65,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         "Matematika",
         "Bahasa Inggris",
 
-        // Mata Pelajaran Kurikulum Merdeka
+        // Mata Pelajaran SMA/MA - Kurikulum Merdeka
         "Bahasa Indonesia Tingkat Lanjut",
         "Bahasa Inggris Tingkat Lanjut",
         "Matematika Tingkat Lanjut",
@@ -86,23 +86,46 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         "Bahasa Asing",
         "Bahasa dan Sastra Inggris",
 
-        // Mata Pelajaran Kurikulum 2013 - IPA
+        // Mata Pelajaran SMA/MA - Kurikulum 2013 - IPA
         "Matematika Peminatan",
         "Fisika Peminatan",
         "Kimia Peminatan",
         "Biologi Peminatan",
 
-        // Mata Pelajaran Kurikulum 2013 - IPS
+        // Mata Pelajaran SMA/MA - Kurikulum 2013 - IPS
         "Ekonomi Peminatan",
         "Geografi Peminatan",
         "Sosiologi Peminatan",
         "Sejarah Peminatan",
 
-        // Mata Pelajaran Kurikulum 2013 - Bahasa
+        // Mata Pelajaran SMA/MA - Kurikulum 2013 - Bahasa
         "Bahasa Indonesia Peminatan",
         "Bahasa Inggris Peminatan",
         "Sastra Indonesia",
         "Antropologi Peminatan",
+
+        // Mata Pelajaran SMK/MAK - Pilihan (1-18)
+        "Teknik Komputer dan Jaringan",
+        "Teknik Kendaraan Ringan",
+        "Teknik Mesin",
+        "Teknik Elektronika",
+        "Teknik Listrik",
+        "Teknik Sipil",
+        "Teknik Kimia",
+        "Teknik Pendingin dan Tata Udara",
+        "Teknik Otomotif",
+        "Teknik Informatika",
+        "Akuntansi",
+        "Administrasi Perkantoran",
+        "Pemasaran",
+        "Perbankan",
+        "Perhotelan",
+        "Tata Boga",
+        "Tata Busana",
+        "Desain Komunikasi Visual",
+
+        // Mata Pelajaran SMK/MAK - Produk/Projek Kreatif dan Kewirausahaan (19)
+        "Produk/Projek Kreatif dan Kewirausahaan",
 
         // Mata Pelajaran Lainnya
         "Agama",
