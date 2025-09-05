@@ -160,7 +160,7 @@ class StudentWebController extends Controller
     public function getMajors()
     {
         $majors = MajorRecommendation::where('is_active', true)
-            ->select('id', 'major_name', 'description', 'career_prospects', 'category')
+            ->select('id', 'major_name', 'description', 'career_prospects', 'rumpun_ilmu')
             ->get();
 
         return response()->json([
@@ -192,7 +192,7 @@ class StudentWebController extends Controller
                 'major_name' => $major->major_name,
                 'description' => $major->description,
                 'career_prospects' => $major->career_prospects,
-                'category' => $major->category,
+                'rumpun_ilmu' => $major->rumpun_ilmu,
                 'subjects' => [
                     'required' => $major->required_subjects,
                     'preferred' => $major->preferred_subjects,

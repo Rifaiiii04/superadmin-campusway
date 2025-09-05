@@ -26,7 +26,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const [importing, setImporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
-    const [categoryFilter, setCategoryFilter] = useState("all"); // all, saintek, soshum, campuran
+    const [rumpunIlmuFilter, setRumpunIlmuFilter] = useState("all"); // all, HUMANIORA, ILMU SOSIAL, ILMU ALAM, ILMU FORMAL, ILMU TERAPAN
 
     // Function to truncate text to specified number of words
     const truncateText = (text, maxWords = 15) => {
@@ -47,7 +47,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         reset,
     } = useForm({
         major_name: "",
-        category: "Saintek",
+        rumpun_ilmu: "ILMU ALAM",
         description: "",
         required_subjects: [],
         preferred_subjects: [],
@@ -60,83 +60,28 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     });
 
     const availableSubjects = [
-        // Mata Pelajaran Wajib (Selalu ada untuk semua jurusan)
-        "Bahasa Indonesia",
-        "Matematika",
-        "Bahasa Inggris",
+        // Mata Pelajaran Wajib (3 mata pelajaran)
+        "Matematika Lanjutan",
+        "Bahasa Indonesia Lanjutan",
+        "Bahasa Inggris Lanjutan",
 
-        // Mata Pelajaran SMA/MA - Kurikulum Merdeka
-        "Bahasa Indonesia Tingkat Lanjut",
-        "Bahasa Inggris Tingkat Lanjut",
-        "Matematika Tingkat Lanjut",
+        // Mata Pelajaran Pilihan (16 mata pelajaran)
         "Fisika",
         "Kimia",
         "Biologi",
         "Ekonomi",
-        "Sejarah",
-        "Sejarah Indonesia",
-        "Geografi",
         "Sosiologi",
+        "Geografi",
+        "Sejarah",
         "Antropologi",
-        "PPKn",
-        "Pendidikan Pancasila",
-        "Seni Budaya",
-        "PJOK",
-        "Informatika",
-        "Bahasa Asing",
-        "Bahasa dan Sastra Inggris",
-
-        // Mata Pelajaran SMA/MA - Kurikulum 2013 - IPA
-        "Matematika Peminatan",
-        "Fisika Peminatan",
-        "Kimia Peminatan",
-        "Biologi Peminatan",
-
-        // Mata Pelajaran SMA/MA - Kurikulum 2013 - IPS
-        "Ekonomi Peminatan",
-        "Geografi Peminatan",
-        "Sosiologi Peminatan",
-        "Sejarah Peminatan",
-
-        // Mata Pelajaran SMA/MA - Kurikulum 2013 - Bahasa
-        "Bahasa Indonesia Peminatan",
-        "Bahasa Inggris Peminatan",
-        "Sastra Indonesia",
-        "Antropologi Peminatan",
-
-        // Mata Pelajaran SMK/MAK - Pilihan (1-18)
-        "Teknik Komputer dan Jaringan",
-        "Teknik Kendaraan Ringan",
-        "Teknik Mesin",
-        "Teknik Elektronika",
-        "Teknik Listrik",
-        "Teknik Sipil",
-        "Teknik Kimia",
-        "Teknik Pendingin dan Tata Udara",
-        "Teknik Otomotif",
-        "Teknik Informatika",
-        "Akuntansi",
-        "Administrasi Perkantoran",
-        "Pemasaran",
-        "Perbankan",
-        "Perhotelan",
-        "Tata Boga",
-        "Tata Busana",
-        "Desain Komunikasi Visual",
-
-        // Mata Pelajaran SMK/MAK - Produk/Projek Kreatif dan Kewirausahaan (19)
+        "PPKn/Pendidikan Pancasila",
+        "Bahasa Arab",
+        "Bahasa Jerman",
+        "Bahasa Prancis",
+        "Bahasa Jepang",
+        "Bahasa Korea",
+        "Bahasa Mandarin",
         "Produk/Projek Kreatif dan Kewirausahaan",
-
-        // Mata Pelajaran Lainnya
-        "Agama",
-        "Pendidikan Kewarganegaraan",
-        "Pendidikan Jasmani",
-        "Seni Rupa",
-        "Seni Musik",
-        "Seni Tari",
-        "Seni Teater",
-        "Prakarya",
-        "Teknologi Informasi dan Komunikasi",
     ];
 
     const handleAddMajor = () => {
@@ -246,20 +191,27 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
             (statusFilter === "active" && major.is_active) ||
             (statusFilter === "inactive" && !major.is_active);
 
-        const matchesCategory =
-            categoryFilter === "all" ||
-            (categoryFilter === "saintek" && major.category === "Saintek") ||
-            (categoryFilter === "soshum" && major.category === "Soshum") ||
-            (categoryFilter === "campuran" && major.category === "Campuran");
+        const matchesRumpunIlmu =
+            rumpunIlmuFilter === "all" ||
+            (rumpunIlmuFilter === "HUMANIORA" &&
+                major.rumpun_ilmu === "HUMANIORA") ||
+            (rumpunIlmuFilter === "ILMU SOSIAL" &&
+                major.rumpun_ilmu === "ILMU SOSIAL") ||
+            (rumpunIlmuFilter === "ILMU ALAM" &&
+                major.rumpun_ilmu === "ILMU ALAM") ||
+            (rumpunIlmuFilter === "ILMU FORMAL" &&
+                major.rumpun_ilmu === "ILMU FORMAL") ||
+            (rumpunIlmuFilter === "ILMU TERAPAN" &&
+                major.rumpun_ilmu === "ILMU TERAPAN");
 
-        return matchesSearch && matchesStatus && matchesCategory;
+        return matchesSearch && matchesStatus && matchesRumpunIlmu;
     });
 
     const openEditModal = (major) => {
         setEditingMajor(major);
         setData({
             major_name: major.major_name,
-            category: major.category || "Saintek",
+            rumpun_ilmu: major.rumpun_ilmu || "ILMU ALAM",
             description: major.description,
             required_subjects: major.required_subjects || [],
             preferred_subjects: major.preferred_subjects || [],
@@ -284,12 +236,15 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const toggleSubject = (subject, type) => {
         const currentSubjects = data[type] || [];
         if (currentSubjects.includes(subject)) {
-            setData(
-                type,
-                currentSubjects.filter((s) => s !== subject)
-            );
+            setData({
+                ...data,
+                [type]: currentSubjects.filter((s) => s !== subject),
+            });
         } else {
-            setData(type, [...currentSubjects, subject]);
+            setData({
+                ...data,
+                [type]: [...currentSubjects, subject],
+            });
         }
     };
 
@@ -364,12 +319,12 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             </div>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">
-                                    Saintek
+                                    ILMU ALAM
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
                                     {
                                         majorRecommendations.filter(
-                                            (m) => m.category === "Saintek"
+                                            (m) => m.rumpun_ilmu === "ILMU ALAM"
                                         ).length
                                     }
                                 </p>
@@ -383,12 +338,13 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             </div>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">
-                                    Soshum
+                                    ILMU SOSIAL
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
                                     {
                                         majorRecommendations.filter(
-                                            (m) => m.category === "Soshum"
+                                            (m) =>
+                                                m.rumpun_ilmu === "ILMU SOSIAL"
                                         ).length
                                     }
                                 </p>
@@ -402,12 +358,52 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                             </div>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-600">
-                                    Campuran
+                                    HUMANIORA
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
                                     {
                                         majorRecommendations.filter(
-                                            (m) => m.category === "Campuran"
+                                            (m) => m.rumpun_ilmu === "HUMANIORA"
+                                        ).length
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-orange-500">
+                                <span className="text-white text-lg">📐</span>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">
+                                    ILMU FORMAL
+                                </p>
+                                <p className="text-xl font-bold text-gray-900">
+                                    {
+                                        majorRecommendations.filter(
+                                            (m) =>
+                                                m.rumpun_ilmu === "ILMU FORMAL"
+                                        ).length
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                        <div className="flex items-center">
+                            <div className="p-2 rounded-lg bg-red-500">
+                                <span className="text-white text-lg">⚙️</span>
+                            </div>
+                            <div className="ml-3">
+                                <p className="text-sm font-medium text-gray-600">
+                                    ILMU TERAPAN
+                                </p>
+                                <p className="text-xl font-bold text-gray-900">
+                                    {
+                                        majorRecommendations.filter(
+                                            (m) =>
+                                                m.rumpun_ilmu === "ILMU TERAPAN"
                                         ).length
                                     }
                                 </p>
@@ -438,7 +434,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                 {/* Filtered Results Summary */}
                 {(searchTerm !== "" ||
                     statusFilter !== "all" ||
-                    categoryFilter !== "all") && (
+                    rumpunIlmuFilter !== "all") && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-blue-500">
@@ -482,19 +478,31 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     />
                                 </div>
 
-                                {/* Category Filter */}
+                                {/* Rumpun Ilmu Filter */}
                                 <select
-                                    value={categoryFilter}
+                                    value={rumpunIlmuFilter}
                                     onChange={(e) =>
-                                        setCategoryFilter(e.target.value)
+                                        setRumpunIlmuFilter(e.target.value)
                                     }
                                     className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                                 >
-                                    <option value="all">Semua Kategori</option>
-                                    <option value="saintek">🔵 Saintek</option>
-                                    <option value="soshum">🟢 Soshum</option>
-                                    <option value="campuran">
-                                        🟣 Campuran
+                                    <option value="all">
+                                        Semua Rumpun Ilmu
+                                    </option>
+                                    <option value="HUMANIORA">
+                                        🎨 HUMANIORA
+                                    </option>
+                                    <option value="ILMU SOSIAL">
+                                        📚 ILMU SOSIAL
+                                    </option>
+                                    <option value="ILMU ALAM">
+                                        🔬 ILMU ALAM
+                                    </option>
+                                    <option value="ILMU FORMAL">
+                                        📐 ILMU FORMAL
+                                    </option>
+                                    <option value="ILMU TERAPAN">
+                                        ⚙️ ILMU TERAPAN
                                     </option>
                                 </select>
 
@@ -516,7 +524,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                         {/* Search Results Info */}
                         {searchTerm !== "" ||
                         statusFilter !== "all" ||
-                        categoryFilter !== "all" ? (
+                        rumpunIlmuFilter !== "all" ? (
                             <div className="mt-3 text-sm text-gray-600">
                                 Menampilkan {filteredMajors.length} dari{" "}
                                 {majorRecommendations.length} jurusan
@@ -528,17 +536,25 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </span>
                                     </span>
                                 )}
-                                {categoryFilter !== "all" && (
+                                {rumpunIlmuFilter !== "all" && (
                                     <span className="ml-2">
-                                        kategori:{" "}
+                                        rumpun ilmu:{" "}
                                         <span className="font-medium">
-                                            {categoryFilter === "saintek"
-                                                ? "🔵 Saintek"
-                                                : categoryFilter === "soshum"
-                                                ? "🟢 Soshum"
-                                                : categoryFilter === "campuran"
-                                                ? "🟣 Campuran"
-                                                : categoryFilter}
+                                            {rumpunIlmuFilter === "HUMANIORA"
+                                                ? "🎨 HUMANIORA"
+                                                : rumpunIlmuFilter ===
+                                                  "ILMU SOSIAL"
+                                                ? "📚 ILMU SOSIAL"
+                                                : rumpunIlmuFilter ===
+                                                  "ILMU ALAM"
+                                                ? "🔬 ILMU ALAM"
+                                                : rumpunIlmuFilter ===
+                                                  "ILMU FORMAL"
+                                                ? "📐 ILMU FORMAL"
+                                                : rumpunIlmuFilter ===
+                                                  "ILMU TERAPAN"
+                                                ? "⚙️ ILMU TERAPAN"
+                                                : rumpunIlmuFilter}
                                         </span>
                                     </span>
                                 )}
@@ -601,24 +617,44 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    major.category === "Saintek"
+                                                    major.rumpun_ilmu ===
+                                                    "ILMU ALAM"
                                                         ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                                        : major.category ===
-                                                          "Soshum"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU SOSIAL"
                                                         ? "bg-green-100 text-green-800 border border-green-200"
-                                                        : "bg-purple-100 text-purple-800 border border-purple-200"
+                                                        : major.rumpun_ilmu ===
+                                                          "HUMANIORA"
+                                                        ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU FORMAL"
+                                                        ? "bg-orange-100 text-orange-800 border border-orange-200"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU TERAPAN"
+                                                        ? "bg-red-100 text-red-800 border border-red-200"
+                                                        : "bg-gray-100 text-gray-800 border border-gray-200"
                                                 }`}
                                             >
                                                 <span className="mr-1">
-                                                    {major.category ===
-                                                    "Saintek"
-                                                        ? "🔵"
-                                                        : major.category ===
-                                                          "Soshum"
-                                                        ? "🟢"
-                                                        : "🟣"}
+                                                    {major.rumpun_ilmu ===
+                                                    "ILMU ALAM"
+                                                        ? "🔬"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU SOSIAL"
+                                                        ? "📚"
+                                                        : major.rumpun_ilmu ===
+                                                          "HUMANIORA"
+                                                        ? "🎨"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU FORMAL"
+                                                        ? "📐"
+                                                        : major.rumpun_ilmu ===
+                                                          "ILMU TERAPAN"
+                                                        ? "⚙️"
+                                                        : "📋"}
                                                 </span>
-                                                {major.category || "Saintek"}
+                                                {major.rumpun_ilmu ||
+                                                    "ILMU ALAM"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -728,12 +764,12 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     </p>
                                     {(searchTerm !== "" ||
                                         statusFilter !== "all" ||
-                                        categoryFilter !== "all") && (
+                                        rumpunIlmuFilter !== "all") && (
                                         <button
                                             onClick={() => {
                                                 setSearchTerm("");
                                                 setStatusFilter("all");
-                                                setCategoryFilter("all");
+                                                setRumpunIlmuFilter("all");
                                             }}
                                             className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
                                         >
@@ -781,31 +817,37 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Kategori Jurusan
+                                            Rumpun Ilmu
                                         </label>
                                         <select
-                                            value={data.category}
+                                            value={data.rumpun_ilmu}
                                             onChange={(e) =>
-                                                setData(
-                                                    "category",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    rumpun_ilmu: e.target.value,
+                                                })
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                         >
-                                            <option value="Saintek">
-                                                Saintek (Sains dan Teknologi)
+                                            <option value="ILMU ALAM">
+                                                🔬 ILMU ALAM
                                             </option>
-                                            <option value="Soshum">
-                                                Soshum (Sosial dan Humaniora)
+                                            <option value="ILMU SOSIAL">
+                                                📚 ILMU SOSIAL
                                             </option>
-                                            <option value="Campuran">
-                                                Campuran (Saintek + Soshum)
+                                            <option value="HUMANIORA">
+                                                🎨 HUMANIORA
+                                            </option>
+                                            <option value="ILMU FORMAL">
+                                                📐 ILMU FORMAL
+                                            </option>
+                                            <option value="ILMU TERAPAN">
+                                                ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
-                                        {errors.category && (
+                                        {errors.rumpun_ilmu && (
                                             <p className="text-red-500 text-xs mt-1">
-                                                {errors.category}
+                                                {errors.rumpun_ilmu}
                                             </p>
                                         )}
                                     </div>
@@ -817,10 +859,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <textarea
                                             value={data.description}
                                             onChange={(e) =>
-                                                setData(
-                                                    "description",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    description: e.target.value,
+                                                })
                                             }
                                             rows="3"
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -1028,10 +1070,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <textarea
                                             value={data.career_prospects}
                                             onChange={(e) =>
-                                                setData(
-                                                    "career_prospects",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    career_prospects:
+                                                        e.target.value,
+                                                })
                                             }
                                             rows="2"
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -1044,10 +1087,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             type="checkbox"
                                             checked={data.is_active}
                                             onChange={(e) =>
-                                                setData(
-                                                    "is_active",
-                                                    e.target.checked
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    is_active: e.target.checked,
+                                                })
                                             }
                                             className="rounded border-gray-300 text-blue-600"
                                         />
@@ -1095,10 +1138,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             type="text"
                                             value={data.major_name}
                                             onChange={(e) =>
-                                                setData(
-                                                    "major_name",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    major_name: e.target.value,
+                                                })
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                         />
@@ -1111,31 +1154,37 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
 
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Kategori Jurusan
+                                            Rumpun Ilmu
                                         </label>
                                         <select
-                                            value={data.category}
+                                            value={data.rumpun_ilmu}
                                             onChange={(e) =>
-                                                setData(
-                                                    "category",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    rumpun_ilmu: e.target.value,
+                                                })
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                         >
-                                            <option value="Saintek">
-                                                Saintek (Sains dan Teknologi)
+                                            <option value="ILMU ALAM">
+                                                🔬 ILMU ALAM
                                             </option>
-                                            <option value="Soshum">
-                                                Soshum (Sosial dan Humaniora)
+                                            <option value="ILMU SOSIAL">
+                                                📚 ILMU SOSIAL
                                             </option>
-                                            <option value="Campuran">
-                                                Campuran (Saintek + Soshum)
+                                            <option value="HUMANIORA">
+                                                🎨 HUMANIORA
+                                            </option>
+                                            <option value="ILMU FORMAL">
+                                                📐 ILMU FORMAL
+                                            </option>
+                                            <option value="ILMU TERAPAN">
+                                                ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
-                                        {errors.category && (
+                                        {errors.rumpun_ilmu && (
                                             <p className="text-red-500 text-xs mt-1">
-                                                {errors.category}
+                                                {errors.rumpun_ilmu}
                                             </p>
                                         )}
                                     </div>
@@ -1147,10 +1196,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <textarea
                                             value={data.description}
                                             onChange={(e) =>
-                                                setData(
-                                                    "description",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    description: e.target.value,
+                                                })
                                             }
                                             rows="3"
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -1357,10 +1406,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <textarea
                                             value={data.career_prospects}
                                             onChange={(e) =>
-                                                setData(
-                                                    "career_prospects",
-                                                    e.target.value
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    career_prospects:
+                                                        e.target.value,
+                                                })
                                             }
                                             rows="2"
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -1372,10 +1422,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             type="checkbox"
                                             checked={data.is_active}
                                             onChange={(e) =>
-                                                setData(
-                                                    "is_active",
-                                                    e.target.checked
-                                                )
+                                                setData({
+                                                    ...data,
+                                                    is_active: e.target.checked,
+                                                })
                                             }
                                             className="rounded border-gray-300 text-blue-600"
                                         />
@@ -1634,11 +1684,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                             <button
                                                 onClick={() => {
                                                     // Create template CSV content
-                                                    const templateContent = `Nama Jurusan;Kategori;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
-Teknik Informatika;Saintek;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
-Teknik Sipil;Saintek;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
-Kedokteran;Saintek;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya
-Akuntansi;Soshum;Program studi yang mempelajari manajemen keuangan dan akuntansi bisnis;Matematika, Bahasa Inggris, Bahasa Indonesia;Ekonomi, Geografi;Matematika Tingkat Lanjut, Ekonomi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Akuntan, Auditor, Financial Analyst;Ya`;
+                                                    const templateContent = `Nama Jurusan;Rumpun Ilmu;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
+Teknik Informatika;ILMU TERAPAN;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
+Teknik Sipil;ILMU TERAPAN;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
+Kedokteran;ILMU ALAM;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya
+Akuntansi;ILMU SOSIAL;Program studi yang mempelajari manajemen keuangan dan akuntansi bisnis;Matematika, Bahasa Inggris, Bahasa Indonesia;Ekonomi, Geografi;Matematika Tingkat Lanjut, Ekonomi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Akuntan, Auditor, Financial Analyst;Ya`;
 
                                                     // Create blob and download
                                                     const blob = new Blob(
@@ -1685,9 +1735,9 @@ Akuntansi;Soshum;Program studi yang mempelajari manajemen keuangan dan akuntansi
                                                 Jurusan (wajib)
                                             </p>
                                             <p>
-                                                <strong>Kolom 2:</strong>{" "}
-                                                Kategori
-                                                (Saintek/Soshum/Campuran)
+                                                <strong>Kolom 2:</strong> Rumpun
+                                                Ilmu (HUMANIORA/ILMU SOSIAL/ILMU
+                                                ALAM/ILMU FORMAL/ILMU TERAPAN)
                                             </p>
                                             <p>
                                                 <strong>Kolom 3:</strong>{" "}

@@ -1180,14 +1180,14 @@ class SuperAdminController extends Controller
     {
         $majorRecommendations = \App\Models\MajorRecommendation::orderBy('major_name')->get();
         
-        // Debug: Log first few records to check if category is present
+        // Debug: Log first few records to check if rumpun_ilmu is present
         \Log::info('Major Recommendations Data:', [
             'total_count' => $majorRecommendations->count(),
             'sample_data' => $majorRecommendations->take(3)->map(function($major) {
                 return [
                     'id' => $major->id,
                     'major_name' => $major->major_name,
-                    'category' => $major->category
+                    'rumpun_ilmu' => $major->rumpun_ilmu
                 ];
             })
         ]);
@@ -1208,7 +1208,7 @@ class SuperAdminController extends Controller
         try {
             $request->validate([
                 'major_name' => 'required|string|max:255|unique:major_recommendations,major_name',
-                'category' => 'required|string|in:Saintek,Soshum,Campuran',
+                'rumpun_ilmu' => 'required|string|in:HUMANIORA,ILMU SOSIAL,ILMU ALAM,ILMU FORMAL,ILMU TERAPAN',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
                 'required_subjects.*' => 'string',
@@ -1256,7 +1256,7 @@ class SuperAdminController extends Controller
             
             $request->validate([
                 'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
-                'category' => 'required|string|in:Saintek,Soshum,Campuran',
+                'rumpun_ilmu' => 'required|string|in:HUMANIORA,ILMU SOSIAL,ILMU ALAM,ILMU FORMAL,ILMU TERAPAN',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
                 'required_subjects.*' => 'string',
