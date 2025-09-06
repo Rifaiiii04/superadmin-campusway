@@ -608,4 +608,51 @@ class SchoolDashboardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete student
+     */
+    public function deleteStudent(Request $request, $studentId)
+    {
+        try {
+            $school = School::find($request->school_id);
+
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Cari siswa yang akan dihapus
+            $student = Student::where('id', $studentId)
+                ->where('school_id', $school->id)
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan'
+                ], 404);
+            }
+
+            // Hapus pilihan jurusan siswa terlebih dahulu (jika ada)
+            StudentChoice::where('student_id', $studentId)->delete();
+
+            // Hapus siswa
+            $student->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil dihapus'
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting student: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
 }

@@ -56,6 +56,8 @@ class TkaSchedule extends Model
     {
         return $query->where(function($q) use ($schoolId) {
             $q->whereNull('target_schools')
+              ->orWhere('target_schools', '[]')
+              ->orWhere('target_schools', '')
               ->orWhereJsonContains('target_schools', $schoolId);
         });
     }
