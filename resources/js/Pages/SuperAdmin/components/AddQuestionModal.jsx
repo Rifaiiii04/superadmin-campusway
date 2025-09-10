@@ -42,7 +42,7 @@ export default function AddQuestionModal({
                                 onChange={(e) =>
                                     setData("subject", e.target.value)
                                 }
-                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                             />
                             {errors.subject && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -74,7 +74,7 @@ export default function AddQuestionModal({
                             value={data.content}
                             onChange={(e) => setData("content", e.target.value)}
                             rows={4}
-                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                         />
                         {errors.content && (
                             <p className="mt-1 text-sm text-red-600">
@@ -102,7 +102,7 @@ export default function AddQuestionModal({
                                         handleFileUpload(file);
                                     }
                                 }}
-                                className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                className="block w-full text-xs sm:text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-maroon-50 file:text-maroon-700 hover:file:bg-maroon-100"
                             />
                             <p className="text-xs text-gray-500 mt-1">
                                 Format: JPG, PNG, MP3, WAV (Max: 5MB)
@@ -121,7 +121,7 @@ export default function AddQuestionModal({
                                     setData("media_url", e.target.value)
                                 }
                                 placeholder="https://example.com/image.jpg atau audio.mp3"
-                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                             />
                             {errors.media_url && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -198,7 +198,7 @@ export default function AddQuestionModal({
                                                     e.target.checked
                                                 )
                                             }
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-maroon-600 focus:ring-maroon-500 border-gray-300 rounded"
                                         />
                                         <span className="ml-2 text-sm font-medium text-gray-700 w-6">
                                             {option.label}:
@@ -215,7 +215,7 @@ export default function AddQuestionModal({
                                             )
                                         }
                                         placeholder={`Masukkan opsi ${option.label}`}
-                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                                     />
                                 </div>
                             ))}
@@ -236,7 +236,7 @@ export default function AddQuestionModal({
                     <button
                         onClick={onSubmit}
                         disabled={processing}
-                        className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700 disabled:opacity-50 transition-colors"
                     >
                         {processing ? "Menyimpan..." : "Simpan"}
                     </button>

@@ -21,7 +21,7 @@ export default function SchoolDetail({ school }) {
 
                     <div className="bg-white shadow-sm border rounded-lg p-6">
                         <div className="flex items-center mb-4">
-                            <div className="p-3 rounded-lg bg-blue-500">
+                            <div className="p-3 rounded-lg bg-maroon-500">
                                 <Building2 className="h-8 w-8 text-white" />
                             </div>
                             <div className="ml-4">
@@ -164,7 +164,7 @@ export default function SchoolDetail({ school }) {
                                                             (choice, index) => (
                                                                 <span
                                                                     key={index}
-                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-1"
+                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800 mr-1"
                                                                 >
                                                                     {choice
                                                                         .major

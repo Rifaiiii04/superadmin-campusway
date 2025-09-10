@@ -211,7 +211,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     Tambah Soal
@@ -280,7 +280,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                             placeholder="Cari soal..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                         />
                     </div>
                 </div>
@@ -331,7 +331,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                         />
                                     </div>
                                     <div>
@@ -357,7 +357,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                             setData("content", e.target.value)
                                         }
                                         rows={4}
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                     />
                                 </div>
 
@@ -372,7 +372,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                             setData("media_url", e.target.value)
                                         }
                                         placeholder="https://example.com/image.jpg"
-                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                     />
                                 </div>
 
@@ -401,7 +401,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                                                 e.target.checked
                                                             )
                                                         }
-                                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        className="h-4 w-4 text-maroon-600 focus:ring-maroon-500 border-gray-300 rounded"
                                                     />
                                                     <span className="ml-2 text-sm font-medium text-gray-700 w-6">
                                                         {option.label}:
@@ -418,7 +418,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                                         )
                                                     }
                                                     placeholder={`Masukkan opsi ${option.label}`}
-                                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                                 />
                                             </div>
                                         ))}
@@ -443,7 +443,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                                 <button
                                     onClick={handleEditQuestion}
                                     disabled={processing}
-                                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700 disabled:opacity-50"
                                 >
                                     {processing ? "Menyimpan..." : "Update"}
                                 </button>

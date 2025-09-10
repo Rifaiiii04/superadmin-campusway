@@ -81,7 +81,7 @@ export default function Schools({ schools }) {
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     <span className="hidden sm:inline">
@@ -102,7 +102,7 @@ export default function Schools({ schools }) {
                             placeholder="Cari sekolah..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                         />
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export default function Schools({ schools }) {
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                                         <div className="flex items-center">
                                             <div className="flex-shrink-0">
-                                                <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                                                <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-maroon-600" />
                                             </div>
                                             <div className="ml-3 min-w-0 flex-1">
                                                 <div className="flex items-center">
@@ -141,7 +141,7 @@ export default function Schools({ schools }) {
                                                 onClick={() =>
                                                     openEditModal(school)
                                                 }
-                                                className="text-blue-600 hover:text-blue-900"
+                                                className="text-maroon-600 hover:text-maroon-900"
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </button>
@@ -180,7 +180,7 @@ export default function Schools({ schools }) {
                                             onChange={(e) =>
                                                 setData("npsn", e.target.value)
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan NPSN"
                                         />
                                         {errors.npsn && (
@@ -199,7 +199,7 @@ export default function Schools({ schools }) {
                                             onChange={(e) =>
                                                 setData("name", e.target.value)
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan nama sekolah"
                                         />
                                         {errors.name && (
@@ -221,7 +221,7 @@ export default function Schools({ schools }) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan password default"
                                         />
                                         {errors.password && (
@@ -241,7 +241,7 @@ export default function Schools({ schools }) {
                                     <button
                                         onClick={handleAddSchool}
                                         disabled={processing}
-                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-maroon-600 rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {processing ? "Menyimpan..." : "Simpan"}
                                     </button>
@@ -270,7 +270,7 @@ export default function Schools({ schools }) {
                                             onChange={(e) =>
                                                 setData("npsn", e.target.value)
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                         />
                                         {errors.npsn && (
                                             <p className="mt-1 text-sm text-red-600">
@@ -288,7 +288,7 @@ export default function Schools({ schools }) {
                                             onChange={(e) =>
                                                 setData("name", e.target.value)
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                         />
                                         {errors.name && (
                                             <p className="mt-1 text-sm text-red-600">
@@ -309,7 +309,7 @@ export default function Schools({ schools }) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Kosongkan jika tidak ingin mengubah password"
                                         />
                                         {errors.password && (
@@ -329,7 +329,7 @@ export default function Schools({ schools }) {
                                     <button
                                         onClick={handleEditSchool}
                                         disabled={processing}
-                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-maroon-600 rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {processing ? "Menyimpan..." : "Simpan"}
                                     </button>

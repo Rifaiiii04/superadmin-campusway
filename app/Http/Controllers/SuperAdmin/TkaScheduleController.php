@@ -100,7 +100,16 @@ class TkaScheduleController extends Controller
                 'type' => 'required|in:regular,makeup,special',
                 'instructions' => 'nullable|string',
                 'target_schools' => 'nullable|array',
-                'target_schools.*' => 'integer|exists:schools,id'
+                'target_schools.*' => 'integer|exists:schools,id',
+                // PUSMENDIK Essential Fields
+                'gelombang' => 'nullable|string|in:1,2',
+                'hari_pelaksanaan' => 'nullable|string|in:Hari Pertama,Hari Kedua',
+                'exam_venue' => 'nullable|string|max:255',
+                'exam_room' => 'nullable|string|max:100',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:20',
+                'requirements' => 'nullable|string',
+                'materials_needed' => 'nullable|string'
             ]);
 
             if ($validator->fails()) {
@@ -119,7 +128,16 @@ class TkaScheduleController extends Controller
                 'type' => $request->type,
                 'instructions' => $request->instructions,
                 'target_schools' => $request->target_schools,
-                'created_by' => 'Super Admin'
+                'created_by' => 'Super Admin',
+                // PUSMENDIK Essential Fields
+                'gelombang' => $request->gelombang,
+                'hari_pelaksanaan' => $request->hari_pelaksanaan,
+                'exam_venue' => $request->exam_venue,
+                'exam_room' => $request->exam_room,
+                'contact_person' => $request->contact_person,
+                'contact_phone' => $request->contact_phone,
+                'requirements' => $request->requirements,
+                'materials_needed' => $request->materials_needed
             ]);
 
             return response()->json([

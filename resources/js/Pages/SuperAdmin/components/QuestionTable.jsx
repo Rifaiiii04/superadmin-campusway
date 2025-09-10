@@ -54,7 +54,7 @@ export default function QuestionTable({
                                     <span
                                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                             question.type === "Pilihan Ganda"
-                                                ? "bg-blue-100 text-blue-800"
+                                                ? "bg-maroon-100 text-maroon-800"
                                                 : "bg-green-100 text-green-800"
                                         }`}
                                     >
@@ -80,7 +80,7 @@ export default function QuestionTable({
                                             ) : question.media_url.match(
                                                   /\.(mp3|wav|ogg|m4a)$/i
                                               ) ? (
-                                                <div className="text-blue-600">
+                                                <div className="text-maroon-600">
                                                     <span className="text-xs">
                                                         🎵 Audio
                                                     </span>
@@ -156,7 +156,7 @@ export default function QuestionTable({
                                     <div className="flex items-center justify-end space-x-2 sm:space-x-3">
                                         <button
                                             onClick={() => onEdit(question)}
-                                            className="text-blue-600 hover:text-blue-900 p-1 sm:p-2 rounded-md hover:bg-blue-50 transition-colors"
+                                            className="text-maroon-600 hover:text-maroon-900 p-1 sm:p-2 rounded-md hover:bg-maroon-50 transition-colors"
                                             title="Edit Soal"
                                         >
                                             <Edit className="h-4 w-4 sm:h-5 sm:w-5" />

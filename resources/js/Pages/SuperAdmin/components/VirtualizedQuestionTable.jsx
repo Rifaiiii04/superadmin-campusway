@@ -1,6 +1,9 @@
 import React, { useMemo } from "react";
-import { FixedSizeList as List } from "react-window";
 import { Edit, Trash2, CheckCircle } from "lucide-react";
+
+// Import react-window using require for compatibility
+const ReactWindow = require("react-window");
+const List = ReactWindow.FixedSizeList;
 
 const ITEM_HEIGHT = 120; // Height of each row
 
@@ -43,7 +46,7 @@ export default function VirtualizedQuestionTable({
                                     <span
                                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                             question.type === "Pilihan Ganda"
-                                                ? "bg-blue-100 text-blue-800"
+                                                ? "bg-maroon-100 text-maroon-800"
                                                 : "bg-green-100 text-green-800"
                                         }`}
                                     >
@@ -69,7 +72,7 @@ export default function VirtualizedQuestionTable({
                                             ) : question.media_url.match(
                                                   /\.(mp3|wav|ogg|m4a)$/i
                                               ) ? (
-                                                <div className="text-blue-600">
+                                                <div className="text-maroon-600">
                                                     <span className="text-xs">
                                                         🎵
                                                     </span>
@@ -137,7 +140,7 @@ export default function VirtualizedQuestionTable({
                         <div className="flex items-center space-x-2 ml-4">
                             <button
                                 onClick={() => onEdit(question)}
-                                className="text-blue-600 hover:text-blue-900 p-1 rounded-md hover:bg-blue-50 transition-colors"
+                                className="text-maroon-600 hover:text-maroon-900 p-1 rounded-md hover:bg-maroon-50 transition-colors"
                                 title="Edit Soal"
                             >
                                 <Edit className="h-4 w-4" />

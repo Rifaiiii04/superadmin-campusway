@@ -21,7 +21,7 @@ export default function SuperAdminLogin() {
             <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-md">
                     <div className="flex justify-center">
-                        <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-blue-600" />
+                        <Building2 className="h-12 w-12 sm:h-16 sm:w-16 text-maroon-600" />
                     </div>
                     <h2 className="mt-4 sm:mt-6 text-center text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
                         Super Admin Login
@@ -54,7 +54,7 @@ export default function SuperAdminLogin() {
                                         onChange={(e) =>
                                             setData("username", e.target.value)
                                         }
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                                         placeholder="Masukkan username"
                                     />
                                 </div>
@@ -84,7 +84,7 @@ export default function SuperAdminLogin() {
                                         onChange={(e) =>
                                             setData("password", e.target.value)
                                         }
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm pr-10"
+                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500 text-sm pr-10"
                                         placeholder="Masukkan password"
                                     />
                                     <button
@@ -112,7 +112,7 @@ export default function SuperAdminLogin() {
                                 <button
                                     type="submit"
                                     disabled={processing}
-                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 disabled:opacity-50"
                                 >
                                     {processing ? "Memproses..." : "Masuk"}
                                 </button>

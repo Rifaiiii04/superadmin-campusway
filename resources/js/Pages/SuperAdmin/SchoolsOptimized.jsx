@@ -134,7 +134,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700"
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
                                     <span className="hidden sm:inline">
@@ -155,7 +155,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                             placeholder="Cari sekolah..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 text-sm"
                         />
                     </div>
                 </div>
@@ -163,7 +163,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                 <div className="bg-white shadow overflow-hidden rounded-lg">
                     {isLoading ? (
                         <div className="px-4 py-8 text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-maroon-600 mx-auto"></div>
                             <p className="mt-2 text-sm text-gray-500">
                                 Loading schools...
                             </p>
@@ -176,7 +176,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0">
-                                                    <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                                                    <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-maroon-600" />
                                                 </div>
                                                 <div className="ml-3 min-w-0 flex-1">
                                                     <div className="flex items-center">
@@ -202,7 +202,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     onClick={() =>
                                                         openEditModal(school)
                                                     }
-                                                    className="text-blue-600 hover:text-blue-900"
+                                                    className="text-maroon-600 hover:text-maroon-900"
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </button>
@@ -247,7 +247,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                     disabled={!link.url}
                                     className={`px-3 py-2 text-sm font-medium rounded-md ${
                                         link.active
-                                            ? "bg-blue-600 text-white"
+                                            ? "bg-maroon-600 text-white"
                                             : link.url
                                             ? "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
                                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -283,7 +283,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     npsn: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan NPSN"
                                         />
                                     </div>
@@ -300,7 +300,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     name: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan nama sekolah"
                                         />
                                     </div>
@@ -317,7 +317,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     password: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Masukkan password default"
                                         />
                                     </div>
@@ -334,7 +334,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                         disabled={
                                             createSchoolMutation.isLoading
                                         }
-                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-maroon-600 rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {createSchoolMutation.isLoading
                                             ? "Menyimpan..."
@@ -368,7 +368,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     npsn: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                         />
                                     </div>
                                     <div>
@@ -384,7 +384,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     name: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                         />
                                     </div>
                                     <div>
@@ -400,7 +400,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                                     password: e.target.value,
                                                 })
                                             }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500"
                                             placeholder="Kosongkan jika tidak ingin mengubah password"
                                         />
                                     </div>
@@ -417,7 +417,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                         disabled={
                                             updateSchoolMutation.isLoading
                                         }
-                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-maroon-600 rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {updateSchoolMutation.isLoading
                                             ? "Menyimpan..."

@@ -66,7 +66,7 @@ export default function SuperAdminLayout({ children }) {
             >
                 <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
                     <div className="flex items-center">
-                        <Building2 className="h-8 w-8 text-blue-600" />
+                        <Building2 className="h-8 w-8 text-maroon-600" />
                         <span className="ml-3 text-xl font-bold text-gray-900">
                             Super Admin
                         </span>
@@ -91,14 +91,14 @@ export default function SuperAdminLayout({ children }) {
                                     onClick={closeSidebar}
                                     className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                                         isActive
-                                            ? "bg-blue-100 text-blue-700 border-r-2 border-blue-700"
+                                            ? "bg-maroon-100 text-maroon-700 border-r-2 border-maroon-700"
                                             : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                     }`}
                                 >
                                     <item.icon
                                         className={`mr-3 h-5 w-5 ${
                                             isActive
-                                                ? "text-blue-700"
+                                                ? "text-maroon-700"
                                                 : "text-gray-400 group-hover:text-gray-500"
                                         }`}
                                     />
@@ -113,8 +113,8 @@ export default function SuperAdminLayout({ children }) {
                 <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center">
-                            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium text-blue-700">
+                            <div className="h-8 w-8 bg-maroon-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-maroon-700">
                                     {auth?.user?.username
                                         ?.charAt(0)
                                         ?.toUpperCase() || "A"}

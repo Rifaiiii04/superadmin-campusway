@@ -12,7 +12,6 @@ import {
     Users,
     Download,
     Search,
-    Upload,
 } from "lucide-react";
 
 export default function MajorRecommendations({ majorRecommendations = [] }) {
@@ -21,9 +20,6 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedMajor, setSelectedMajor] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [showImportModal, setShowImportModal] = useState(false);
-    const [importFile, setImportFile] = useState(null);
-    const [importing, setImporting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
     const [rumpunIlmuFilter, setRumpunIlmuFilter] = useState("all"); // all, HUMANIORA, ILMU SOSIAL, ILMU ALAM, ILMU FORMAL, ILMU TERAPAN
@@ -116,47 +112,6 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
     const handleToggleStatus = (id) => {
         // Use Inertia patch for toggle
         router.patch(`/super-admin/major-recommendations/${id}/toggle`);
-    };
-
-    const handleImport = async () => {
-        if (!importFile) {
-            alert("Pilih file CSV terlebih dahulu");
-            return;
-        }
-
-        setImporting(true);
-        const formData = new FormData();
-        formData.append("file", importFile);
-
-        try {
-            const response = await fetch(
-                "/super-admin/major-recommendations/import",
-                {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                }
-            );
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert(result.message);
-                setShowImportModal(false);
-                setImportFile(null);
-                // Refresh the page to show new data
-                window.location.reload();
-            } else {
-                alert(result.message || "Terjadi kesalahan saat import");
-            }
-        } catch (error) {
-            console.error("Import error:", error);
-            alert("Terjadi kesalahan saat import");
-        } finally {
-            setImporting(false);
-        }
     };
 
     // Filter majors based on search term, status, and category
@@ -277,15 +232,8 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     Export CSV
                                 </button>
                                 <button
-                                    onClick={() => setShowImportModal(true)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                                >
-                                    <Upload className="h-4 w-4" />
-                                    Import CSV
-                                </button>
-                                <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                    className="bg-maroon-600 hover:bg-maroon-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
                                     Tambah Jurusan
@@ -314,7 +262,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                     </div>
                     <div className="bg-white rounded-lg shadow-sm border p-4">
                         <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-blue-500">
+                            <div className="p-2 rounded-lg bg-maroon-500">
                                 <span className="text-white text-lg">🔵</span>
                             </div>
                             <div className="ml-3">
@@ -435,16 +383,16 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                 {(searchTerm !== "" ||
                     statusFilter !== "all" ||
                     rumpunIlmuFilter !== "all") && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div className="bg-maroon-50 border border-maroon-200 rounded-lg p-4 mb-6">
                         <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-blue-500">
+                            <div className="p-2 rounded-lg bg-maroon-500">
                                 <Search className="h-5 w-5 text-white" />
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-blue-800">
+                                <p className="text-sm font-medium text-maroon-800">
                                     Hasil Pencarian & Filter
                                 </p>
-                                <p className="text-lg font-bold text-blue-900">
+                                <p className="text-lg font-bold text-maroon-900">
                                     {filteredMajors.length} jurusan ditemukan
                                 </p>
                             </div>
@@ -474,7 +422,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         onChange={(e) =>
                                             setSearchTerm(e.target.value)
                                         }
-                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 sm:text-sm"
                                     />
                                 </div>
 
@@ -484,7 +432,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     onChange={(e) =>
                                         setRumpunIlmuFilter(e.target.value)
                                     }
-                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 sm:text-sm"
                                 >
                                     <option value="all">
                                         Semua Rumpun Ilmu
@@ -512,7 +460,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     onChange={(e) =>
                                         setStatusFilter(e.target.value)
                                     }
-                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                    className="block w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500 sm:text-sm"
                                 >
                                     <option value="all">Semua Status</option>
                                     <option value="active">Aktif</option>
@@ -619,7 +567,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                     major.rumpun_ilmu ===
                                                     "ILMU ALAM"
-                                                        ? "bg-blue-100 text-blue-800 border border-blue-200"
+                                                        ? "bg-maroon-100 text-maroon-800 border border-maroon-200"
                                                         : major.rumpun_ilmu ===
                                                           "ILMU SOSIAL"
                                                         ? "bg-green-100 text-green-800 border border-green-200"
@@ -663,7 +611,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                     (subject, index) => (
                                                         <span
                                                             key={index}
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800"
                                                         >
                                                             {subject}
                                                         </span>
@@ -704,7 +652,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                     onClick={() =>
                                                         openDetailModal(major)
                                                     }
-                                                    className="text-blue-600 hover:text-blue-900"
+                                                    className="text-maroon-600 hover:text-maroon-900"
                                                     title="Lihat Detail"
                                                 >
                                                     <Eye className="h-4 w-4" />
@@ -771,7 +719,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                 setStatusFilter("all");
                                                 setRumpunIlmuFilter("all");
                                             }}
-                                            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+                                            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-maroon-700 bg-maroon-100 hover:bg-maroon-200"
                                         >
                                             Reset Filter
                                         </button>
@@ -873,25 +821,25 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                            <p className="text-sm text-blue-800 mb-2">
+                                        <div className="mt-2 p-3 bg-maroon-50 border border-maroon-200 rounded-md">
+                                            <p className="text-sm text-maroon-800 mb-2">
                                                 <strong>
                                                     Mata pelajaran wajib untuk
                                                     semua jurusan:
                                                 </strong>
                                             </p>
                                             <div className="flex flex-wrap gap-2">
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Matematika
                                                 </span>
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Bahasa Inggris
                                                 </span>
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Bahasa Indonesia
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-blue-600 mt-2">
+                                            <p className="text-xs text-maroon-600 mt-2">
                                                 Mata pelajaran wajib ini akan
                                                 otomatis ditambahkan untuk semua
                                                 jurusan.
@@ -1092,7 +1040,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                     is_active: e.target.checked,
                                                 })
                                             }
-                                            className="rounded border-gray-300 text-blue-600"
+                                            className="rounded border-gray-300 text-maroon-600"
                                         />
                                         <span className="ml-2 text-sm text-gray-700">
                                             Jurusan Aktif
@@ -1110,7 +1058,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     <button
                                         onClick={handleAddMajor}
                                         disabled={processing}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-maroon-600 border border-transparent rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {processing ? "Menyimpan..." : "Simpan"}
                                     </button>
@@ -1209,25 +1157,25 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         <label className="block text-sm font-medium text-gray-700">
                                             Mata Pelajaran Wajib
                                         </label>
-                                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                                            <p className="text-sm text-blue-800 mb-2">
+                                        <div className="mt-2 p-3 bg-maroon-50 border border-maroon-200 rounded-md">
+                                            <p className="text-sm text-maroon-800 mb-2">
                                                 <strong>
                                                     Mata pelajaran wajib untuk
                                                     semua jurusan:
                                                 </strong>
                                             </p>
                                             <div className="flex flex-wrap gap-2">
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Matematika
                                                 </span>
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Bahasa Inggris
                                                 </span>
-                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                     Bahasa Indonesia
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-blue-600 mt-2">
+                                            <p className="text-xs text-maroon-600 mt-2">
                                                 Mata pelajaran wajib ini akan
                                                 otomatis ditambahkan untuk semua
                                                 jurusan.
@@ -1427,7 +1375,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                     is_active: e.target.checked,
                                                 })
                                             }
-                                            className="rounded border-gray-300 text-blue-600"
+                                            className="rounded border-gray-300 text-maroon-600"
                                         />
                                         <span className="ml-2 text-sm text-gray-700">
                                             Jurusan Aktif
@@ -1445,7 +1393,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     <button
                                         onClick={handleEditMajor}
                                         disabled={processing}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-maroon-600 border border-transparent rounded-md hover:bg-maroon-700 disabled:opacity-50"
                                     >
                                         {processing ? "Menyimpan..." : "Update"}
                                     </button>
@@ -1498,7 +1446,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                             ) => (
                                                                 <span
                                                                     key={index}
-                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800"
                                                                 >
                                                                     {subject}
                                                                 </span>
@@ -1638,179 +1586,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         onClick={() =>
                                             setShowDetailModal(false)
                                         }
-                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-maroon-600 text-base font-medium text-white hover:bg-maroon-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500 sm:ml-3 sm:w-auto sm:text-sm"
                                     >
                                         Tutup
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Import Modal */}
-                {showImportModal && (
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-                        <div className="relative top-10 sm:top-20 mx-auto p-4 sm:p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
-                            <div className="mt-3">
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                                    Import Jurusan dari CSV
-                                </h3>
-
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Pilih File CSV
-                                        </label>
-                                        <input
-                                            type="file"
-                                            accept=".csv,.txt"
-                                            onChange={(e) =>
-                                                setImportFile(e.target.files[0])
-                                            }
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Format CSV dengan delimiter
-                                            semicolon (;). Maksimal 2MB.
-                                        </p>
-                                    </div>
-
-                                    <div className="bg-blue-50 p-4 rounded-lg">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="text-sm font-medium text-blue-800">
-                                                Format CSV yang Diperlukan:
-                                            </h4>
-                                            <button
-                                                onClick={() => {
-                                                    // Create template CSV content
-                                                    const templateContent = `Nama Jurusan;Rumpun Ilmu;Deskripsi;Mata Pelajaran Wajib;Mata Pelajaran Preferensi;Kurikulum Merdeka;Kurikulum 2013 - IPA;Kurikulum 2013 - IPS;Kurikulum 2013 - Bahasa;Prospek Karir;Aktif
-Teknik Informatika;ILMU TERAPAN;Program studi yang mempelajari teknologi komputer dan pengembangan perangkat lunak;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Informatika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Software Developer, Data Scientist, System Analyst;Ya
-Teknik Sipil;ILMU TERAPAN;Program studi yang mempelajari perencanaan, perancangan, dan konstruksi infrastruktur;Matematika, Bahasa Inggris, Bahasa Indonesia;Fisika, Kimia;Matematika Tingkat Lanjut, Fisika;Matematika Peminatan, Fisika, Kimia;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Civil Engineer, Project Manager, Consultant;Ya
-Kedokteran;ILMU ALAM;Program studi yang mempelajari ilmu kedokteran dan kesehatan;Matematika, Bahasa Inggris, Bahasa Indonesia;Biologi, Kimia, Fisika;Matematika Tingkat Lanjut, Biologi, Kimia;Matematika Peminatan, Fisika, Kimia, Biologi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Dokter, Peneliti Medis, Konsultan Kesehatan;Ya
-Akuntansi;ILMU SOSIAL;Program studi yang mempelajari manajemen keuangan dan akuntansi bisnis;Matematika, Bahasa Inggris, Bahasa Indonesia;Ekonomi, Geografi;Matematika Tingkat Lanjut, Ekonomi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Ekonomi, Geografi;Matematika Peminatan, Bahasa Indonesia, Sastra Indonesia;Akuntan, Auditor, Financial Analyst;Ya`;
-
-                                                    // Create blob and download
-                                                    const blob = new Blob(
-                                                        [templateContent],
-                                                        {
-                                                            type: "text/csv;charset=utf-8;",
-                                                        }
-                                                    );
-                                                    const link =
-                                                        document.createElement(
-                                                            "a"
-                                                        );
-                                                    const url =
-                                                        URL.createObjectURL(
-                                                            blob
-                                                        );
-                                                    link.setAttribute(
-                                                        "href",
-                                                        url
-                                                    );
-                                                    link.setAttribute(
-                                                        "download",
-                                                        "template_import_jurusan.csv"
-                                                    );
-                                                    link.style.visibility =
-                                                        "hidden";
-                                                    document.body.appendChild(
-                                                        link
-                                                    );
-                                                    link.click();
-                                                    document.body.removeChild(
-                                                        link
-                                                    );
-                                                }}
-                                                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <Download className="h-3 w-3 mr-1" />
-                                                Download Template
-                                            </button>
-                                        </div>
-                                        <div className="text-xs text-blue-700 space-y-1">
-                                            <p>
-                                                <strong>Kolom 1:</strong> Nama
-                                                Jurusan (wajib)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 2:</strong> Rumpun
-                                                Ilmu (HUMANIORA/ILMU SOSIAL/ILMU
-                                                ALAM/ILMU FORMAL/ILMU TERAPAN)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 3:</strong>{" "}
-                                                Deskripsi
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 4:</strong> Mata
-                                                Pelajaran Wajib (dipisah koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 5:</strong> Mata
-                                                Pelajaran Preferensi (dipisah
-                                                koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 6:</strong>{" "}
-                                                Kurikulum Merdeka (dipisah koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 7:</strong>{" "}
-                                                Kurikulum 2013 - IPA (dipisah
-                                                koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 8:</strong>{" "}
-                                                Kurikulum 2013 - IPS (dipisah
-                                                koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 9:</strong>{" "}
-                                                Kurikulum 2013 - Bahasa (dipisah
-                                                koma)
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 10:</strong>{" "}
-                                                Prospek Karir
-                                            </p>
-                                            <p>
-                                                <strong>Kolom 11:</strong> Aktif
-                                                (Ya/Tidak)
-                                            </p>
-                                        </div>
-                                        <div className="mt-3 p-2 bg-blue-100 rounded border border-blue-200">
-                                            <p className="text-xs text-blue-800">
-                                                <strong>Tips:</strong> Klik
-                                                "Download Template" untuk
-                                                mendapatkan file CSV contoh yang
-                                                sudah sesuai format. Edit file
-                                                tersebut sesuai kebutuhan, lalu
-                                                upload kembali.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                                <button
-                                    onClick={handleImport}
-                                    disabled={!importFile || importing}
-                                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {importing ? "Mengimport..." : "Import"}
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowImportModal(false);
-                                        setImportFile(null);
-                                    }}
-                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                                >
-                                    Batal
-                                </button>
                             </div>
                         </div>
                     </div>

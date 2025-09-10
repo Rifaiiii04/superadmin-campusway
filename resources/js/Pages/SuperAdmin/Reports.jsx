@@ -22,7 +22,7 @@ export default function Reports({ errors, flash }) {
             title: "Laporan Sekolah",
             description: "Data lengkap semua sekolah terdaftar",
             icon: Building2,
-            color: "bg-blue-500",
+            color: "bg-maroon-500",
         },
         {
             id: "students",
@@ -212,7 +212,7 @@ export default function Reports({ errors, flash }) {
                                 onClick={() => setSelectedReport(report.id)}
                                 className={`bg-white rounded-lg shadow-sm border p-4 sm:p-6 cursor-pointer transition-all duration-200 hover:shadow-md ${
                                     selectedReport === report.id
-                                        ? "ring-2 ring-blue-500 border-blue-500"
+                                        ? "ring-2 ring-maroon-500 border-maroon-500"
                                         : "hover:border-gray-300"
                                 }`}
                             >
@@ -258,7 +258,7 @@ export default function Reports({ errors, flash }) {
                                                 start: e.target.value,
                                             })
                                         }
-                                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                     />
                                 </div>
                                 <div>
@@ -275,7 +275,7 @@ export default function Reports({ errors, flash }) {
                                                 end: e.target.value,
                                             })
                                         }
-                                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                        className="block w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-1 focus:ring-maroon-500 focus:border-maroon-500"
                                     />
                                 </div>
                             </div>
@@ -324,7 +324,7 @@ export default function Reports({ errors, flash }) {
                                 <button
                                     onClick={handleDownloadReportDirect}
                                     disabled={processing}
-                                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-maroon-500"
                                 >
                                     <Download className="h-4 w-4 mr-2" />
                                     {processing

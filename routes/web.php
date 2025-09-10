@@ -85,7 +85,6 @@ Route::prefix('super-admin')->name('super-admin.')->group(function () {
         Route::delete('/major-recommendations/{id}', [SuperAdminController::class, 'deleteMajorRecommendation'])->name('major-recommendations.delete');
         Route::patch('/major-recommendations/{id}/toggle', [SuperAdminController::class, 'toggleMajorRecommendation'])->name('major-recommendations.toggle');
         Route::get('/major-recommendations/export', [SuperAdminController::class, 'exportMajorRecommendations'])->name('major-recommendations.export');
-        Route::post('/major-recommendations/import', [SuperAdminController::class, 'importMajorRecommendations'])->name('major-recommendations.import');
         
         Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
         

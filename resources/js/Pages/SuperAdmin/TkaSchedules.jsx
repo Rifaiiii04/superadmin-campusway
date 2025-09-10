@@ -40,6 +40,15 @@ export default function TkaSchedules({
         type: "regular",
         instructions: "",
         target_schools: [],
+        // PUSMENDIK Essential Fields
+        gelombang: "1",
+        hari_pelaksanaan: "Hari Pertama",
+        exam_venue: "",
+        exam_room: "",
+        contact_person: "",
+        contact_phone: "",
+        requirements: "",
+        materials_needed: "",
     });
 
     // Filter schedules
@@ -316,7 +325,7 @@ export default function TkaSchedules({
                             <div className="p-6">
                                 <div className="flex items-center">
                                     <div className="flex-shrink-0">
-                                        <Calendar className="h-8 w-8 text-blue-600" />
+                                        <Calendar className="h-8 w-8 text-maroon-600" />
                                     </div>
                                     <div className="ml-5 w-0 flex-1">
                                         <dl>
@@ -547,7 +556,7 @@ export default function TkaSchedules({
                                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                             statusBadge.variant ===
                                                             "default"
-                                                                ? "bg-blue-100 text-blue-800"
+                                                                ? "bg-maroon-100 text-maroon-800"
                                                                 : statusBadge.variant ===
                                                                   "secondary"
                                                                 ? "bg-green-100 text-green-800"
@@ -563,7 +572,7 @@ export default function TkaSchedules({
                                                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                             typeBadge.variant ===
                                                             "default"
-                                                                ? "bg-blue-100 text-blue-800"
+                                                                ? "bg-maroon-100 text-maroon-800"
                                                                 : typeBadge.variant ===
                                                                   "secondary"
                                                                 ? "bg-yellow-100 text-yellow-800"
@@ -675,6 +684,7 @@ export default function TkaSchedules({
             {/* Create/Edit Modal */}
             <Modal
                 show={showCreateModal || showEditModal}
+                maxWidth="7xl"
                 onClose={() => {
                     setShowCreateModal(false);
                     setShowEditModal(false);
@@ -682,8 +692,8 @@ export default function TkaSchedules({
                     resetForm();
                 }}
             >
-                <div className="p-6">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="p-8">
+                    <h2 className="text-xl font-medium text-gray-900 mb-6">
                         {editingSchedule
                             ? "Edit Jadwal TKA"
                             : "Tambah Jadwal TKA"}
@@ -695,8 +705,8 @@ export default function TkaSchedules({
                     </p>
 
                     <form onSubmit={handleSubmit}>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="max-h-[70vh] overflow-y-auto space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div>
                                     <InputLabel
                                         htmlFor="title"
@@ -760,7 +770,7 @@ export default function TkaSchedules({
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div>
                                     <InputLabel
                                         htmlFor="start_date"
@@ -852,9 +862,190 @@ export default function TkaSchedules({
                                     ))}
                                 </select>
                             </div>
+
+                            {/* PUSMENDIK Essential Fields */}
+                            <div className="border-t pt-6 mt-6">
+                                <h3 className="text-lg font-medium text-gray-900 mb-6">
+                                    📋 Informasi PUSMENDIK (Sesuai Jadwal Resmi)
+                                </h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="gelombang"
+                                            value="Gelombang *"
+                                        />
+                                        <select
+                                            id="gelombang"
+                                            value={formData.gelombang}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    gelombang: e.target.value,
+                                                })
+                                            }
+                                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            required
+                                        >
+                                            <option value="1">
+                                                Gelombang 1
+                                            </option>
+                                            <option value="2">
+                                                Gelombang 2
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="hari_pelaksanaan"
+                                            value="Hari Pelaksanaan *"
+                                        />
+                                        <select
+                                            id="hari_pelaksanaan"
+                                            value={formData.hari_pelaksanaan}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    hari_pelaksanaan:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                            required
+                                        >
+                                            <option value="Hari Pertama">
+                                                Hari Pertama
+                                            </option>
+                                            <option value="Hari Kedua">
+                                                Hari Kedua
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="exam_venue"
+                                            value="Tempat Ujian"
+                                        />
+                                        <TextInput
+                                            id="exam_venue"
+                                            type="text"
+                                            value={formData.exam_venue}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    exam_venue: e.target.value,
+                                                })
+                                            }
+                                            placeholder="SMK Negeri 1 Jakarta"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="exam_room"
+                                            value="Ruangan Ujian"
+                                        />
+                                        <TextInput
+                                            id="exam_room"
+                                            type="text"
+                                            value={formData.exam_room}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    exam_room: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Lab Komputer 1"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="contact_person"
+                                            value="Kontak Person"
+                                        />
+                                        <TextInput
+                                            id="contact_person"
+                                            type="text"
+                                            value={formData.contact_person}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    contact_person:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            placeholder="Dr. Sari Indah, M.Pd"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <InputLabel
+                                            htmlFor="contact_phone"
+                                            value="Nomor Telepon"
+                                        />
+                                        <TextInput
+                                            id="contact_phone"
+                                            type="tel"
+                                            value={formData.contact_phone}
+                                            onChange={(e) =>
+                                                setFormData({
+                                                    ...formData,
+                                                    contact_phone:
+                                                        e.target.value,
+                                                })
+                                            }
+                                            placeholder="021-3844294"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mt-4">
+                                    <InputLabel
+                                        htmlFor="requirements"
+                                        value="Persyaratan Peserta"
+                                    />
+                                    <textarea
+                                        id="requirements"
+                                        value={formData.requirements}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                requirements: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Siswa kelas 12 SMK, membawa KTP/Kartu Pelajar, alat tulis"
+                                        rows={2}
+                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <div className="mt-4">
+                                    <InputLabel
+                                        htmlFor="materials_needed"
+                                        value="Bahan yang Diperlukan"
+                                    />
+                                    <textarea
+                                        id="materials_needed"
+                                        value={formData.materials_needed}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                materials_needed:
+                                                    e.target.value,
+                                            })
+                                        }
+                                        placeholder="Pensil 2B, Penghapus, Rautan, KTP/Kartu Pelajar"
+                                        rows={2}
+                                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex justify-end space-x-3 mt-6">
+                        <div className="sticky bottom-0 bg-white border-t pt-4 mt-6 flex justify-end space-x-3">
                             <SecondaryButton
                                 type="button"
                                 onClick={() => {

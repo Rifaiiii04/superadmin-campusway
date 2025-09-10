@@ -29,10 +29,46 @@ class TkaScheduleController extends Controller
 
             $schedules = $query->active()->orderBy('start_date', 'asc')->get();
 
+            // Transform data to include PUSMENDIK fields and formatted data
+            $transformedSchedules = $schedules->map(function ($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'title' => $schedule->title,
+                    'description' => $schedule->description,
+                    'start_date' => $schedule->start_date->toISOString(),
+                    'end_date' => $schedule->end_date->toISOString(),
+                    'status' => $schedule->status,
+                    'type' => $schedule->type,
+                    'instructions' => $schedule->instructions,
+                    'target_schools' => $schedule->target_schools,
+                    'is_active' => $schedule->is_active,
+                    'created_by' => $schedule->created_by,
+                    'created_at' => $schedule->created_at->toISOString(),
+                    'updated_at' => $schedule->updated_at->toISOString(),
+                    
+                    // PUSMENDIK Essential Fields
+                    'gelombang' => $schedule->gelombang,
+                    'hari_pelaksanaan' => $schedule->hari_pelaksanaan,
+                    'exam_venue' => $schedule->exam_venue,
+                    'exam_room' => $schedule->exam_room,
+                    'contact_person' => $schedule->contact_person,
+                    'contact_phone' => $schedule->contact_phone,
+                    'requirements' => $schedule->requirements,
+                    'materials_needed' => $schedule->materials_needed,
+                    
+                    // Formatted data for frontend
+                    'formatted_start_date' => $schedule->formatted_start_date,
+                    'formatted_end_date' => $schedule->formatted_end_date,
+                    'status_badge' => $schedule->status_badge,
+                    'type_badge' => $schedule->type_badge,
+                    'duration' => $schedule->duration,
+                ];
+            });
+
             return response()->json([
                 'success' => true,
-                'data' => $schedules,
-                'total' => $schedules->count()
+                'data' => $transformedSchedules,
+                'total' => $transformedSchedules->count()
             ]);
 
         } catch (\Exception $e) {
@@ -58,10 +94,46 @@ class TkaScheduleController extends Controller
 
             $schedules = $query->orderBy('start_date', 'asc')->get();
 
+            // Transform data to include PUSMENDIK fields and formatted data
+            $transformedSchedules = $schedules->map(function ($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'title' => $schedule->title,
+                    'description' => $schedule->description,
+                    'start_date' => $schedule->start_date->toISOString(),
+                    'end_date' => $schedule->end_date->toISOString(),
+                    'status' => $schedule->status,
+                    'type' => $schedule->type,
+                    'instructions' => $schedule->instructions,
+                    'target_schools' => $schedule->target_schools,
+                    'is_active' => $schedule->is_active,
+                    'created_by' => $schedule->created_by,
+                    'created_at' => $schedule->created_at->toISOString(),
+                    'updated_at' => $schedule->updated_at->toISOString(),
+                    
+                    // PUSMENDIK Essential Fields
+                    'gelombang' => $schedule->gelombang,
+                    'hari_pelaksanaan' => $schedule->hari_pelaksanaan,
+                    'exam_venue' => $schedule->exam_venue,
+                    'exam_room' => $schedule->exam_room,
+                    'contact_person' => $schedule->contact_person,
+                    'contact_phone' => $schedule->contact_phone,
+                    'requirements' => $schedule->requirements,
+                    'materials_needed' => $schedule->materials_needed,
+                    
+                    // Formatted data for frontend
+                    'formatted_start_date' => $schedule->formatted_start_date,
+                    'formatted_end_date' => $schedule->formatted_end_date,
+                    'status_badge' => $schedule->status_badge,
+                    'type_badge' => $schedule->type_badge,
+                    'duration' => $schedule->duration,
+                ];
+            });
+
             return response()->json([
                 'success' => true,
-                'data' => $schedules,
-                'total' => $schedules->count()
+                'data' => $transformedSchedules,
+                'total' => $transformedSchedules->count()
             ]);
 
         } catch (\Exception $e) {
@@ -86,7 +158,16 @@ class TkaScheduleController extends Controller
                 'end_date' => 'required|date|after:start_date',
                 'type' => 'required|in:regular,makeup,special',
                 'instructions' => 'nullable|string',
-                'target_schools' => 'nullable|array'
+                'target_schools' => 'nullable|array',
+                // PUSMENDIK Essential Fields
+                'gelombang' => 'nullable|in:1,2',
+                'hari_pelaksanaan' => 'nullable|in:Hari Pertama,Hari Kedua',
+                'exam_venue' => 'nullable|string|max:255',
+                'exam_room' => 'nullable|string|max:255',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:20',
+                'requirements' => 'nullable|string',
+                'materials_needed' => 'nullable|string'
             ]);
 
             if ($validator->fails()) {
@@ -105,7 +186,16 @@ class TkaScheduleController extends Controller
                 'type' => $request->type,
                 'instructions' => $request->instructions,
                 'target_schools' => $request->target_schools,
-                'created_by' => 'Super Admin'
+                'created_by' => 'Super Admin',
+                // PUSMENDIK Essential Fields
+                'gelombang' => $request->gelombang,
+                'hari_pelaksanaan' => $request->hari_pelaksanaan,
+                'exam_venue' => $request->exam_venue,
+                'exam_room' => $request->exam_room,
+                'contact_person' => $request->contact_person,
+                'contact_phone' => $request->contact_phone,
+                'requirements' => $request->requirements,
+                'materials_needed' => $request->materials_needed
             ]);
 
             return response()->json([
@@ -145,7 +235,16 @@ class TkaScheduleController extends Controller
                 'end_date' => 'required|date|after:start_date',
                 'type' => 'required|in:regular,makeup,special',
                 'instructions' => 'nullable|string',
-                'target_schools' => 'nullable|array'
+                'target_schools' => 'nullable|array',
+                // PUSMENDIK Essential Fields
+                'gelombang' => 'nullable|in:1,2',
+                'hari_pelaksanaan' => 'nullable|in:Hari Pertama,Hari Kedua',
+                'exam_venue' => 'nullable|string|max:255',
+                'exam_room' => 'nullable|string|max:255',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:20',
+                'requirements' => 'nullable|string',
+                'materials_needed' => 'nullable|string'
             ]);
 
             if ($validator->fails()) {

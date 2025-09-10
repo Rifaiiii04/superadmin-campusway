@@ -165,7 +165,7 @@ export default function Monitoring({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                         <div className="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
                             <div className="flex items-center">
-                                <div className="p-2 sm:p-3 rounded-lg bg-blue-500">
+                                <div className="p-2 sm:p-3 rounded-lg bg-maroon-500">
                                     <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                                 </div>
                                 <div className="ml-3 sm:ml-4">

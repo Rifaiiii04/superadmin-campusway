@@ -101,7 +101,7 @@ export default function Pagination({
                                 disabled={typeof page !== "number"}
                                 className={`relative inline-flex items-center px-3 sm:px-4 py-2 border text-sm font-medium ${
                                     page === currentPage
-                                        ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                        ? "z-10 bg-maroon-50 border-maroon-500 text-maroon-600"
                                         : page === "..."
                                         ? "bg-white border-gray-300 text-gray-500 cursor-default"
                                         : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"

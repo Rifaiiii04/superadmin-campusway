@@ -235,21 +235,21 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
 
                 <div className="p-4 sm:p-6">
                     {/* Template Download */}
-                    <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-maroon-50 border border-maroon-200 rounded-lg">
                         <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0">
-                            <FileText className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                            <FileText className="h-5 w-5 text-maroon-500 mr-2 flex-shrink-0" />
                             <div className="flex-1">
-                                <h3 className="font-medium text-blue-900 text-sm sm:text-base">
+                                <h3 className="font-medium text-maroon-900 text-sm sm:text-base">
                                     Download Template CSV
                                 </h3>
-                                <p className="text-xs sm:text-sm text-blue-700 mt-1">
+                                <p className="text-xs sm:text-sm text-maroon-700 mt-1">
                                     Gunakan template ini sebagai panduan format
                                     yang benar untuk import sekolah
                                 </p>
                             </div>
                             <button
                                 onClick={downloadTemplate}
-                                className="w-full sm:w-auto inline-flex items-center justify-center px-3 py-2 border border-blue-300 rounded-md text-xs sm:text-sm font-medium text-blue-700 bg-white hover:bg-blue-50"
+                                className="w-full sm:w-auto inline-flex items-center justify-center px-3 py-2 border border-maroon-300 rounded-md text-xs sm:text-sm font-medium text-maroon-700 bg-white hover:bg-maroon-50"
                             >
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Template
@@ -299,7 +299,7 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
                         <div
                             className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center ${
                                 dragActive
-                                    ? "border-blue-500 bg-blue-50"
+                                    ? "border-maroon-500 bg-maroon-50"
                                     : "border-gray-300 hover:border-gray-400"
                             }`}
                             onDragEnter={handleDrag}
@@ -310,7 +310,7 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
                             <Upload className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
                             <div className="mt-3 sm:mt-4">
                                 <p className="text-xs sm:text-sm text-gray-600">
-                                    <span className="font-medium text-blue-600 hover:text-blue-500">
+                                    <span className="font-medium text-maroon-600 hover:text-maroon-500">
                                         Klik untuk upload
                                     </span>{" "}
                                     atau drag and drop
@@ -329,7 +329,7 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
                             />
                             <label
                                 htmlFor="file-upload"
-                                className="mt-3 sm:mt-4 inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer"
+                                className="mt-3 sm:mt-4 inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-transparent text-xs sm:text-sm font-medium rounded-md text-white bg-maroon-600 hover:bg-maroon-700 cursor-pointer"
                             >
                                 Pilih File
                             </label>
@@ -414,7 +414,7 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
                         <button
                             onClick={handleSubmit}
                             disabled={!selectedFile || isImporting}
-                            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-maroon-600 hover:bg-maroon-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                         >
                             {isImporting ? (
                                 <>
@@ -437,7 +437,7 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-60">
                     <div className="bg-white rounded-lg p-4 sm:p-6 shadow-xl mx-4">
                         <div className="flex items-center space-x-3">
-                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-blue-600"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-maroon-600"></div>
                             <div>
                                 <p className="text-base sm:text-lg font-medium text-gray-900">
                                     Mengimport Sekolah...

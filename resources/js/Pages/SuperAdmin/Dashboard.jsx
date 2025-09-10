@@ -36,8 +36,8 @@ export default function Dashboard({
             {
                 label: "Jumlah Siswa",
                 data: studentsPerMajor.map((item) => item.student_count),
-                backgroundColor: "rgba(59, 130, 246, 0.8)",
-                borderColor: "rgba(59, 130, 246, 1)",
+                backgroundColor: "rgba(128, 0, 0, 0.8)",
+                borderColor: "rgba(128, 0, 0, 1)",
                 borderWidth: 2,
                 borderRadius: 8,
             },
@@ -85,7 +85,7 @@ export default function Dashboard({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow-sm border p-4">
                         <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-blue-500">
+                            <div className="p-2 rounded-lg bg-maroon-600">
                                 <Building2 className="h-5 w-5 text-white" />
                             </div>
                             <div className="ml-3">
