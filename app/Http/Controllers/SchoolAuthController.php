@@ -147,4 +147,58 @@ class SchoolAuthController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Update password sekolah
+     */
+    public function updatePassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'new_password' => 'required|string|min:6'
+            ], [
+                'new_password.required' => 'Password baru harus diisi',
+                'new_password.min' => 'Password minimal 6 karakter'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $school = School::find($request->school_id);
+
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Update password
+            $school->password_hash = Hash::make($request->new_password);
+            $school->save();
+
+            Log::info('School password updated successfully', [
+                'school_id' => $school->id,
+                'npsn' => $school->npsn,
+                'school_name' => $school->name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password berhasil diubah'
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Update school password error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
 }

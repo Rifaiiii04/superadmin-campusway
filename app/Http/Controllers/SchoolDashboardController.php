@@ -475,12 +475,12 @@ class SchoolDashboardController extends Controller
                             'nama_jurusan' => $major->major_name,
                             'kategori_jurusan' => $major->category ?? 'Saintek',
                             'prospek_karir' => $major->career_prospects ?? '-',
-                            'mata_pelajaran_wajib' => $major->required_subjects ? implode(', ', json_decode($major->required_subjects, true)) : '-',
-                            'mata_pelajaran_diutamakan' => $major->preferred_subjects ? implode(', ', json_decode($major->preferred_subjects, true)) : '-',
-                            'mata_pelajaran_kurikulum_merdeka' => $major->kurikulum_merdeka_subjects ? implode(', ', json_decode($major->kurikulum_merdeka_subjects, true)) : '-',
-                            'mata_pelajaran_kurikulum_2013_ipa' => $major->kurikulum_2013_ipa_subjects ? implode(', ', json_decode($major->kurikulum_2013_ipa_subjects, true)) : '-',
-                            'mata_pelajaran_kurikulum_2013_ips' => $major->kurikulum_2013_ips_subjects ? implode(', ', json_decode($major->kurikulum_2013_ips_subjects, true)) : '-',
-                            'mata_pelajaran_kurikulum_2013_bahasa' => $major->kurikulum_2013_bahasa_subjects ? implode(', ', json_decode($major->kurikulum_2013_bahasa_subjects, true)) : '-'
+                            'mata_pelajaran_wajib' => $major->required_subjects ? implode(', ', $major->required_subjects) : '-',
+                            'mata_pelajaran_diutamakan' => $major->preferred_subjects ? implode(', ', $major->preferred_subjects) : '-',
+                            'mata_pelajaran_kurikulum_merdeka' => $major->kurikulum_merdeka_subjects ? implode(', ', $major->kurikulum_merdeka_subjects) : '-',
+                            'mata_pelajaran_kurikulum_2013_ipa' => $major->kurikulum_2013_ipa_subjects ? implode(', ', $major->kurikulum_2013_ipa_subjects) : '-',
+                            'mata_pelajaran_kurikulum_2013_ips' => $major->kurikulum_2013_ips_subjects ? implode(', ', $major->kurikulum_2013_ips_subjects) : '-',
+                            'mata_pelajaran_kurikulum_2013_bahasa' => $major->kurikulum_2013_bahasa_subjects ? implode(', ', $major->kurikulum_2013_bahasa_subjects) : '-'
                         ]);
                     } else {
                         $exportData = array_merge($exportData, [

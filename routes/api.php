@@ -102,6 +102,7 @@ Route::prefix('school')->group(function () {
     Route::middleware('school.auth')->group(function () {
         // Profile sekolah
         Route::get('/profile', [SchoolAuthController::class, 'profile']);
+        Route::post('/change-password', [SchoolAuthController::class, 'updatePassword']);
         
         // Dashboard overview
         Route::get('/dashboard', [SchoolDashboardController::class, 'dashboard']);

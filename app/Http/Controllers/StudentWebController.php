@@ -278,7 +278,7 @@ class StudentWebController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Siswa belum memilih jurusan'
-            ], 404);
+            ], 200);
         }
 
         return response()->json([
