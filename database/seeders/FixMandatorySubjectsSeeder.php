@@ -125,8 +125,7 @@ class FixMandatorySubjectsSeeder extends Seeder
             DB::table('subjects')->updateOrInsert(
                 [
                     'name' => $subject['name'],
-                    'education_level' => $subject['education_level'],
-                    'subject_type' => $subject['subject_type']
+                    'education_level' => $subject['education_level']
                 ],
                 $subject
             );
@@ -137,8 +136,7 @@ class FixMandatorySubjectsSeeder extends Seeder
             DB::table('subjects')->updateOrInsert(
                 [
                     'name' => $subject['name'],
-                    'education_level' => $subject['education_level'],
-                    'subject_type' => $subject['subject_type']
+                    'education_level' => $subject['education_level']
                 ],
                 $subject
             );
@@ -164,8 +162,7 @@ class FixMandatorySubjectsSeeder extends Seeder
         DB::table('subjects')->updateOrInsert(
             [
                 'name' => $produkPKK['name'],
-                'education_level' => $produkPKK['education_level'],
-                'subject_type' => $produkPKK['subject_type']
+                'education_level' => $produkPKK['education_level']
             ],
             $produkPKK
         );

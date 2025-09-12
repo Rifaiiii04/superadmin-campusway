@@ -8,6 +8,7 @@ use App\Http\Controllers\SchoolDashboardController;
 use App\Http\Controllers\OptimizedApiController;
 use App\Http\Controllers\SchoolLevelMajorController;
 use App\Http\Controllers\TkaScheduleController;
+use App\Http\Controllers\StudentSubjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,6 +91,10 @@ Route::prefix('web')->group(function () {
     // TKA Schedules for students
     Route::get('/tka-schedules', [TkaScheduleController::class, 'index']);
     Route::get('/tka-schedules/upcoming', [TkaScheduleController::class, 'upcoming']);
+    
+    // Student subjects based on major choice
+    Route::get('/student-subjects/{studentId}', [StudentSubjectController::class, 'getStudentSubjects']);
+    Route::get('/subjects-for-major', [StudentSubjectController::class, 'getSubjectsForMajor']);
 });
 
 // School Dashboard API Routes

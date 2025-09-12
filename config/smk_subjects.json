@@ -1,0 +1,61 @@
+{
+    "smk_subjects": {
+        "mandatory": ["Bahasa Indonesia", "Bahasa Inggris", "Matematika"],
+        "pkk_subject": "Produk/Projek Kreatif dan Kewirausahaan",
+        "optional_subjects": [
+            "Matematika Lanjutan",
+            "Bahasa Indonesia Lanjutan",
+            "Bahasa Inggris Lanjutan",
+            "Fisika",
+            "Kimia",
+            "Biologi",
+            "Ekonomi",
+            "Sosiologi",
+            "PPKn/Pendidikan Pancasila",
+            "Sejarah",
+            "Geografi",
+            "Antropologi",
+            "Seni Budaya",
+            "Bahasa Prancis",
+            "Bahasa Jepang",
+            "Bahasa Korea",
+            "Bahasa Mandarin",
+            "Bahasa Arab",
+            "Bahasa Jerman"
+        ],
+        "mapping_rules": {
+            "default": {
+                "pkk_priority": 1,
+                "optional_priority": 2,
+                "total_subjects": 2
+            },
+            "special_cases": {
+                "Seni": {
+                    "pkk_priority": 1,
+                    "additional_subjects": ["Matematika"],
+                    "total_subjects": 2
+                },
+                "Linguistik": {
+                    "pkk_priority": 1,
+                    "additional_subjects": ["Bahasa Indonesia Lanjutan"],
+                    "total_subjects": 2
+                },
+                "Filsafat": {
+                    "pkk_priority": 1,
+                    "additional_subjects": ["Sosiologi"],
+                    "total_subjects": 2
+                },
+                "Sejarah": {
+                    "pkk_priority": 1,
+                    "additional_subjects": ["Matematika"],
+                    "total_subjects": 2
+                },
+                "Sastra": {
+                    "pkk_priority": 1,
+                    "additional_subjects": ["Matematika"],
+                    "total_subjects": 2
+                }
+            }
+        }
+    }
+}

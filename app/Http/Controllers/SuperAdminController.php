@@ -9,6 +9,7 @@ use App\Models\QuestionOption;
 use App\Models\Result;
 use App\Models\Recommendation;
 use App\Models\MajorRecommendation;
+use App\Helpers\SMKSubjectHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -46,40 +47,78 @@ class SuperAdminController extends Controller
 
     public function dashboard()
     {
-        // Cache dashboard stats for 10 minutes
-        $stats = Cache::remember('superadmin_dashboard_stats', 600, function () {
-            return [
-                'total_schools' => School::count(),
-                'total_students' => Student::count(),
-                'total_majors' => \App\Models\MajorRecommendation::where('is_active', true)->count(),
-            ];
-        });
-
-        // Get recent schools and students
-        $recent_schools = School::latest()->take(5)->get();
-        $recent_students = Student::with('school')->latest()->take(5)->get();
-
-        // Get students per major for chart
-        $studentsPerMajor = \App\Models\StudentChoice::with(['student.school', 'major'])
-            ->selectRaw('major_id, COUNT(*) as student_count')
-            ->groupBy('major_id')
-            ->get()
-            ->map(function($item) {
+        try {
+            // Set execution time limit
+            set_time_limit(60);
+            
+            // Cache dashboard stats for 10 minutes
+            $stats = Cache::remember('superadmin_dashboard_stats', 600, function () {
                 return [
-                    'major_name' => $item->major->major_name ?? 'Unknown',
-                    'student_count' => $item->student_count
+                    'total_schools' => School::count(),
+                    'total_students' => Student::count(),
+                    'total_majors' => \App\Models\MajorRecommendation::where('is_active', true)->count(),
                 ];
             });
 
-        return inertia('SuperAdmin/Dashboard', [
-            'stats' => $stats,
-            'recent_schools' => $recent_schools,
-            'recent_students' => $recent_students,
-            'studentsPerMajor' => $studentsPerMajor,
-            'auth' => [
-                'user' => Auth::guard('admin')->user()
-            ]
-        ]);
+            // Get recent schools and students with optimized queries
+            $recent_schools = Cache::remember('recent_schools', 300, function () {
+                return School::select('id', 'name', 'npsn', 'created_at')
+                    ->latest()
+                    ->take(5)
+                    ->get();
+            });
+
+            $recent_students = Cache::remember('recent_students', 300, function () {
+                return Student::select('id', 'name', 'nisn', 'school_id', 'created_at')
+                    ->with(['school:id,name'])
+                    ->latest()
+                    ->take(5)
+                    ->get();
+            });
+
+            // Get students per major for chart with optimized query
+            $studentsPerMajor = Cache::remember('students_per_major', 600, function () {
+                return \App\Models\StudentChoice::select('major_id')
+                    ->selectRaw('COUNT(*) as student_count')
+                    ->groupBy('major_id')
+                    ->with(['major:id,major_name'])
+                    ->get()
+                    ->map(function($item) {
+                        return [
+                            'major_name' => $item->major->major_name ?? 'Unknown',
+                            'student_count' => $item->student_count
+                        ];
+                    });
+            });
+
+            return inertia('SuperAdmin/Dashboard', [
+                'stats' => $stats,
+                'recent_schools' => $recent_schools,
+                'recent_students' => $recent_students,
+                'studentsPerMajor' => $studentsPerMajor,
+                'auth' => [
+                    'user' => Auth::guard('admin')->user()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Dashboard error: ' . $e->getMessage());
+            
+            // Return minimal data on error
+            return inertia('SuperAdmin/Dashboard', [
+                'stats' => [
+                    'total_schools' => 0,
+                    'total_students' => 0,
+                    'total_majors' => 0,
+                ],
+                'recent_schools' => [],
+                'recent_students' => [],
+                'studentsPerMajor' => [],
+                'auth' => [
+                    'user' => Auth::guard('admin')->user()
+                ],
+                'error' => 'Gagal memuat data dashboard. Silakan refresh halaman.'
+            ]);
+        }
     }
 
     // School Management
@@ -1178,19 +1217,47 @@ class SuperAdminController extends Controller
      */
     public function majorRecommendations()
     {
-        $majorRecommendations = \App\Models\MajorRecommendation::orderBy('major_name')->get();
-        
-        // Debug: Log first few records to check if rumpun_ilmu is present
-        \Log::info('Major Recommendations Data:', [
-            'total_count' => $majorRecommendations->count(),
-            'sample_data' => $majorRecommendations->take(3)->map(function($major) {
+        $majorRecommendations = \App\Models\MajorRecommendation::with(['majorSubjectMappings.subject'])
+            ->orderBy('major_name')
+            ->get()
+            ->map(function($major) {
+                // Tentukan education level berdasarkan rumpun ilmu dan nama jurusan
+                $educationLevel = $this->determineEducationLevelForMajor($major);
+                
+                // Dapatkan mata pelajaran wajib (3 untuk semua)
+                $mandatorySubjects = \App\Models\Subject::where('subject_type', 'wajib')
+                    ->where('education_level', $educationLevel)
+                    ->pluck('name')
+                    ->toArray();
+                
+                // Dapatkan mata pelajaran pilihan berdasarkan education level
+                if ($educationLevel === 'SMK/MAK') {
+                    // Untuk SMK, gunakan helper SMK
+                    $optionalSubjects = SMKSubjectHelper::getSubjectsForMajor($major->major_name);
+                } else {
+                    // Untuk SMA, gunakan mapping database
+                    $optionalSubjects = $major->majorSubjectMappings
+                        ->filter(function($mapping) {
+                            return $mapping->subject && 
+                                   in_array($mapping->subject_type, ['pilihan', 'pilihan_wajib']);
+                        })
+                        ->pluck('subject.name')
+                        ->toArray();
+                }
+                
                 return [
                     'id' => $major->id,
                     'major_name' => $major->major_name,
-                    'rumpun_ilmu' => $major->rumpun_ilmu
+                    'description' => $major->description,
+                    'rumpun_ilmu' => $major->rumpun_ilmu,
+                    'education_level' => $educationLevel,
+                    'mandatory_subjects' => $mandatorySubjects,
+                    'optional_subjects' => $optionalSubjects,
+                    'is_active' => $major->is_active,
+                    'created_at' => $major->created_at,
+                    'updated_at' => $major->updated_at
                 ];
-            })
-        ]);
+            });
         
         return inertia('SuperAdmin/MajorRecommendations', [
             'majorRecommendations' => $majorRecommendations,
@@ -1198,6 +1265,45 @@ class SuperAdminController extends Controller
                 'user' => Auth::guard('admin')->user()
             ]
         ]);
+    }
+    
+    private function determineEducationLevel($rumpunIlmu)
+    {
+        // Tentukan education level berdasarkan rumpun ilmu
+        $smaRumpun = ['ILMU ALAM', 'ILMU SOSIAL', 'ILMU BUDAYA', 'ILMU TERAPAN', 'ILMU FORMAL'];
+        
+        if (in_array($rumpunIlmu, $smaRumpun)) {
+            return 'SMA/MA';
+        } else {
+            return 'SMK/MAK';
+        }
+    }
+    
+    /**
+     * Determine education level for specific major (handles HUMANIORA special case)
+     */
+    private function determineEducationLevelForMajor($major)
+    {
+        $rumpunIlmu = $major->rumpun_ilmu;
+        $majorName = $major->major_name;
+        
+        // Khusus untuk HUMANIORA, periksa nama jurusan
+        if ($rumpunIlmu === 'HUMANIORA') {
+            $smaHumanioraMajors = ['Seni', 'Linguistik', 'Filsafat', 'Sejarah', 'Sastra'];
+            if (in_array($majorName, $smaHumanioraMajors)) {
+                return 'SMA/MA';
+            } else {
+                return 'SMK/MAK';
+            }
+        }
+        
+        // Untuk rumpun ilmu lain, gunakan logika normal
+        $smaRumpun = ['ILMU ALAM', 'ILMU SOSIAL', 'ILMU BUDAYA', 'ILMU TERAPAN', 'ILMU FORMAL'];
+        if (in_array($rumpunIlmu, $smaRumpun)) {
+            return 'SMA/MA';
+        } else {
+            return 'SMK/MAK';
+        }
     }
 
     /**
@@ -1340,7 +1446,7 @@ class SuperAdminController extends Controller
                 'Nama Jurusan',
                 'Deskripsi',
                 'Mata Pelajaran Wajib',
-                'Mata Pelajaran Preferensi',
+                'Mata Pelajaran Pilihan',
                 'Kurikulum Merdeka',
                 'Kurikulum 2013 - IPA',
                 'Kurikulum 2013 - IPS',

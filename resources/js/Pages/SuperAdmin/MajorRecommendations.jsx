@@ -533,7 +533,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         Mata Pelajaran Wajib
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                                        Mata Pelajaran Referensi
+                                        Mata Pelajaran Pilihan
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
@@ -607,11 +607,11 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
-                                                {major.required_subjects?.map(
+                                                {major.mandatory_subjects?.map(
                                                     (subject, index) => (
                                                         <span
                                                             key={index}
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800"
+                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                                         >
                                                             {subject}
                                                         </span>
@@ -621,11 +621,16 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
-                                                {major.preferred_subjects?.map(
+                                                {major.optional_subjects?.map(
                                                     (subject, index) => (
                                                         <span
                                                             key={index}
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                                subject ===
+                                                                "Produk/Projek Kreatif dan Kewirausahaan"
+                                                                    ? "bg-yellow-100 text-yellow-800"
+                                                                    : "bg-green-100 text-green-800"
+                                                            }`}
                                                         >
                                                             {subject}
                                                         </span>
@@ -848,7 +853,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Mata Pelajaran Preferensi
+                                            Mata Pelajaran Pilihan
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
@@ -1184,7 +1189,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">
-                                            Mata Pelajaran Preferensi
+                                            Mata Pelajaran Pilihan
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
@@ -1439,14 +1444,14 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                         Mata Pelajaran Wajib
                                                     </h4>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedMajor.required_subjects?.map(
+                                                        {selectedMajor.mandatory_subjects?.map(
                                                             (
                                                                 subject,
                                                                 index
                                                             ) => (
                                                                 <span
                                                                     key={index}
-                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800"
+                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                                                 >
                                                                     {subject}
                                                                 </span>
@@ -1458,10 +1463,10 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
                                                 {/* Mata Pelajaran Referensi */}
                                                 <div>
                                                     <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                                        Mata Pelajaran Referensi
+                                                        Mata Pelajaran Pilihan
                                                     </h4>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedMajor.preferred_subjects?.map(
+                                                        {selectedMajor.optional_subjects?.map(
                                                             (
                                                                 subject,
                                                                 index

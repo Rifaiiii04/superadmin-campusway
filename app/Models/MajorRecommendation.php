@@ -12,6 +12,7 @@ class MajorRecommendation extends Model
     protected $fillable = [
         'major_name',
         'category',
+        'rumpun_ilmu',
         'description',
         'required_subjects',
         'preferred_subjects',
@@ -39,6 +40,14 @@ class MajorRecommendation extends Model
     public function studentChoices()
     {
         return $this->hasMany(StudentChoice::class, 'major_id');
+    }
+
+    /**
+     * Get the subject mappings for this major
+     */
+    public function majorSubjectMappings()
+    {
+        return $this->hasMany(MajorSubjectMapping::class, 'major_id');
     }
 
     /**

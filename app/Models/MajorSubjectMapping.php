@@ -82,8 +82,7 @@ class MajorSubjectMapping extends Model
     public static function getMandatorySubjects($educationLevel)
     {
         return Subject::where('education_level', $educationLevel)
-            ->where('subject_type', 'Wajib')
-            ->where('is_active', true)
+            ->where('subject_type', 'wajib')
             ->orderBy('subject_number')
             ->get();
     }
