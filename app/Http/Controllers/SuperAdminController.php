@@ -1253,6 +1253,11 @@ class SuperAdminController extends Controller
                     'education_level' => $educationLevel,
                     'mandatory_subjects' => $mandatorySubjects,
                     'optional_subjects' => $optionalSubjects,
+                    'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+                    'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+                    'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+                    'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? [],
+                    'career_prospects' => $major->career_prospects ?? '',
                     'is_active' => $major->is_active,
                     'created_at' => $major->created_at,
                     'updated_at' => $major->updated_at
@@ -1350,6 +1355,8 @@ class SuperAdminController extends Controller
             \App\Models\MajorRecommendation::create($data);
 
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Database error in storeMajorRecommendation: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan database. Silakan coba lagi.');
@@ -1365,8 +1372,7 @@ class SuperAdminController extends Controller
     public function updateMajorRecommendation(Request $request, $id)
     {
         try {
-            $major = \App\Models\MajorRecommendation::findOrFail($id);
-            
+            // Validate first
             $request->validate([
                 'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
                 'rumpun_ilmu' => 'required|string|in:HUMANIORA,ILMU SOSIAL,ILMU ALAM,ILMU FORMAL,ILMU TERAPAN',
@@ -1387,6 +1393,9 @@ class SuperAdminController extends Controller
                 'is_active' => 'boolean'
             ]);
 
+            // Then find the major
+            $major = \App\Models\MajorRecommendation::findOrFail($id);
+
             // Set required subjects to be the same for all majors
             $data = $request->all();
             $data['required_subjects'] = [
@@ -1398,6 +1407,10 @@ class SuperAdminController extends Controller
             $major->update($data);
 
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diupdate');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->back()->with('error', 'Jurusan tidak ditemukan.');
         } catch (\Illuminate\Database\QueryException $e) {
             Log::error('Database error in updateMajorRecommendation: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan database. Silakan coba lagi.');
