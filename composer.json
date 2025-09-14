@@ -15,7 +15,9 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.2",
         "laravel/tinker": "^2.8",
-        "tightenco/ziggy": "^2.0"
+        "tightenco/ziggy": "^2.0",
+        "microsoft/azure-storage-blob": "^1.5",
+        "microsoft/azure-storage-common": "^1.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

@@ -91,6 +91,13 @@ class StudentSubjectController extends Controller
                         }),
                         'total_count' => $subjects['total']
                     ],
+                    'curriculum' => [
+                        'merdeka' => $studentChoice->major->kurikulum_merdeka_subjects ?? [],
+                        '2013_ipa' => $studentChoice->major->kurikulum_2013_ipa_subjects ?? [],
+                        '2013_ips' => $studentChoice->major->kurikulum_2013_ips_subjects ?? [],
+                        '2013_bahasa' => $studentChoice->major->kurikulum_2013_bahasa_subjects ?? []
+                    ],
+                    'career_prospects' => $studentChoice->major->career_prospects ?? '',
                     'rules' => $this->getEducationLevelRules($educationLevel)
                 ]
             ]);
@@ -148,6 +155,13 @@ class StudentSubjectController extends Controller
                         }),
                         'total_count' => $subjects['total']
                     ],
+                    'curriculum' => [
+                        'merdeka' => $major->kurikulum_merdeka_subjects ?? [],
+                        '2013_ipa' => $major->kurikulum_2013_ipa_subjects ?? [],
+                        '2013_ips' => $major->kurikulum_2013_ips_subjects ?? [],
+                        '2013_bahasa' => $major->kurikulum_2013_bahasa_subjects ?? []
+                    ],
+                    'career_prospects' => $major->career_prospects ?? '',
                     'rules' => $this->getEducationLevelRules($request->education_level)
                 ]
             ]);
@@ -188,7 +202,7 @@ class StudentSubjectController extends Controller
             // For SMA: Use database mapping (2 optional subjects)
             $optionalSubjects = MajorSubjectMapping::where('major_id', $majorId)
                 ->where('education_level', 'SMA/MA')
-                ->whereIn('subject_type', ['pilihan', 'pilihan_wajib'])
+                ->where('mapping_type', 'pilihan')
                 ->with('subject')
                 ->get()
                 ->pluck('subject')

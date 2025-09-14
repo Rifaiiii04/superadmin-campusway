@@ -14,7 +14,10 @@ import {
     Search,
 } from "lucide-react";
 
-export default function MajorRecommendations({ majorRecommendations = [] }) {
+export default function MajorRecommendations({
+    majorRecommendations = [],
+    availableSubjects = [],
+}) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -55,30 +58,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
         is_active: true,
     });
 
-    const availableSubjects = [
-        // Mata Pelajaran Wajib (3 mata pelajaran)
-        "Matematika Lanjutan",
-        "Bahasa Indonesia Lanjutan",
-        "Bahasa Inggris Lanjutan",
-
-        // Mata Pelajaran Pilihan (16 mata pelajaran)
-        "Fisika",
-        "Kimia",
-        "Biologi",
-        "Ekonomi",
-        "Sosiologi",
-        "Geografi",
-        "Sejarah",
-        "Antropologi",
-        "PPKn/Pendidikan Pancasila",
-        "Bahasa Arab",
-        "Bahasa Jerman",
-        "Bahasa Prancis",
-        "Bahasa Jepang",
-        "Bahasa Korea",
-        "Bahasa Mandarin",
-        "Produk/Projek Kreatif dan Kewirausahaan",
-    ];
+    // Use subjects from database instead of hardcoded list
 
     const handleAddMajor = () => {
         post("/super-admin/major-recommendations", {
@@ -169,7 +149,7 @@ export default function MajorRecommendations({ majorRecommendations = [] }) {
             rumpun_ilmu: major.rumpun_ilmu || "ILMU ALAM",
             description: major.description,
             required_subjects: major.required_subjects || [],
-            preferred_subjects: major.preferred_subjects || [],
+            preferred_subjects: major.optional_subjects || [], // Use optional_subjects from database
             kurikulum_merdeka_subjects: major.kurikulum_merdeka_subjects || [],
             kurikulum_2013_ipa_subjects:
                 major.kurikulum_2013_ipa_subjects || [],

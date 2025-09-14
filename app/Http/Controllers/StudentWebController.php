@@ -159,9 +159,52 @@ class StudentWebController extends Controller
      */
     public function getMajors()
     {
-        $majors = MajorRecommendation::where('is_active', true)
-            ->select('id', 'major_name', 'description', 'career_prospects', 'rumpun_ilmu')
-            ->get();
+        $majors = MajorRecommendation::with(['majorSubjectMappings.subject'])
+            ->where('is_active', true)
+            ->get()
+            ->map(function($major) {
+                // Tentukan education level berdasarkan rumpun ilmu
+                $educationLevel = $this->determineEducationLevel($major->rumpun_ilmu);
+                
+                // Dapatkan mata pelajaran wajib (3 untuk semua)
+                $mandatorySubjects = \App\Models\Subject::where('subject_type', 'wajib')
+                    ->where('education_level', $educationLevel)
+                    ->pluck('name')
+                    ->toArray();
+                
+                // Dapatkan mata pelajaran pilihan berdasarkan education level
+                if ($educationLevel === 'SMK/MAK') {
+                    // Untuk SMK, gunakan helper SMK
+                    $optionalSubjects = \App\Helpers\SMKSubjectHelper::getSubjectsForMajor($major->major_name);
+                } else {
+                    // Untuk SMA, gunakan mapping database
+                    $optionalSubjects = $major->majorSubjectMappings
+                        ->filter(function($mapping) {
+                            return $mapping->subject && 
+                                   $mapping->mapping_type === 'pilihan';
+                        })
+                        ->pluck('subject.name')
+                        ->toArray();
+                }
+                
+                return [
+                    'id' => $major->id,
+                    'major_name' => $major->major_name,
+                    'description' => $major->description,
+                    'career_prospects' => $major->career_prospects,
+                    'rumpun_ilmu' => $major->rumpun_ilmu,
+                    'education_level' => $educationLevel,
+                    'mandatory_subjects' => $mandatorySubjects,
+                    'optional_subjects' => $optionalSubjects,
+                    'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+                    'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+                    'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+                    'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? [],
+                    'is_active' => $major->is_active,
+                    'created_at' => $major->created_at,
+                    'updated_at' => $major->updated_at
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -170,11 +213,27 @@ class StudentWebController extends Controller
     }
 
     /**
+     * Determine education level based on rumpun ilmu
+     */
+    private function determineEducationLevel($rumpunIlmu)
+    {
+        // Tentukan education level berdasarkan rumpun ilmu
+        $smaRumpun = ['ILMU ALAM', 'ILMU SOSIAL', 'ILMU BUDAYA', 'HUMANIORA', 'ILMU FORMAL'];
+        
+        if (in_array($rumpunIlmu, $smaRumpun)) {
+            return 'SMA/MA';
+        } else {
+            return 'SMK/MAK';
+        }
+    }
+
+    /**
      * Get major details with subjects
      */
     public function getMajorDetails($id)
     {
-        $major = MajorRecommendation::where('is_active', true)
+        $major = MajorRecommendation::with(['majorSubjectMappings.subject'])
+            ->where('is_active', true)
             ->where('id', $id)
             ->first();
 
@@ -185,6 +244,30 @@ class StudentWebController extends Controller
             ], 404);
         }
 
+        // Tentukan education level berdasarkan rumpun ilmu
+        $educationLevel = $this->determineEducationLevel($major->rumpun_ilmu);
+        
+        // Dapatkan mata pelajaran wajib (3 untuk semua)
+        $mandatorySubjects = \App\Models\Subject::where('subject_type', 'wajib')
+            ->where('education_level', $educationLevel)
+            ->pluck('name')
+            ->toArray();
+        
+        // Dapatkan mata pelajaran pilihan berdasarkan education level
+        if ($educationLevel === 'SMK/MAK') {
+            // Untuk SMK, gunakan helper SMK
+            $optionalSubjects = \App\Helpers\SMKSubjectHelper::getSubjectsForMajor($major->major_name);
+        } else {
+            // Untuk SMA, gunakan mapping database
+            $optionalSubjects = $major->majorSubjectMappings
+                ->filter(function($mapping) {
+                    return $mapping->subject && 
+                           $mapping->mapping_type === 'pilihan';
+                })
+                ->pluck('subject.name')
+                ->toArray();
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -193,13 +276,16 @@ class StudentWebController extends Controller
                 'description' => $major->description,
                 'career_prospects' => $major->career_prospects,
                 'rumpun_ilmu' => $major->rumpun_ilmu,
+                'education_level' => $educationLevel,
+                'mandatory_subjects' => $mandatorySubjects,
+                'optional_subjects' => $optionalSubjects,
                 'subjects' => [
-                    'required' => $major->required_subjects,
-                    'preferred' => $major->preferred_subjects,
-                    'kurikulum_merdeka' => $major->kurikulum_merdeka_subjects,
-                    'kurikulum_2013_ipa' => $major->kurikulum_2013_ipa_subjects,
-                    'kurikulum_2013_ips' => $major->kurikulum_2013_ips_subjects,
-                    'kurikulum_2013_bahasa' => $major->kurikulum_2013_bahasa_subjects
+                    'required' => $mandatorySubjects,
+                    'preferred' => $optionalSubjects,
+                    'kurikulum_merdeka' => $major->kurikulum_merdeka_subjects ?? [],
+                    'kurikulum_2013_ipa' => $major->kurikulum_2013_ipa_subjects ?? [],
+                    'kurikulum_2013_ips' => $major->kurikulum_2013_ips_subjects ?? [],
+                    'kurikulum_2013_bahasa' => $major->kurikulum_2013_bahasa_subjects ?? []
                 ]
             ]
         ]);

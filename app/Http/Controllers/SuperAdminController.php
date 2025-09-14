@@ -1239,7 +1239,7 @@ class SuperAdminController extends Controller
                     $optionalSubjects = $major->majorSubjectMappings
                         ->filter(function($mapping) {
                             return $mapping->subject && 
-                                   in_array($mapping->subject_type, ['pilihan', 'pilihan_wajib']);
+                                   $mapping->mapping_type === 'pilihan';
                         })
                         ->pluck('subject.name')
                         ->toArray();
@@ -1259,8 +1259,15 @@ class SuperAdminController extends Controller
                 ];
             });
         
+        // Get available subjects from database
+        $availableSubjects = \App\Models\Subject::where('is_active', true)
+            ->orderBy('name')
+            ->pluck('name')
+            ->toArray();
+        
         return inertia('SuperAdmin/MajorRecommendations', [
             'majorRecommendations' => $majorRecommendations,
+            'availableSubjects' => $availableSubjects,
             'auth' => [
                 'user' => Auth::guard('admin')->user()
             ]

@@ -120,19 +120,7 @@ class SchoolDashboardController extends Controller
                         'phone' => $student->phone,
                         'parent_phone' => $student->parent_phone,
                         'has_choice' => $student->studentChoice ? true : false,
-                        'chosen_major' => $student->studentChoice ? [
-                            'id' => $student->studentChoice->major->id,
-                            'name' => $student->studentChoice->major->major_name,
-                            'description' => $student->studentChoice->major->description,
-                            'career_prospects' => $student->studentChoice->major->career_prospects,
-                            'category' => $student->studentChoice->major->category ?? 'Saintek',
-                            'required_subjects' => $student->studentChoice->major->required_subjects,
-                            'preferred_subjects' => $student->studentChoice->major->preferred_subjects,
-                            'kurikulum_merdeka_subjects' => $student->studentChoice->major->kurikulum_merdeka_subjects,
-                            'kurikulum_2013_ipa_subjects' => $student->studentChoice->major->kurikulum_2013_ipa_subjects,
-                            'kurikulum_2013_ips_subjects' => $student->studentChoice->major->kurikulum_2013_ips_subjects,
-                            'kurikulum_2013_bahasa_subjects' => $student->studentChoice->major->kurikulum_2013_bahasa_subjects
-                        ] : null,
+                        'chosen_major' => $student->studentChoice ? $this->getMajorWithSubjects($student->studentChoice->major) : null,
                         'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
                     ];
                 });
@@ -200,20 +188,9 @@ class SchoolDashboardController extends Controller
             ];
 
             if ($student->studentChoice) {
-                $studentData['chosen_major'] = [
-                    'id' => $student->studentChoice->major->id,
-                    'name' => $student->studentChoice->major->major_name,
-                    'description' => $student->studentChoice->major->description,
-                    'career_prospects' => $student->studentChoice->major->career_prospects,
-                    'category' => $student->studentChoice->major->category ?? 'Saintek',
-                    'choice_date' => $student->studentChoice->created_at,
-                    'required_subjects' => $student->studentChoice->major->required_subjects,
-                    'preferred_subjects' => $student->studentChoice->major->preferred_subjects,
-                    'kurikulum_merdeka_subjects' => $student->studentChoice->major->kurikulum_merdeka_subjects,
-                    'kurikulum_2013_ipa_subjects' => $student->studentChoice->major->kurikulum_2013_ipa_subjects,
-                    'kurikulum_2013_ips_subjects' => $student->studentChoice->major->kurikulum_2013_ips_subjects,
-                    'kurikulum_2013_bahasa_subjects' => $student->studentChoice->major->kurikulum_2013_bahasa_subjects
-                ];
+                $majorData = $this->getMajorWithSubjects($student->studentChoice->major);
+                $majorData['choice_date'] = $student->studentChoice->created_at;
+                $studentData['chosen_major'] = $majorData;
             }
 
             return response()->json([
@@ -234,6 +211,56 @@ class SchoolDashboardController extends Controller
                 'success' => false,
                 'message' => 'Terjadi kesalahan server'
             ], 500);
+        }
+    }
+
+    /**
+     * Get major with subjects from database mapping
+     */
+    private function getMajorWithSubjects($major)
+    {
+        $educationLevel = $this->determineEducationLevel($major->rumpun_ilmu);
+        
+        // Get subjects from database mapping
+        $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+            ->with('subject')
+            ->get();
+        
+        $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
+            ->pluck('subject.name')
+            ->toArray();
+            
+        $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
+            ->pluck('subject.name')
+            ->toArray();
+        
+        return [
+            'id' => $major->id,
+            'name' => $major->major_name,
+            'description' => $major->description,
+            'career_prospects' => $major->career_prospects,
+            'category' => $major->rumpun_ilmu ?? 'Saintek',
+            'education_level' => $educationLevel,
+            'required_subjects' => $mandatorySubjects,
+            'preferred_subjects' => $optionalSubjects,
+            'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+            'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+            'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+            'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
+        ];
+    }
+
+    /**
+     * Determine education level based on rumpun ilmu
+     */
+    private function determineEducationLevel($rumpunIlmu)
+    {
+        $smaRumpun = ['ILMU ALAM', 'ILMU SOSIAL', 'ILMU BUDAYA', 'HUMANIORA', 'ILMU FORMAL'];
+        
+        if (in_array($rumpunIlmu, $smaRumpun)) {
+            return 'SMA/MA';
+        } else {
+            return 'SMK/MAK';
         }
     }
 
