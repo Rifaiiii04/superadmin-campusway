@@ -46,14 +46,13 @@ class PerformanceServiceProvider extends ServiceProvider
         
         // OPcache settings
         if (function_exists('opcache_get_status')) {
-            ini_set('opcache.enable', 1);
+            // ini_set('opcache.enable', 1); // ❌ ini bikin error
             ini_set('opcache.memory_consumption', 256);
             ini_set('opcache.interned_strings_buffer', 16);
             ini_set('opcache.max_accelerated_files', 20000);
             ini_set('opcache.validate_timestamps', 0);
-            ini_set('opcache.save_comments', 1);
-            ini_set('opcache.fast_shutdown', 1);
         }
+        
         
         // Disable unnecessary features for performance
         ini_set('display_errors', 0);
