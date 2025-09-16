@@ -1,19 +1,183 @@
+# Laravel Framework
 /.phpunit.cache
+/.phpunit.result.cache
+/vendor
 /node_modules
 /public/build
 /public/hot
 /public/storage
 /storage/*.key
-/vendor
+/storage/app/public/*
+!/storage/app/public/.gitkeep
+/storage/framework/cache/*
+!/storage/framework/cache/.gitkeep
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/testing/*
+!/storage/framework/testing/.gitkeep
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/app/temp/*
+!/storage/app/temp/.gitkeep
+
+# Environment & Configuration
 .env
 .env.backup
 .env.production
-.phpunit.result.cache
+.env.local
+.env.staging
+.env.testing
+.env.*.local
+php.ini
 Homestead.json
 Homestead.yaml
 auth.json
-npm-debug.log
-yarn-error.log
+
+# Database
+database.sqlite
+*.sqlite
+*.db
+*.sql
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+laravel.log
+
+# IDE & Editor
 /.fleet
 /.idea
 /.vscode
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary Files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
+
+# Cache & Compiled Files
+bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
+*.cache
+
+# Test Files (Development/Testing Scripts)
+test_*.php
+debug_*.php
+check_*.php
+verify_*.php
+fix_*.php
+populate_*.php
+update_*.php
+add_*.php
+insert_*.php
+rebuild_*.php
+run_*.php
+setup_*.php
+clear_*.php
+quick_*.php
+final_*.php
+
+# Batch Files (Windows)
+*.bat
+
+# Documentation Files (Project-specific)
+*PERBAIKAN*.md
+*SISTEM*.md
+*IMPORT*.md
+*CLEANUP*.md
+*COLOR*.md
+*REMOVE*.md
+*TIMEOUT*.md
+*TKA*.md
+*SETUP*.md
+
+# Media Files (Uploaded content)
+/storage/app/media/*
+!/storage/app/media/.gitkeep
+/public/media/*
+!/public/media/.gitkeep
+
+# Backup Files
+*.backup
+*.bak
+*.old
+
+# Package Files
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Composer
+composer.phar
+
+# NPM
+package-lock.json
+yarn.lock
+
+# Laravel Mix
+/public/mix-manifest.json
+
+# Laravel Telescope
+/storage/telescope
+
+# Laravel Horizon
+/storage/horizon
+
+# Laravel Passport
+/storage/oauth-*
+
+# Laravel Sanctum
+/storage/sanctum
+
+# Laravel Socialite
+/storage/socialite
+
+# Laravel Cashier
+/storage/cashier
+
+# Laravel Scout
+/storage/scout
+
+# Laravel Dusk
+/tests/Browser/screenshots
+/tests/Browser/console
+
+# PHPUnit
+/coverage
+/.phpunit.result.cache
+
+# PHP CS Fixer
+/.php_cs.cache
+
+# PHPStan
+/.phpstan
+
+# Rector
+/rector.php
+
+# Infection
+/infection.log
+
+# Local Development
+/docker-compose.override.yml
+/.docker
