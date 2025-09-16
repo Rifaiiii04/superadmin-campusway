@@ -1252,7 +1252,7 @@ class SuperAdminController extends Controller
                     'rumpun_ilmu' => $major->rumpun_ilmu,
                     'education_level' => $educationLevel,
                     'mandatory_subjects' => $mandatorySubjects,
-                    'optional_subjects' => $optionalSubjects,
+                    'preferred_subjects' => $optionalSubjects,
                     'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
                     'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
                     'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
@@ -1372,6 +1372,9 @@ class SuperAdminController extends Controller
     public function updateMajorRecommendation(Request $request, $id)
     {
         try {
+            // Debug: Log the incoming request data
+            Log::info('Update Major Request Data:', $request->all());
+            
             // Validate first
             $request->validate([
                 'major_name' => 'required|string|max:255|unique:major_recommendations,major_name,' . $id,
@@ -1403,6 +1406,9 @@ class SuperAdminController extends Controller
                 'Bahasa Inggris',
                 'Bahasa Indonesia'
             ];
+
+            // Debug: Log the data being updated
+            Log::info('Update Major Data:', $data);
 
             $major->update($data);
 

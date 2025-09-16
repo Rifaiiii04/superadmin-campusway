@@ -70,11 +70,34 @@ export default function MajorRecommendations({
     };
 
     const handleEditMajor = () => {
+        console.log("=== EDIT MAJOR DEBUG ===");
+        console.log("Edit data being sent:", data);
+        console.log("Editing major ID:", editingMajor?.id);
+        console.log("Processing state:", processing);
+        console.log("Form errors:", errors);
+
+        if (!editingMajor?.id) {
+            console.error("No editing major ID found!");
+            return;
+        }
+
+        console.log(
+            "Sending PUT request to:",
+            `/super-admin/major-recommendations/${editingMajor.id}`
+        );
+
         put(`/super-admin/major-recommendations/${editingMajor.id}`, {
-            onSuccess: () => {
+            onSuccess: (page) => {
+                console.log("Edit successful:", page);
                 setShowEditModal(false);
                 setEditingMajor(null);
                 reset();
+            },
+            onError: (errors) => {
+                console.error("Edit errors:", errors);
+            },
+            onFinish: () => {
+                console.log("Edit request finished");
             },
         });
     };
@@ -143,13 +166,18 @@ export default function MajorRecommendations({
     });
 
     const openEditModal = (major) => {
+        console.log("=== OPEN EDIT MODAL DEBUG ===");
+        console.log("Major data received:", major);
+        console.log("Major ID:", major.id);
+        console.log("Major preferred_subjects:", major.preferred_subjects);
+
         setEditingMajor(major);
         setData({
             major_name: major.major_name,
             rumpun_ilmu: major.rumpun_ilmu || "ILMU ALAM",
             description: major.description,
             required_subjects: major.required_subjects || [],
-            preferred_subjects: major.optional_subjects || [], // Use optional_subjects from database
+            preferred_subjects: major.preferred_subjects || [], // Use preferred_subjects from database
             kurikulum_merdeka_subjects: major.kurikulum_merdeka_subjects || [],
             kurikulum_2013_ipa_subjects:
                 major.kurikulum_2013_ipa_subjects || [],
@@ -212,7 +240,10 @@ export default function MajorRecommendations({
                                     Export CSV
                                 </button>
                                 <button
-                                    onClick={() => setShowAddModal(true)}
+                                    onClick={() => {
+                                        reset(); // Reset form data
+                                        setShowAddModal(true);
+                                    }}
                                     className="bg-maroon-600 hover:bg-maroon-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                                 >
                                     <Plus className="h-4 w-4" />
@@ -601,7 +632,7 @@ export default function MajorRecommendations({
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
-                                                {major.optional_subjects?.map(
+                                                {major.preferred_subjects?.map(
                                                     (subject, index) => (
                                                         <span
                                                             key={index}
@@ -837,9 +868,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -870,9 +901,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -903,9 +934,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -936,9 +967,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -969,9 +1000,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1173,9 +1204,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1206,9 +1237,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1239,9 +1270,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1272,9 +1303,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1305,9 +1336,9 @@ export default function MajorRecommendations({
                                         </label>
                                         <div className="mt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                             {availableSubjects.map(
-                                                (subject) => (
+                                                (subject, index) => (
                                                     <label
-                                                        key={subject}
+                                                        key={`${subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1446,7 +1477,7 @@ export default function MajorRecommendations({
                                                         Mata Pelajaran Pilihan
                                                     </h4>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedMajor.optional_subjects?.map(
+                                                        {selectedMajor.preferred_subjects?.map(
                                                             (
                                                                 subject,
                                                                 index
