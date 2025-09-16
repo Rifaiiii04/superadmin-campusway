@@ -1230,20 +1230,8 @@ class SuperAdminController extends Controller
                     ->pluck('name')
                     ->toArray();
                 
-                // Dapatkan mata pelajaran pilihan berdasarkan education level
-                if ($educationLevel === 'SMK/MAK') {
-                    // Untuk SMK, gunakan helper SMK
-                    $optionalSubjects = SMKSubjectHelper::getSubjectsForMajor($major->major_name);
-                } else {
-                    // Untuk SMA, gunakan mapping database
-                    $optionalSubjects = $major->majorSubjectMappings
-                        ->filter(function($mapping) {
-                            return $mapping->subject && 
-                                   $mapping->mapping_type === 'pilihan';
-                        })
-                        ->pluck('subject.name')
-                        ->toArray();
-                }
+                // Dapatkan mata pelajaran pilihan dari database preferred_subjects field
+                $optionalSubjects = $major->preferred_subjects ?? [];
                 
                 return [
                     'id' => $major->id,
@@ -1269,6 +1257,15 @@ class SuperAdminController extends Controller
             ->orderBy('name')
             ->pluck('name')
             ->toArray();
+        
+        // Debug: Log the data being sent to frontend
+        $firstMajor = $majorRecommendations->first();
+        Log::info('Major Recommendations Data:', [
+            'count' => $majorRecommendations->count(),
+            'first_major_name' => $firstMajor['major_name'] ?? 'None',
+            'first_major_preferred_subjects' => $firstMajor['preferred_subjects'] ?? 'None',
+            'available_subjects_count' => count($availableSubjects)
+        ]);
         
         return inertia('SuperAdmin/MajorRecommendations', [
             'majorRecommendations' => $majorRecommendations,

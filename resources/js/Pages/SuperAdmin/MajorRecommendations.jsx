@@ -197,16 +197,28 @@ export default function MajorRecommendations({
     };
 
     const toggleSubject = (subject, type) => {
+        console.log(`=== TOGGLE SUBJECT DEBUG ===`);
+        console.log(`Subject: ${subject}`);
+        console.log(`Type: ${type}`);
+        console.log(`Current data[${type}]:`, data[type]);
+
         const currentSubjects = data[type] || [];
+        console.log(`Current subjects array:`, currentSubjects);
+        console.log(`Subject included:`, currentSubjects.includes(subject));
+
         if (currentSubjects.includes(subject)) {
+            const newSubjects = currentSubjects.filter((s) => s !== subject);
+            console.log(`Removing subject. New array:`, newSubjects);
             setData({
                 ...data,
-                [type]: currentSubjects.filter((s) => s !== subject),
+                [type]: newSubjects,
             });
         } else {
+            const newSubjects = [...currentSubjects, subject];
+            console.log(`Adding subject. New array:`, newSubjects);
             setData({
                 ...data,
-                [type]: [...currentSubjects, subject],
+                [type]: newSubjects,
             });
         }
     };
