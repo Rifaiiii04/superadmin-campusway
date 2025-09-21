@@ -125,6 +125,15 @@ Route::prefix('school')->group(function () {
         
         // Export data siswa
         Route::get('/export-students', [SchoolDashboardController::class, 'exportStudents']);
+        
+        // Import data siswa
+        Route::post('/import-students', [SchoolDashboardController::class, 'importStudents']);
+        
+        // Download template import
+        Route::get('/import-template', [SchoolDashboardController::class, 'downloadImportTemplate']);
+        
+        // Get import rules
+        Route::get('/import-rules', [SchoolDashboardController::class, 'getImportRules']);
     });
 });
 

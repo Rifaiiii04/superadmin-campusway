@@ -682,4 +682,455 @@ class SchoolDashboardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Import data siswa dari CSV/Excel
+     */
+    public function importStudents(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:csv,xlsx,xls|max:10240', // Max 10MB
+                'school_id' => 'required|exists:schools,id'
+            ]);
+
+            $school = School::find($request->school_id);
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            $file = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
+            
+            // Baca file berdasarkan ekstensi
+            $data = [];
+            if ($extension === 'csv') {
+                $data = $this->readCSV($file);
+            } elseif (in_array($extension, ['xlsx', 'xls'])) {
+                $data = $this->readExcel($file);
+            }
+
+            if (empty($data)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File kosong atau format tidak valid'
+                ], 400);
+            }
+
+            // Validasi header kolom - support both old and new format
+            $requiredColumns = ['nisn', 'name', 'kelas', 'email', 'phone', 'parent_phone', 'password'];
+            $requiredColumnsNew = ['NISN', 'Nama Lengkap', 'Kelas', 'Email', 'No Handphone', 'No Handphone Orang Tua', 'Password'];
+            
+            $headers = array_keys($data[0]);
+            $headersLower = array_map('strtolower', array_map('trim', $headers));
+            
+            // Check if using new format (with spaces and proper names)
+            $isNewFormat = false;
+            $missingColumns = [];
+            
+            if (count(array_intersect($requiredColumnsNew, $headers)) >= 3) {
+                // Using new format
+                $isNewFormat = true;
+                $missingColumns = array_diff($requiredColumnsNew, $headers);
+            } else {
+                // Using old format
+                $missingColumns = array_diff($requiredColumns, $headersLower);
+            }
+            
+            if (!empty($missingColumns)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kolom yang diperlukan tidak ditemukan: ' . implode(', ', $missingColumns)
+                ], 400);
+            }
+
+            $importedCount = 0;
+            $skippedCount = 0;
+            $errors = [];
+
+            foreach ($data as $index => $row) {
+                try {
+                    // Normalize data based on format
+                    if ($isNewFormat) {
+                        // New format with proper column names
+                        $normalizedRow = [
+                            'nisn' => $row['NISN'] ?? '',
+                            'name' => $row['Nama Lengkap'] ?? '',
+                            'kelas' => $row['Kelas'] ?? '',
+                            'email' => $row['Email'] ?? '',
+                            'phone' => $row['No Handphone'] ?? '',
+                            'parent_phone' => $row['No Handphone Orang Tua'] ?? '',
+                            'password' => $row['Password'] ?? ''
+                        ];
+                    } else {
+                        // Old format - normalize to lowercase
+                        $normalizedRow = [
+                            'nisn' => $row['nisn'] ?? $row['NISN'] ?? '',
+                            'name' => $row['name'] ?? $row['Nama Lengkap'] ?? '',
+                            'kelas' => $row['kelas'] ?? $row['Kelas'] ?? '',
+                            'email' => $row['email'] ?? $row['Email'] ?? '',
+                            'phone' => $row['phone'] ?? $row['No Handphone'] ?? '',
+                            'parent_phone' => $row['parent_phone'] ?? $row['No Handphone Orang Tua'] ?? '',
+                            'password' => $row['password'] ?? $row['Password'] ?? ''
+                        ];
+                    }
+                    
+                    // Validasi data per baris
+                    $rowNumber = $index + 2; // +2 karena header di baris 1 dan array dimulai dari 0
+                    
+                    if (empty($normalizedRow['nisn']) || empty($normalizedRow['name']) || empty($normalizedRow['kelas'])) {
+                        $errors[] = "Baris {$rowNumber}: NISN, nama, dan kelas harus diisi";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Validasi NISN format (10 digit)
+                    if (!preg_match('/^\d{10}$/', $normalizedRow['nisn'])) {
+                        $errors[] = "Baris {$rowNumber}: NISN harus 10 digit angka";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Validasi email format (jika diisi)
+                    if (!empty($normalizedRow['email']) && !filter_var($normalizedRow['email'], FILTER_VALIDATE_EMAIL)) {
+                        $errors[] = "Baris {$rowNumber}: Format email tidak valid";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Validasi phone format (jika diisi)
+                    if (!empty($normalizedRow['phone']) && !preg_match('/^08\d{8,11}$/', $normalizedRow['phone'])) {
+                        $errors[] = "Baris {$rowNumber}: Format nomor handphone tidak valid (contoh: 081234567890)";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Validasi parent phone format (jika diisi)
+                    if (!empty($normalizedRow['parent_phone']) && !preg_match('/^08\d{8,11}$/', $normalizedRow['parent_phone'])) {
+                        $errors[] = "Baris {$rowNumber}: Format nomor handphone orang tua tidak valid (contoh: 081234567890)";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Cek apakah NISN sudah ada
+                    $existingStudent = Student::where('nisn', $normalizedRow['nisn'])->first();
+                    if ($existingStudent) {
+                        $errors[] = "Baris {$rowNumber}: NISN {$normalizedRow['nisn']} sudah terdaftar";
+                        $skippedCount++;
+                        continue;
+                    }
+
+                    // Buat siswa baru
+                    Student::create([
+                        'nisn' => $normalizedRow['nisn'],
+                        'name' => $normalizedRow['name'],
+                        'school_id' => $request->school_id,
+                        'kelas' => $normalizedRow['kelas'],
+                        'email' => $normalizedRow['email'] ?: null,
+                        'phone' => $normalizedRow['phone'] ?: null,
+                        'parent_phone' => $normalizedRow['parent_phone'] ?: null,
+                        'password' => bcrypt($normalizedRow['password'] ?: 'password123'), // Default password jika kosong
+                        'status' => 'active'
+                    ]);
+
+                    $importedCount++;
+
+                } catch (\Exception $e) {
+                    $errors[] = "Baris {$rowNumber}: " . $e->getMessage();
+                    $skippedCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Import selesai. {$importedCount} siswa berhasil diimport, {$skippedCount} siswa dilewati",
+                'data' => [
+                    'imported_count' => $importedCount,
+                    'skipped_count' => $skippedCount,
+                    'total_rows' => count($data),
+                    'errors' => $errors
+                ]
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Import students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Baca file CSV
+     */
+    private function readCSV($file)
+    {
+        $data = [];
+        $handle = fopen($file->getPathname(), 'r');
+        
+        if ($handle !== false) {
+            // Skip BOM if present
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+            
+            // Coba baca dengan semicolon dulu, jika gagal coba dengan comma
+            $headers = fgetcsv($handle, 1000, ';');
+            if (count($headers) < 3) {
+                // Jika tidak cukup kolom dengan semicolon, coba dengan comma
+                rewind($handle);
+                $bom = fread($handle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($handle);
+                }
+                $headers = fgetcsv($handle, 1000, ',');
+            }
+            
+            // Clean headers (remove quotes and trim)
+            $headers = array_map(function($header) {
+                return trim($header, '"');
+            }, $headers);
+            
+            // Tentukan delimiter berdasarkan jumlah kolom yang ditemukan
+            $delimiter = count($headers) >= 3 ? ';' : ',';
+            
+            // Reset file pointer
+            rewind($handle);
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+            
+            // Baca ulang dengan delimiter yang benar
+            $headers = fgetcsv($handle, 1000, $delimiter);
+            $headers = array_map(function($header) {
+                return trim($header, '"');
+            }, $headers);
+            
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+                if (count($row) === count($headers)) {
+                    // Clean row data (remove quotes and trim)
+                    $cleanRow = array_map(function($field) {
+                        return trim($field, '"');
+                    }, $row);
+                    
+                    $data[] = array_combine($headers, $cleanRow);
+                }
+            }
+            
+            fclose($handle);
+        }
+        
+        return $data;
+    }
+
+    /**
+     * Baca file Excel
+     */
+    private function readExcel($file)
+    {
+        try {
+            $data = [];
+            
+            // Load PhpSpreadsheet
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($file->getPathname());
+            $spreadsheet = $reader->load($file->getPathname());
+            $worksheet = $spreadsheet->getActiveSheet();
+            
+            // Get all rows
+            $rows = $worksheet->toArray();
+            
+            if (empty($rows)) {
+                return $data;
+            }
+            
+            // First row as headers - keep original case for new format
+            $headers = array_map('trim', $rows[0]);
+            
+            // Process data rows
+            for ($i = 1; $i < count($rows); $i++) {
+                $row = $rows[$i];
+                
+                // Skip empty rows
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+                
+                // Combine headers with row data
+                $rowData = [];
+                for ($j = 0; $j < count($headers); $j++) {
+                    $rowData[$headers[$j]] = isset($row[$j]) ? trim($row[$j]) : '';
+                }
+                
+                $data[] = $rowData;
+            }
+            
+            return $data;
+            
+        } catch (\Exception $e) {
+            Log::error('Excel read error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Download template CSV untuk import data siswa
+     */
+    public function downloadImportTemplate()
+    {
+        try {
+            // Header CSV dengan nama yang lebih jelas
+            $headers = [
+                'NISN',
+                'Nama Lengkap', 
+                'Kelas',
+                'Email',
+                'No Handphone',
+                'No Handphone Orang Tua',
+                'Password'
+            ];
+
+            // Data contoh yang lebih lengkap
+            $sampleData = [
+                [
+                    'NISN' => '1234567890',
+                    'Nama Lengkap' => 'Ahmad Rizki Pratama',
+                    'Kelas' => 'X IPA 1',
+                    'Email' => 'ahmad.rizki@example.com',
+                    'No Handphone' => '081234567890',
+                    'No Handphone Orang Tua' => '081234567891',
+                    'Password' => 'password123'
+                ],
+                [
+                    'NISN' => '1234567891',
+                    'Nama Lengkap' => 'Siti Nurhaliza',
+                    'Kelas' => 'X IPA 1',
+                    'Email' => 'siti.nurhaliza@example.com',
+                    'No Handphone' => '081234567892',
+                    'No Handphone Orang Tua' => '081234567893',
+                    'Password' => 'password123'
+                ],
+                [
+                    'NISN' => '1234567892',
+                    'Nama Lengkap' => 'Budi Santoso',
+                    'Kelas' => 'X IPA 2',
+                    'Email' => 'budi.santoso@example.com',
+                    'No Handphone' => '081234567894',
+                    'No Handphone Orang Tua' => '081234567895',
+                    'Password' => 'password123'
+                ],
+                [
+                    'NISN' => '1234567893',
+                    'Nama Lengkap' => 'Dewi Kartika',
+                    'Kelas' => 'X IPS 1',
+                    'Email' => 'dewi.kartika@example.com',
+                    'No Handphone' => '081234567896',
+                    'No Handphone Orang Tua' => '081234567897',
+                    'Password' => 'password123'
+                ]
+            ];
+
+            // Buat CSV content dengan format yang benar untuk Excel
+            $csvContent = '';
+            
+            // BOM untuk UTF-8 (agar Excel mengenali encoding dengan benar)
+            $csvContent .= "\xEF\xBB\xBF";
+            
+            // Header dengan semicolon sebagai delimiter (lebih kompatibel dengan Excel Indonesia)
+            $csvContent .= implode(';', $headers) . "\n";
+            
+            // Data contoh dengan semicolon sebagai delimiter
+            foreach ($sampleData as $row) {
+                $csvContent .= implode(';', array_map(function($field) {
+                    // Escape semicolon dan quotes jika ada
+                    $field = str_replace('"', '""', $field);
+                    // Wrap dengan quotes jika mengandung semicolon, comma, atau quotes
+                    if (strpos($field, ';') !== false || strpos($field, ',') !== false || strpos($field, '"') !== false) {
+                        return '"' . $field . '"';
+                    }
+                    return $field;
+                }, $row)) . "\n";
+            }
+
+            // Set headers untuk download
+            $filename = 'Template_Import_Siswa_' . date('Y-m-d') . '.csv';
+            
+            return response($csvContent)
+                ->header('Content-Type', 'text/csv; charset=UTF-8')
+                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Cache-Control', 'no-cache, must-revalidate')
+                ->header('Pragma', 'no-cache');
+
+        } catch (\Exception $e) {
+            Log::error('Download template error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunduh template'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get import rules and requirements
+     */
+    public function getImportRules()
+    {
+        try {
+            $rules = [
+                'required_columns' => [
+                    'nisn' => 'NISN siswa (wajib, 10 digit, unik)',
+                    'name' => 'Nama lengkap siswa (wajib)',
+                    'kelas' => 'Kelas siswa (wajib)',
+                    'email' => 'Email siswa (opsional)',
+                    'phone' => 'Nomor handphone siswa (opsional)',
+                    'parent_phone' => 'Nomor handphone orang tua (opsional)',
+                    'password' => 'Password default (opsional, default: password123)'
+                ],
+                'file_requirements' => [
+                    'max_size' => '10MB',
+                    'allowed_formats' => ['CSV', 'Excel (.xlsx, .xls)'],
+                    'encoding' => 'UTF-8'
+                ],
+                'validation_rules' => [
+                    'nisn' => 'Harus 10 digit, unik di sistem',
+                    'name' => 'Tidak boleh kosong',
+                    'kelas' => 'Tidak boleh kosong',
+                    'email' => 'Format email yang valid (jika diisi)',
+                    'phone' => 'Format nomor handphone yang valid (jika diisi)',
+                    'parent_phone' => 'Format nomor handphone yang valid (jika diisi)'
+                ],
+                'tips' => [
+                    'Gunakan template yang disediakan untuk memastikan format yang benar',
+                    'Pastikan NISN unik dan tidak duplikat',
+                    'Gunakan koma (,) sebagai pemisah kolom',
+                      'Gunakan tanda kutip ganda (") untuk data yang mengandung koma',
+                    'Hapus baris kosong di akhir file',
+                    'Pastikan encoding file adalah UTF-8'
+                ]
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $rules
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Get import rules error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil aturan import'
+            ], 500);
+        }
+    }
 }
