@@ -801,18 +801,26 @@ class SchoolDashboardController extends Controller
                         continue;
                     }
 
-                    // Validasi phone format (jika diisi)
-                    if (!empty($normalizedRow['phone']) && !preg_match('/^08\d{8,11}$/', $normalizedRow['phone'])) {
-                        $errors[] = "Baris {$rowNumber}: Format nomor handphone tidak valid (contoh: 081234567890)";
-                        $skippedCount++;
-                        continue;
+                    // Normalisasi dan validasi phone format (jika diisi)
+                    if (!empty($normalizedRow['phone'])) {
+                        $phone = $this->normalizePhoneNumber($normalizedRow['phone']);
+                        if (!$phone || !preg_match('/^08\d{8,11}$/', $phone)) {
+                            $errors[] = "Baris {$rowNumber}: Format nomor handphone tidak valid (contoh: 081234567890). Gunakan format: =\"081234567890\" di Excel";
+                            $skippedCount++;
+                            continue;
+                        }
+                        $normalizedRow['phone'] = $phone;
                     }
 
-                    // Validasi parent phone format (jika diisi)
-                    if (!empty($normalizedRow['parent_phone']) && !preg_match('/^08\d{8,11}$/', $normalizedRow['parent_phone'])) {
-                        $errors[] = "Baris {$rowNumber}: Format nomor handphone orang tua tidak valid (contoh: 081234567890)";
-                        $skippedCount++;
-                        continue;
+                    // Normalisasi dan validasi parent phone format (jika diisi)
+                    if (!empty($normalizedRow['parent_phone'])) {
+                        $parentPhone = $this->normalizePhoneNumber($normalizedRow['parent_phone']);
+                        if (!$parentPhone || !preg_match('/^08\d{8,11}$/', $parentPhone)) {
+                            $errors[] = "Baris {$rowNumber}: Format nomor handphone orang tua tidak valid (contoh: 081234567890). Gunakan format: =\"081234567890\" di Excel";
+                            $skippedCount++;
+                            continue;
+                        }
+                        $normalizedRow['parent_phone'] = $parentPhone;
                     }
 
                     // Cek apakah NISN sudah ada
@@ -996,20 +1004,20 @@ class SchoolDashboardController extends Controller
                 'Nama Lengkap', 
                 'Kelas',
                 'Email',
-                'No Handphone',
-                'No Handphone Orang Tua',
+                'No Handphone (Format: ="081234567890")',
+                'No Handphone Orang Tua (Format: ="081234567890")',
                 'Password'
             ];
 
-            // Data contoh yang lebih lengkap
+            // Data contoh yang lebih lengkap dengan format yang Excel-friendly
             $sampleData = [
                 [
                     'NISN' => '1234567890',
                     'Nama Lengkap' => 'Ahmad Rizki Pratama',
                     'Kelas' => 'X IPA 1',
                     'Email' => 'ahmad.rizki@example.com',
-                    'No Handphone' => '081234567890',
-                    'No Handphone Orang Tua' => '081234567891',
+                    'No Handphone' => '="081234567890"',
+                    'No Handphone Orang Tua' => '="081234567891"',
                     'Password' => 'password123'
                 ],
                 [
@@ -1017,8 +1025,8 @@ class SchoolDashboardController extends Controller
                     'Nama Lengkap' => 'Siti Nurhaliza',
                     'Kelas' => 'X IPA 1',
                     'Email' => 'siti.nurhaliza@example.com',
-                    'No Handphone' => '081234567892',
-                    'No Handphone Orang Tua' => '081234567893',
+                    'No Handphone' => '="081234567892"',
+                    'No Handphone Orang Tua' => '="081234567893"',
                     'Password' => 'password123'
                 ],
                 [
@@ -1026,8 +1034,8 @@ class SchoolDashboardController extends Controller
                     'Nama Lengkap' => 'Budi Santoso',
                     'Kelas' => 'X IPA 2',
                     'Email' => 'budi.santoso@example.com',
-                    'No Handphone' => '081234567894',
-                    'No Handphone Orang Tua' => '081234567895',
+                    'No Handphone' => '="081234567894"',
+                    'No Handphone Orang Tua' => '="081234567895"',
                     'Password' => 'password123'
                 ],
                 [
@@ -1035,8 +1043,8 @@ class SchoolDashboardController extends Controller
                     'Nama Lengkap' => 'Dewi Kartika',
                     'Kelas' => 'X IPS 1',
                     'Email' => 'dewi.kartika@example.com',
-                    'No Handphone' => '081234567896',
-                    'No Handphone Orang Tua' => '081234567897',
+                    'No Handphone' => '="081234567896"',
+                    'No Handphone Orang Tua' => '="081234567897"',
                     'Password' => 'password123'
                 ]
             ];
@@ -1069,8 +1077,10 @@ class SchoolDashboardController extends Controller
             return response($csvContent)
                 ->header('Content-Type', 'text/csv; charset=UTF-8')
                 ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                ->header('Content-Length', strlen($csvContent))
                 ->header('Cache-Control', 'no-cache, must-revalidate')
-                ->header('Pragma', 'no-cache');
+                ->header('Pragma', 'no-cache')
+                ->header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
 
         } catch (\Exception $e) {
             Log::error('Download template error: ' . $e->getMessage());
@@ -1079,6 +1089,49 @@ class SchoolDashboardController extends Controller
                 'message' => 'Gagal mengunduh template'
             ], 500);
         }
+    }
+
+    /**
+     * Normalize phone number from various formats
+     */
+    private function normalizePhoneNumber($phone)
+    {
+        if (empty($phone)) {
+            return null;
+        }
+
+        // Remove all non-digit characters except +
+        $phone = preg_replace('/[^\d+]/', '', $phone);
+        
+        // Handle Excel formula format: ="081234567890"
+        if (strpos($phone, '=') !== false) {
+            $phone = str_replace(['=', '"', "'"], '', $phone);
+        }
+        
+        // Remove leading +62 and replace with 0
+        if (substr($phone, 0, 3) === '+62') {
+            $phone = '0' . substr($phone, 3);
+        }
+        
+        // Remove leading 62 and add 0
+        if (substr($phone, 0, 2) === '62' && strlen($phone) >= 10) {
+            $phone = '0' . substr($phone, 2);
+        }
+        
+        // Ensure it starts with 08
+        if (substr($phone, 0, 1) === '8' && strlen($phone) >= 10) {
+            $phone = '0' . $phone;
+        }
+        
+        // Remove any remaining non-digit characters
+        $phone = preg_replace('/[^\d]/', '', $phone);
+        
+        // Validate length (10-13 digits for Indonesian mobile numbers)
+        if (strlen($phone) < 10 || strlen($phone) > 13) {
+            return null;
+        }
+        
+        return $phone;
     }
 
     /**
@@ -1113,8 +1166,10 @@ class SchoolDashboardController extends Controller
                 'tips' => [
                     'Gunakan template yang disediakan untuk memastikan format yang benar',
                     'Pastikan NISN unik dan tidak duplikat',
+                    'Untuk nomor handphone di Excel: gunakan format =\"081234567890\" agar angka 0 di depan tidak hilang',
+                    'Alternatif: format kolom sebagai "Text" sebelum memasukkan nomor handphone',
                     'Gunakan koma (,) sebagai pemisah kolom',
-                      'Gunakan tanda kutip ganda (") untuk data yang mengandung koma',
+                    'Gunakan tanda kutip ganda (") untuk data yang mengandung koma',
                     'Hapus baris kosong di akhir file',
                     'Pastikan encoding file adalah UTF-8'
                 ]
