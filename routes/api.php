@@ -134,6 +134,9 @@ Route::prefix('school')->group(function () {
         
         // Get import rules
         Route::get('/import-rules', [SchoolDashboardController::class, 'getImportRules']);
+        
+        // Get classes list
+        Route::get('/classes', [SchoolDashboardController::class, 'getClasses']);
     });
 });
 

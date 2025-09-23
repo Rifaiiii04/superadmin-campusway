@@ -1135,6 +1135,53 @@ class SchoolDashboardController extends Controller
     }
 
     /**
+     * Get classes list for the school
+     */
+    public function getClasses(Request $request)
+    {
+        try {
+            $school = School::find($request->school_id);
+
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            // Get unique classes from students data
+            $classes = Student::where('school_id', $school->id)
+                ->select('kelas')
+                ->distinct()
+                ->whereNotNull('kelas')
+                ->where('kelas', '!=', '')
+                ->orderBy('kelas')
+                ->pluck('kelas')
+                ->map(function($kelas) {
+                    return [
+                        'name' => $kelas,
+                        'value' => $kelas
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'classes' => $classes,
+                    'total_classes' => $classes->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Get classes error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil daftar kelas'
+            ], 500);
+        }
+    }
+
+    /**
      * Get import rules and requirements
      */
     public function getImportRules()
