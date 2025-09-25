@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('major_recommendations', function (Blueprint $table) {
-            $table->string('category')->after('major_name')->default('Saintek')->comment('Kategori jurusan: Saintek, Soshum, atau Campuran');
+            if (!Schema::hasColumn('major_recommendations', 'category')) {
+                $table->string('category')->after('major_name')->default('Saintek')->comment('Kategori jurusan: Saintek, Soshum, atau Campuran');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('major_recommendations', function (Blueprint $table) {
-            $table->dropColumn('category');
+            if (Schema::hasColumn('major_recommendations', 'category')) {
+                $table->dropColumn('category');
+            }
         });
     }
 };

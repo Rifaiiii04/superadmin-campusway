@@ -12,60 +12,164 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Add indexes for frequently queried columns
+        // Add indexes for frequently queried columns using try-catch for idempotency
         
         // Schools table indexes
-        Schema::table('schools', function (Blueprint $table) {
-            $table->index('npsn');
-            $table->index('name');
-            $table->index('created_at');
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_schools_npsn ON schools (npsn)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_schools_name ON schools (name)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_schools_created_at ON schools (created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Students table indexes
-        Schema::table('students', function (Blueprint $table) {
-            $table->index('nisn');
-            $table->index('school_id');
-            $table->index('kelas');
-            $table->index('created_at');
-            $table->index(['school_id', 'kelas']); // Composite index for school + class queries
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_students_nisn ON students (nisn)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_students_school_id ON students (school_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_students_kelas ON students (kelas)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_students_created_at ON students (created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_students_school_id_kelas ON students (school_id, kelas)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Questions table indexes
-        Schema::table('questions', function (Blueprint $table) {
-            $table->index('subject');
-            $table->index('type');
-            $table->index('created_at');
-            $table->index(['subject', 'type']); // Composite index for subject + type queries
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_questions_subject ON questions (subject)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_questions_type ON questions (type)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_questions_created_at ON questions (created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_questions_subject_type ON questions (subject, type)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Question options table indexes
-        Schema::table('question_options', function (Blueprint $table) {
-            $table->index('question_id');
-            $table->index('is_correct');
-            $table->index(['question_id', 'is_correct']); // Composite index for correct answers
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_question_options_question_id ON question_options (question_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_question_options_is_correct ON question_options (is_correct)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_question_options_question_id_is_correct ON question_options (question_id, is_correct)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Student choices table indexes
-        Schema::table('student_choices', function (Blueprint $table) {
-            $table->index('student_id');
-            $table->index('major_id');
-            $table->index('created_at');
-            $table->index(['student_id', 'major_id']); // Composite index for student + major queries
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_student_choices_student_id ON student_choices (student_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_student_choices_major_id ON student_choices (major_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_student_choices_created_at ON student_choices (created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_student_choices_student_id_major_id ON student_choices (student_id, major_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Major recommendations table indexes
-        Schema::table('major_recommendations', function (Blueprint $table) {
-            $table->index('category');
-            $table->index('is_active');
-            $table->index(['category', 'is_active']); // Composite index for active majors by category
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_major_recommendations_category ON major_recommendations (category)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_major_recommendations_is_active ON major_recommendations (is_active)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_major_recommendations_category_is_active ON major_recommendations (category, is_active)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
         
         // Results table indexes
-        Schema::table('results', function (Blueprint $table) {
-            $table->index('student_id');
-            $table->index('created_at');
-            $table->index(['student_id', 'created_at']); // Composite index for student results by date
-        });
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_results_student_id ON results (student_id)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_results_created_at ON results (created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
+        
+        try {
+            DB::statement('CREATE NONCLUSTERED INDEX idx_results_student_id_created_at ON results (student_id, created_at)');
+        } catch (\Exception $e) {
+            // Index already exists, ignore
+        }
     }
 
     /**
@@ -73,51 +177,41 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Remove indexes
-        Schema::table('schools', function (Blueprint $table) {
-            $table->dropIndex(['npsn']);
-            $table->dropIndex(['name']);
-            $table->dropIndex(['created_at']);
-        });
-        
-        Schema::table('students', function (Blueprint $table) {
-            $table->dropIndex(['nisn']);
-            $table->dropIndex(['school_id']);
-            $table->dropIndex(['kelas']);
-            $table->dropIndex(['created_at']);
-            $table->dropIndex(['school_id', 'kelas']);
-        });
-        
-        Schema::table('questions', function (Blueprint $table) {
-            $table->dropIndex(['subject']);
-            $table->dropIndex(['type']);
-            $table->dropIndex(['created_at']);
-            $table->dropIndex(['subject', 'type']);
-        });
-        
-        Schema::table('question_options', function (Blueprint $table) {
-            $table->dropIndex(['question_id']);
-            $table->dropIndex(['is_correct']);
-            $table->dropIndex(['question_id', 'is_correct']);
-        });
-        
-        Schema::table('student_choices', function (Blueprint $table) {
-            $table->dropIndex(['student_id']);
-            $table->dropIndex(['major_id']);
-            $table->dropIndex(['created_at']);
-            $table->dropIndex(['student_id', 'major_id']);
-        });
-        
-        Schema::table('major_recommendations', function (Blueprint $table) {
-            $table->dropIndex(['category']);
-            $table->dropIndex(['is_active']);
-            $table->dropIndex(['category', 'is_active']);
-        });
-        
-        Schema::table('results', function (Blueprint $table) {
-            $table->dropIndex(['student_id']);
-            $table->dropIndex(['created_at']);
-            $table->dropIndex(['student_id', 'created_at']);
-        });
+        // Remove indexes using DB::statement for idempotency
+        try {
+            DB::statement('DROP INDEX IF EXISTS idx_schools_npsn ON schools');
+            DB::statement('DROP INDEX IF EXISTS idx_schools_name ON schools');
+            DB::statement('DROP INDEX IF EXISTS idx_schools_created_at ON schools');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_students_nisn ON students');
+            DB::statement('DROP INDEX IF EXISTS idx_students_school_id ON students');
+            DB::statement('DROP INDEX IF EXISTS idx_students_kelas ON students');
+            DB::statement('DROP INDEX IF EXISTS idx_students_created_at ON students');
+            DB::statement('DROP INDEX IF EXISTS idx_students_school_id_kelas ON students');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_questions_subject ON questions');
+            DB::statement('DROP INDEX IF EXISTS idx_questions_type ON questions');
+            DB::statement('DROP INDEX IF EXISTS idx_questions_created_at ON questions');
+            DB::statement('DROP INDEX IF EXISTS idx_questions_subject_type ON questions');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_question_options_question_id ON question_options');
+            DB::statement('DROP INDEX IF EXISTS idx_question_options_is_correct ON question_options');
+            DB::statement('DROP INDEX IF EXISTS idx_question_options_question_id_is_correct ON question_options');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_student_choices_student_id ON student_choices');
+            DB::statement('DROP INDEX IF EXISTS idx_student_choices_major_id ON student_choices');
+            DB::statement('DROP INDEX IF EXISTS idx_student_choices_created_at ON student_choices');
+            DB::statement('DROP INDEX IF EXISTS idx_student_choices_student_id_major_id ON student_choices');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_major_recommendations_category ON major_recommendations');
+            DB::statement('DROP INDEX IF EXISTS idx_major_recommendations_is_active ON major_recommendations');
+            DB::statement('DROP INDEX IF EXISTS idx_major_recommendations_category_is_active ON major_recommendations');
+            
+            DB::statement('DROP INDEX IF EXISTS idx_results_student_id ON results');
+            DB::statement('DROP INDEX IF EXISTS idx_results_created_at ON results');
+            DB::statement('DROP INDEX IF EXISTS idx_results_student_id_created_at ON results');
+        } catch (\Exception $e) {
+            // Ignore errors if indexes don't exist
+        }
     }
 };

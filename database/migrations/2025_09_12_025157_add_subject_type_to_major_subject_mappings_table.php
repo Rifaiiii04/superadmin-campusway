@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('major_subject_mappings', function (Blueprint $table) {
-            $table->string('subject_type')->nullable()->after('subject_id');
+            if (!Schema::hasColumn('major_subject_mappings', 'subject_type')) {
+                $table->string('subject_type')->nullable()->after('subject_id');
+            }
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('major_subject_mappings', function (Blueprint $table) {
-            $table->dropColumn('subject_type');
+            if (Schema::hasColumn('major_subject_mappings', 'subject_type')) {
+                $table->dropColumn('subject_type');
+            }
         });
     }
 };

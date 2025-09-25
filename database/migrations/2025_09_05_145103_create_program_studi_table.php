@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('program_studi', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('description')->nullable();
-            $table->foreignId('rumpun_ilmu_id')->constrained('rumpun_ilmu')->onDelete('cascade');
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('program_studi')) {
+            Schema::create('program_studi', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('description')->nullable();
+                $table->foreignId('rumpun_ilmu_id')->constrained('rumpun_ilmu')->onDelete('cascade');
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::table('schools', function (Blueprint $table) {
             // Tambahkan kolom jenjang sekolah
-            $table->enum('school_level', ['SMA/MA', 'SMK/MAK'])->default('SMA/MA')->after('name');
+            if (!Schema::hasColumn('schools', 'school_level')) {
+                $table->enum('school_level', ['SMA/MA', 'SMK/MAK'])->default('SMA/MA')->after('name');
+            }
         });
     }
 
@@ -23,7 +25,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('schools', function (Blueprint $table) {
-            $table->dropColumn('school_level');
+            if (Schema::hasColumn('schools', 'school_level')) {
+                $table->dropColumn('school_level');
+            }
         });
     }
 };
