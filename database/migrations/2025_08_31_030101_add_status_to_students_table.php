@@ -4,25 +4,23 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration {
     public function up(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            $table->enum('status', ['registered', 'testing', 'completed'])->default('registered')->after('no_orang_tua');
+            if (!Schema::hasColumn('students', 'status')) {
+                $table->enum('status', ['registered', 'testing', 'completed'])
+                      ->default('registered');
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('students', function (Blueprint $table) {
-            $table->dropColumn('status');
+            if (Schema::hasColumn('students', 'status')) {
+                $table->dropColumn('status');
+            }
         });
     }
 };
