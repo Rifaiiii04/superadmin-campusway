@@ -1224,27 +1224,33 @@ class SuperAdminController extends Controller
                 // Tentukan education level berdasarkan rumpun ilmu dan nama jurusan
                 $educationLevel = $this->determineEducationLevelForMajor($major);
                 
-                // Dapatkan mata pelajaran wajib (3 untuk semua)
-                $mandatorySubjects = \App\Models\Subject::where('subject_type', 'wajib')
-                    ->where('education_level', $educationLevel)
+                // Dapatkan mata pelajaran wajib (3 untuk semua) - gunakan 'Umum' karena mata pelajaran wajib berlaku untuk semua jenjang
+                $mandatorySubjects = \App\Models\Subject::where('subject_type', 'Wajib')
+                    ->where('education_level', 'Umum')
                     ->pluck('name')
                     ->toArray();
                 
                 // Dapatkan mata pelajaran pilihan dari database preferred_subjects field
-                $optionalSubjects = $major->preferred_subjects ?? [];
+                $preferredSubjects = $major->preferred_subjects;
+                if (is_string($preferredSubjects)) {
+                    $decoded = json_decode($preferredSubjects, true);
+                    $optionalSubjects = is_array($decoded) ? $decoded : [];
+                } else {
+                    $optionalSubjects = is_array($preferredSubjects) ? $preferredSubjects : [];
+                }
                 
                 return [
                     'id' => $major->id,
                     'major_name' => $major->major_name,
                     'description' => $major->description,
-                    'rumpun_ilmu' => $major->rumpun_ilmu,
+                    'rumpun_ilmu' => $major->category,
                     'education_level' => $educationLevel,
                     'mandatory_subjects' => $mandatorySubjects,
                     'preferred_subjects' => $optionalSubjects,
-                    'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
-                    'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
-                    'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
-                    'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? [],
+                    'kurikulum_merdeka_subjects' => $this->parseJsonField($major->kurikulum_merdeka_subjects),
+                    'kurikulum_2013_ipa_subjects' => $this->parseJsonField($major->kurikulum_2013_ipa_subjects),
+                    'kurikulum_2013_ips_subjects' => $this->parseJsonField($major->kurikulum_2013_ips_subjects),
+                    'kurikulum_2013_bahasa_subjects' => $this->parseJsonField($major->kurikulum_2013_bahasa_subjects),
                     'career_prospects' => $major->career_prospects ?? '',
                     'is_active' => $major->is_active,
                     'created_at' => $major->created_at,
@@ -1289,15 +1295,32 @@ class SuperAdminController extends Controller
     }
     
     /**
+     * Parse JSON field that might be double-encoded
+     */
+    private function parseJsonField($field)
+    {
+        if (is_array($field)) {
+            return $field;
+        }
+        
+        if (is_string($field)) {
+            $decoded = json_decode($field, true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        
+        return [];
+    }
+
+    /**
      * Determine education level for specific major (handles HUMANIORA special case)
      */
     private function determineEducationLevelForMajor($major)
     {
-        $rumpunIlmu = $major->rumpun_ilmu;
+        $rumpunIlmu = $major->category;
         $majorName = $major->major_name;
         
         // Khusus untuk HUMANIORA, periksa nama jurusan
-        if ($rumpunIlmu === 'HUMANIORA') {
+        if ($rumpunIlmu === 'Humaniora') {
             $smaHumanioraMajors = ['Seni', 'Linguistik', 'Filsafat', 'Sejarah', 'Sastra'];
             if (in_array($majorName, $smaHumanioraMajors)) {
                 return 'SMA/MA';
@@ -1307,7 +1330,7 @@ class SuperAdminController extends Controller
         }
         
         // Untuk rumpun ilmu lain, gunakan logika normal
-        $smaRumpun = ['ILMU ALAM', 'ILMU SOSIAL', 'ILMU BUDAYA', 'ILMU TERAPAN', 'ILMU FORMAL'];
+        $smaRumpun = ['Ilmu Alam', 'Ilmu Sosial', 'Ilmu Terapan', 'Ilmu Formal'];
         if (in_array($rumpunIlmu, $smaRumpun)) {
             return 'SMA/MA';
         } else {

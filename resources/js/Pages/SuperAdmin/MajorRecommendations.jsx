@@ -267,7 +267,7 @@ export default function MajorRecommendations({
                 </div>
 
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     <div className="bg-white rounded-lg shadow-sm border p-4">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-gray-500">
@@ -283,98 +283,98 @@ export default function MajorRecommendations({
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                    <div className="bg-blue-50 rounded-lg shadow-sm border border-blue-200 p-4">
                         <div className="flex items-center">
-                            <div className="p-2 rounded-lg bg-maroon-500">
-                                <span className="text-white text-lg">🔵</span>
+                            <div className="p-2 rounded-lg bg-blue-500">
+                                <span className="text-white text-lg">🔬</span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-blue-700">
                                     ILMU ALAM
                                 </p>
-                                <p className="text-xl font-bold text-gray-900">
+                                <p className="text-xl font-bold text-blue-900">
                                     {
                                         majorRecommendations.filter(
-                                            (m) => m.rumpun_ilmu === "ILMU ALAM"
+                                            (m) => m.rumpun_ilmu === "Ilmu Alam"
                                         ).length
                                     }
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                    <div className="bg-green-50 rounded-lg shadow-sm border border-green-200 p-4">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-green-500">
-                                <span className="text-white text-lg">🟢</span>
+                                <span className="text-white text-lg">👥</span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-green-700">
                                     ILMU SOSIAL
                                 </p>
-                                <p className="text-xl font-bold text-gray-900">
+                                <p className="text-xl font-bold text-green-900">
                                     {
                                         majorRecommendations.filter(
                                             (m) =>
-                                                m.rumpun_ilmu === "ILMU SOSIAL"
+                                                m.rumpun_ilmu === "Ilmu Sosial"
                                         ).length
                                     }
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                    <div className="bg-purple-50 rounded-lg shadow-sm border border-purple-200 p-4">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-purple-500">
-                                <span className="text-white text-lg">🟣</span>
+                                <span className="text-white text-lg">🎨</span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-purple-700">
                                     HUMANIORA
                                 </p>
-                                <p className="text-xl font-bold text-gray-900">
+                                <p className="text-xl font-bold text-purple-900">
                                     {
                                         majorRecommendations.filter(
-                                            (m) => m.rumpun_ilmu === "HUMANIORA"
+                                            (m) => m.rumpun_ilmu === "Humaniora"
                                         ).length
                                     }
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                    <div className="bg-orange-50 rounded-lg shadow-sm border border-orange-200 p-4">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-orange-500">
                                 <span className="text-white text-lg">📐</span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-orange-700">
                                     ILMU FORMAL
                                 </p>
-                                <p className="text-xl font-bold text-gray-900">
+                                <p className="text-xl font-bold text-orange-900">
                                     {
                                         majorRecommendations.filter(
                                             (m) =>
-                                                m.rumpun_ilmu === "ILMU FORMAL"
+                                                m.rumpun_ilmu === "Ilmu Formal"
                                         ).length
                                     }
                                 </p>
                             </div>
                         </div>
                     </div>
-                    <div className="bg-white rounded-lg shadow-sm border p-4">
+                    <div className="bg-red-50 rounded-lg shadow-sm border border-red-200 p-4">
                         <div className="flex items-center">
                             <div className="p-2 rounded-lg bg-red-500">
                                 <span className="text-white text-lg">⚙️</span>
                             </div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-600">
+                                <p className="text-sm font-medium text-red-700">
                                     ILMU TERAPAN
                                 </p>
-                                <p className="text-xl font-bold text-gray-900">
+                                <p className="text-xl font-bold text-red-900">
                                     {
                                         majorRecommendations.filter(
                                             (m) =>
-                                                m.rumpun_ilmu === "ILMU TERAPAN"
+                                                m.rumpun_ilmu === "Ilmu Terapan"
                                         ).length
                                     }
                                 </p>
@@ -589,43 +589,43 @@ export default function MajorRecommendations({
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                     major.rumpun_ilmu ===
-                                                    "ILMU ALAM"
-                                                        ? "bg-maroon-100 text-maroon-800 border border-maroon-200"
+                                                    "Ilmu Alam"
+                                                        ? "bg-blue-100 text-blue-800 border border-blue-200"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU SOSIAL"
+                                                          "Ilmu Sosial"
                                                         ? "bg-green-100 text-green-800 border border-green-200"
                                                         : major.rumpun_ilmu ===
-                                                          "HUMANIORA"
+                                                          "Humaniora"
                                                         ? "bg-purple-100 text-purple-800 border border-purple-200"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU FORMAL"
+                                                          "Ilmu Formal"
                                                         ? "bg-orange-100 text-orange-800 border border-orange-200"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU TERAPAN"
+                                                          "Ilmu Terapan"
                                                         ? "bg-red-100 text-red-800 border border-red-200"
                                                         : "bg-gray-100 text-gray-800 border border-gray-200"
                                                 }`}
                                             >
                                                 <span className="mr-1">
                                                     {major.rumpun_ilmu ===
-                                                    "ILMU ALAM"
+                                                    "Ilmu Alam"
                                                         ? "🔬"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU SOSIAL"
-                                                        ? "📚"
+                                                          "Ilmu Sosial"
+                                                        ? "👥"
                                                         : major.rumpun_ilmu ===
-                                                          "HUMANIORA"
+                                                          "Humaniora"
                                                         ? "🎨"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU FORMAL"
+                                                          "Ilmu Formal"
                                                         ? "📐"
                                                         : major.rumpun_ilmu ===
-                                                          "ILMU TERAPAN"
+                                                          "Ilmu Terapan"
                                                         ? "⚙️"
                                                         : "📋"}
                                                 </span>
                                                 {major.rumpun_ilmu ||
-                                                    "ILMU ALAM"}
+                                                    "Ilmu Alam"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

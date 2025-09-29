@@ -1,120 +1,70 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuperAdminController;
-use App\Http\Controllers\MediaController;
-use App\Http\Controllers\HealthController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\SchoolAuthController;
+use App\Http\Controllers\SchoolDashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
+// Public routes - Redirect to TKA Super Admin Login
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect('/super-admin/login');
 });
 
-// Health check endpoint
-Route::get('/health', [HealthController::class, 'check']);
+// Laravel Auth routes (for admin)
+Route::get('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store']);
+Route::post('/logout', [App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
+Route::get('/register', [App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [App\Http\Controllers\Auth\RegisteredUserController::class, 'store']);
+
+// Dashboard route
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    return redirect('/super-admin/dashboard');
+})->middleware('auth:admin')->name('dashboard');
 
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// School Auth Routes
+Route::prefix('school')->group(function () {
+    Route::get('/login', [SchoolAuthController::class, 'showLogin'])->name('school.login');
+    Route::post('/login', [SchoolAuthController::class, 'login']);
+    Route::get('/dashboard', [SchoolDashboardController::class, 'index'])->name('school.dashboard');
 });
 
 // Super Admin Routes
-Route::prefix('super-admin')->name('super-admin.')->group(function () {
-    // Public login route (no auth required)
-    Route::get('/login', [SuperAdminController::class, 'showLogin'])->name('login');
-    Route::post('/login', [SuperAdminController::class, 'login'])->name('login.post');
-    
-    // Import routes (no CSRF required, but still protected by admin auth)
-    Route::middleware(['admin.auth.nocsrf'])->group(function () {
-        Route::post('/questions/import', [SuperAdminController::class, 'importQuestions'])->name('questions.import');
-        Route::post('/schools/import', [SuperAdminController::class, 'importSchools'])->name('schools.import');
-    });
+Route::prefix('super-admin')->group(function () {
+    // Public login routes (no auth required)
+    Route::get('/login', [SuperAdminController::class, 'showLogin'])->name('super-admin.login');
+    Route::post('/login', [SuperAdminController::class, 'login']);
     
     // Protected routes (require auth)
-    Route::middleware(['admin.auth'])->group(function () {
-        Route::get('/', [SuperAdminController::class, 'dashboard'])->name('dashboard');
-        Route::get('/schools', [SuperAdminController::class, 'schools'])->name('schools');
-        Route::get('/schools/{id}', [SuperAdminController::class, 'schoolDetail'])->name('schools.detail');
-        Route::post('/schools', [SuperAdminController::class, 'storeSchool'])->name('schools.store');
-        Route::put('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('schools.update');
-        Route::delete('/schools/{school}', [SuperAdminController::class, 'deleteSchool'])->name('schools.delete');
-        Route::get('/schools/import-test', [SuperAdminController::class, 'importSchoolsTest'])->name('schools.import.test');
-
-        Route::get('/questions', [SuperAdminController::class, 'questions'])->name('questions');
-        Route::post('/questions', [SuperAdminController::class, 'storeQuestion'])->name('questions.store');
-        Route::get('/questions/import-test', [SuperAdminController::class, 'importTest'])->name('questions.import.test');
-        Route::put('/questions/{question}', [SuperAdminController::class, 'updateQuestion'])->name('questions.update');
-        Route::delete('/questions/{question}', [SuperAdminController::class, 'deleteQuestion'])->name('questions.delete');
-
-        Route::get('/results', [SuperAdminController::class, 'results'])->name('results');
-        
-        Route::get('/monitoring', [SuperAdminController::class, 'monitoring'])->name('monitoring');
-        Route::get('/monitoring/data', [SuperAdminController::class, 'getMonitoringData'])->name('monitoring.data');
-        Route::get('/reports', [SuperAdminController::class, 'reports'])->name('reports');
-        Route::post('/reports/download', [SuperAdminController::class, 'downloadReport'])->name('reports.download');
-        Route::get('/reports/test', [SuperAdminController::class, 'testDownload'])->name('reports.test');
-        
-        // Major Recommendations
-        Route::get('/major-recommendations', [SuperAdminController::class, 'majorRecommendations'])->name('major-recommendations');
-        Route::post('/major-recommendations', [SuperAdminController::class, 'storeMajorRecommendation'])->name('major-recommendations.store');
-        Route::put('/major-recommendations/{id}', [SuperAdminController::class, 'updateMajorRecommendation'])->name('major-recommendations.update');
-        Route::delete('/major-recommendations/{id}', [SuperAdminController::class, 'deleteMajorRecommendation'])->name('major-recommendations.delete');
-        Route::patch('/major-recommendations/{id}/toggle', [SuperAdminController::class, 'toggleMajorRecommendation'])->name('major-recommendations.toggle');
-        Route::get('/major-recommendations/export', [SuperAdminController::class, 'exportMajorRecommendations'])->name('major-recommendations.export');
-        
-        Route::post('/logout', [SuperAdminController::class, 'logout'])->name('logout');
-        
-        // Media upload route
-        Route::post('/upload-media', [MediaController::class, 'upload'])->name('media.upload');
-        
-        // TKA Schedules Management
-        // Web routes (return Inertia views)
-        Route::get('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index'])->name('tka-schedules');
-        
-        // TKA Schedules CRUD routes (return JSON) - with authentication
-        Route::post('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store'])->name('tka-schedules.store');
-        Route::get('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show'])->name('tka-schedules.show');
-        Route::put('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update'])->name('tka-schedules.update');
-        Route::delete('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy'])->name('tka-schedules.destroy');
-        Route::post('/tka-schedules/{id}/cancel', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel'])->name('tka-schedules.cancel');
-        Route::get('/tka-schedules/statistics', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'statistics'])->name('tka-schedules.statistics');
-        
-        // API routes (return JSON) - with authentication
-        Route::prefix('api')->middleware(['admin.auth'])->group(function () {
-            Route::get('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'apiIndex'])->name('tka-schedules.api.index');
-            Route::post('/tka-schedules', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store'])->name('tka-schedules.api.store');
-            Route::get('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show'])->name('tka-schedules.api.show');
-            Route::put('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update'])->name('tka-schedules.api.update');
-            Route::delete('/tka-schedules/{id}', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy'])->name('tka-schedules.api.destroy');
-            Route::post('/tka-schedules/{id}/cancel', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel'])->name('tka-schedules.api.cancel');
-            Route::get('/tka-schedules/statistics', [\App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'statistics'])->name('tka-schedules.api.statistics');
-        });
-        
+    Route::middleware(['auth:admin'])->group(function () {
+        Route::get('/', function () {
+            return redirect('/super-admin/dashboard');
+        })->name('super-admin');
+        Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('super-admin.dashboard');
+        Route::get('/schools', [SuperAdminController::class, 'schools'])->name('super-admin.schools');
+        Route::get('/major-recommendations', [SuperAdminController::class, 'majorRecommendations'])->name('super-admin.major-recommendations');
+        Route::get('/questions', [SuperAdminController::class, 'questions'])->name('super-admin.questions');
+        Route::get('/results', [SuperAdminController::class, 'results'])->name('super-admin.results');
+        Route::get('/tka-schedules', [SuperAdminController::class, 'tkaSchedules'])->name('super-admin.tka-schedules');
     });
 });
 
-require __DIR__.'/auth.php';
+// Test endpoint untuk debug major recommendations
+Route::get('/test-majors', function() {
+    $majors = \App\Models\MajorRecommendation::all();
+    return response()->json([
+        'total' => $majors->count(),
+        'ilmu_alam' => $majors->where('category', 'Ilmu Alam')->count(),
+        'ilmu_sosial' => $majors->where('category', 'Ilmu Sosial')->count(),
+        'humaniora' => $majors->where('category', 'Humaniora')->count(),
+        'ilmu_formal' => $majors->where('category', 'Ilmu Formal')->count(),
+        'ilmu_terapan' => $majors->where('category', 'Ilmu Terapan')->count(),
+        'ilmu_kesehatan' => $majors->where('category', 'Ilmu Kesehatan')->count(),
+        'ilmu_lingkungan' => $majors->where('category', 'Ilmu Lingkungan')->count(),
+        'ilmu_teknologi' => $majors->where('category', 'Ilmu Teknologi')->count(),
+        'sample_ilmu_alam' => $majors->where('category', 'Ilmu Alam')->take(3)->pluck('major_name')->toArray()
+    ]);
+});

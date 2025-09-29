@@ -12,321 +12,147 @@ class UpdateMajorRecommendationsSeeder extends Seeder
      */
     public function run(): void
     {
-        echo "🔄 Starting Major Recommendations Update...\n";
-
-        // 1. Update all existing majors to use proper rumpun_ilmu
-        echo "📚 Step 1: Updating existing majors with proper rumpun_ilmu...\n";
-        
-        // Get all existing majors
-        $majors = DB::table('major_recommendations')->get();
-        echo "Found " . $majors->count() . " existing majors\n";
-
-        // Define mapping of major names to rumpun_ilmu
-        $majorMapping = [
+        // Update major recommendations dengan mata pelajaran sesuai Kepmendikdasmen
+        $updates = [
             // HUMANIORA
-            'Seni' => 'HUMANIORA',
-            'Sejarah' => 'HUMANIORA',
-            'Linguistik' => 'HUMANIORA',
-            'Sastra' => 'HUMANIORA',
-            'Filsafat' => 'HUMANIORA',
-            'Bahasa' => 'HUMANIORA',
-            'Sastra Indonesia' => 'HUMANIORA',
-            'Sastra Inggris' => 'HUMANIORA',
-            'Sastra Arab' => 'HUMANIORA',
-            'Sastra Jepang' => 'HUMANIORA',
-            'Sastra Korea' => 'HUMANIORA',
-            'Sastra Mandarin' => 'HUMANIORA',
-            'Sastra Prancis' => 'HUMANIORA',
-            'Sastra Jerman' => 'HUMANIORA',
-            'Seni Rupa' => 'HUMANIORA',
-            'Seni Musik' => 'HUMANIORA',
-            'Seni Tari' => 'HUMANIORA',
-            'Seni Teater' => 'HUMANIORA',
-            'Desain Komunikasi Visual' => 'HUMANIORA',
-            'Desain Interior' => 'HUMANIORA',
-            'Desain Produk' => 'HUMANIORA',
-            'Fashion Design' => 'HUMANIORA',
-            'Antropologi' => 'HUMANIORA',
-            'Arkeologi' => 'HUMANIORA',
-            'Sejarah' => 'HUMANIORA',
-            'Ilmu Sejarah' => 'HUMANIORA',
-
+            'Seni' => [
+                'required_subjects' => json_encode(['Seni Budaya']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+                'career_prospects' => 'Seniman, Desainer, Kurator, Pengajar Seni',
+                'kurikulum_merdeka_subjects' => json_encode(['Seni Budaya']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Seni Budaya']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Seni Budaya']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Seni Budaya']),
+            ],
+            'Sejarah' => [
+                'required_subjects' => json_encode(['Sejarah']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+                'career_prospects' => 'Sejarawan, Peneliti, Kurator Museum, Penulis',
+                'kurikulum_merdeka_subjects' => json_encode(['Sejarah']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Sejarah Indonesia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Sejarah Indonesia']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Sejarah Indonesia']),
+            ],
+            'Linguistik' => [
+                'required_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+                'preferred_subjects' => json_encode(['Bahasa Asing']),
+                'career_prospects' => 'Linguis, Penerjemah, Editor, Peneliti Bahasa',
+                'kurikulum_merdeka_subjects' => json_encode(['Bahasa Indonesia Tingkat Lanjut', 'Bahasa Inggris']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Inggris']),
+            ],
+            'Susastra atau Sastra' => [
+                'required_subjects' => json_encode(['Bahasa Indonesia Tingkat Lanjut']),
+                'preferred_subjects' => json_encode(['Bahasa Asing yang Relevan']),
+                'career_prospects' => 'Sastrawan, Kritikus Sastra, Editor, Penulis',
+                'kurikulum_merdeka_subjects' => json_encode(['Bahasa Indonesia Tingkat Lanjut', 'Bahasa Asing yang Relevan']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Asing yang Relevan']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Asing yang Relevan']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Bahasa Indonesia', 'Bahasa Asing yang Relevan']),
+            ],
+            'Filsafat' => [
+                'required_subjects' => json_encode(['Sosiologi']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Sejarah']),
+                'career_prospects' => 'Filsuf, Peneliti, Dosen, Konsultan',
+                'kurikulum_merdeka_subjects' => json_encode(['Sosiologi']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Sejarah Indonesia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Sosiologi']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Antropologi']),
+            ],
+            
             // ILMU SOSIAL
-            'Sosiologi' => 'ILMU SOSIAL',
-            'Psikologi' => 'ILMU SOSIAL',
-            'Ekonomi' => 'ILMU SOSIAL',
-            'Manajemen' => 'ILMU SOSIAL',
-            'Administrasi Bisnis' => 'ILMU SOSIAL',
-            'Administrasi Negara' => 'ILMU SOSIAL',
-            'Administrasi Publik' => 'ILMU SOSIAL',
-            'Hubungan Internasional' => 'ILMU SOSIAL',
-            'Ilmu Politik' => 'ILMU SOSIAL',
-            'Ilmu Komunikasi' => 'ILMU SOSIAL',
-            'Jurnalistik' => 'ILMU SOSIAL',
-            'Public Relations' => 'ILMU SOSIAL',
-            'Periklanan' => 'ILMU SOSIAL',
-            'Penyiaran' => 'ILMU SOSIAL',
-            'Akuntansi' => 'ILMU SOSIAL',
-            'Keuangan' => 'ILMU SOSIAL',
-            'Perbankan' => 'ILMU SOSIAL',
-            'Pemasaran' => 'ILMU SOSIAL',
-            'Bisnis' => 'ILMU SOSIAL',
-            'Kewirausahaan' => 'ILMU SOSIAL',
-            'Geografi' => 'ILMU SOSIAL',
-            'Ilmu Geografi' => 'ILMU SOSIAL',
-            'Pendidikan' => 'ILMU SOSIAL',
-            'Pendidikan Guru' => 'ILMU SOSIAL',
-            'Bimbingan Konseling' => 'ILMU SOSIAL',
-            'Kesejahteraan Sosial' => 'ILMU SOSIAL',
-            'Ilmu Kesejahteraan Sosial' => 'ILMU SOSIAL',
-            'Kriminologi' => 'ILMU SOSIAL',
-            'Ilmu Kriminologi' => 'ILMU SOSIAL',
-
+            'Sosial' => [
+                'required_subjects' => json_encode(['Sosiologi']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Sejarah']),
+                'career_prospects' => 'Sosiolog, Peneliti Sosial, Konsultan, Aktivis',
+                'kurikulum_merdeka_subjects' => json_encode(['Sosiologi']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Sejarah Indonesia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Sosiologi']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Antropologi']),
+            ],
+            'Ekonomi' => [
+                'required_subjects' => json_encode(['Ekonomi', 'Matematika']),
+                'preferred_subjects' => json_encode(['Bahasa Inggris', 'Sosiologi']),
+                'career_prospects' => 'Ekonom, Analis Keuangan, Konsultan, Bankir',
+                'kurikulum_merdeka_subjects' => json_encode(['Ekonomi', 'Matematika Tingkat Lanjut']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Matematika', 'Ekonomi']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Ekonomi', 'Matematika']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Matematika', 'Ekonomi']),
+            ],
+            'Pertahanan' => [
+                'required_subjects' => json_encode(['Pendidikan Pancasila']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Sejarah']),
+                'career_prospects' => 'TNI, Polri, Analis Keamanan, Konsultan Pertahanan',
+                'kurikulum_merdeka_subjects' => json_encode(['Pendidikan Pancasila']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['PPKn']),
+                'kurikulum_2013_ips_subjects' => json_encode(['PPKn']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['PPKn']),
+            ],
+            'Psikologi' => [
+                'required_subjects' => json_encode(['Sosiologi', 'Matematika']),
+                'preferred_subjects' => json_encode(['Bahasa Indonesia', 'Biologi']),
+                'career_prospects' => 'Psikolog, Konselor, Peneliti, HRD',
+                'kurikulum_merdeka_subjects' => json_encode(['Sosiologi', 'Matematika Tingkat Lanjut', 'Pendidikan Pancasila']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Matematika', 'PPKn']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Sosiologi', 'PPKn']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Matematika', 'PPKn']),
+            ],
+            
             // ILMU ALAM
-            'Fisika' => 'ILMU ALAM',
-            'Kimia' => 'ILMU ALAM',
-            'Biologi' => 'ILMU ALAM',
-            'Matematika' => 'ILMU ALAM',
-            'Statistika' => 'ILMU ALAM',
-            'Astronomi' => 'ILMU ALAM',
-            'Geofisika' => 'ILMU ALAM',
-            'Geologi' => 'ILMU ALAM',
-            'Meteorologi' => 'ILMU ALAM',
-            'Oseanografi' => 'ILMU ALAM',
-            'Ilmu Kelautan' => 'ILMU ALAM',
-            'Ilmu Kebumian' => 'ILMU ALAM',
-            'Ilmu Lingkungan' => 'ILMU ALAM',
-            'Biokimia' => 'ILMU ALAM',
-            'Biofisika' => 'ILMU ALAM',
-            'Biologi Molekuler' => 'ILMU ALAM',
-            'Mikrobiologi' => 'ILMU ALAM',
-            'Botani' => 'ILMU ALAM',
-            'Zoologi' => 'ILMU ALAM',
-            'Ekologi' => 'ILMU ALAM',
-            'Farmasi' => 'ILMU ALAM',
-            'Kedokteran' => 'ILMU ALAM',
-            'Kedokteran Gigi' => 'ILMU ALAM',
-            'Kedokteran Hewan' => 'ILMU ALAM',
-            'Keperawatan' => 'ILMU ALAM',
-            'Kesehatan Masyarakat' => 'ILMU ALAM',
-            'Gizi' => 'ILMU ALAM',
-            'Ilmu Gizi' => 'ILMU ALAM',
-            'Kesehatan Lingkungan' => 'ILMU ALAM',
-            'Epidemiologi' => 'ILMU ALAM',
-            'Biomedis' => 'ILMU ALAM',
-            'Ilmu Biomedis' => 'ILMU ALAM',
-
-            // ILMU FORMAL
-            'Matematika Murni' => 'ILMU FORMAL',
-            'Matematika Terapan' => 'ILMU FORMAL',
-            'Statistika' => 'ILMU FORMAL',
-            'Aktuaria' => 'ILMU FORMAL',
-            'Ilmu Aktuaria' => 'ILMU FORMAL',
-            'Logika' => 'ILMU FORMAL',
-            'Ilmu Logika' => 'ILMU FORMAL',
-            'Filsafat' => 'ILMU FORMAL',
-            'Ilmu Filsafat' => 'ILMU FORMAL',
-
-            // ILMU TERAPAN
-            'Teknik' => 'ILMU TERAPAN',
-            'Teknik Sipil' => 'ILMU TERAPAN',
-            'Teknik Mesin' => 'ILMU TERAPAN',
-            'Teknik Elektro' => 'ILMU TERAPAN',
-            'Teknik Informatika' => 'ILMU TERAPAN',
-            'Sistem Informasi' => 'ILMU TERAPAN',
-            'Teknologi Informasi' => 'ILMU TERAPAN',
-            'Teknik Komputer' => 'ILMU TERAPAN',
-            'Teknik Industri' => 'ILMU TERAPAN',
-            'Teknik Kimia' => 'ILMU TERAPAN',
-            'Teknik Lingkungan' => 'ILMU TERAPAN',
-            'Teknik Pertambangan' => 'ILMU TERAPAN',
-            'Teknik Perminyakan' => 'ILMU TERAPAN',
-            'Teknik Geologi' => 'ILMU TERAPAN',
-            'Teknik Geofisika' => 'ILMU TERAPAN',
-            'Teknik Nuklir' => 'ILMU TERAPAN',
-            'Teknik Material' => 'ILMU TERAPAN',
-            'Teknik Metalurgi' => 'ILMU TERAPAN',
-            'Teknik Fisika' => 'ILMU TERAPAN',
-            'Teknik Biomedis' => 'ILMU TERAPAN',
-            'Teknik Penerbangan' => 'ILMU TERAPAN',
-            'Teknik Dirgantara' => 'ILMU TERAPAN',
-            'Teknik Kelautan' => 'ILMU TERAPAN',
-            'Teknik Perkapalan' => 'ILMU TERAPAN',
-            'Teknik Perikanan' => 'ILMU TERAPAN',
-            'Teknik Pertanian' => 'ILMU TERAPAN',
-            'Teknik Pangan' => 'ILMU TERAPAN',
-            'Teknik Biosistem' => 'ILMU TERAPAN',
-            'Teknik Sipil' => 'ILMU TERAPAN',
-            'Arsitektur' => 'ILMU TERAPAN',
-            'Perencanaan Wilayah dan Kota' => 'ILMU TERAPAN',
-            'Teknik Geomatika' => 'ILMU TERAPAN',
-            'Teknik Geodesi' => 'ILMU TERAPAN',
-            'Teknik Geologi' => 'ILMU TERAPAN',
-            'Teknik Geofisika' => 'ILMU TERAPAN',
-            'Teknik Pertambangan' => 'ILMU TERAPAN',
-            'Teknik Perminyakan' => 'ILMU TERAPAN',
-            'Teknik Nuklir' => 'ILMU TERAPAN',
-            'Teknik Material' => 'ILMU TERAPAN',
-            'Teknik Metalurgi' => 'ILMU TERAPAN',
-            'Teknik Fisika' => 'ILMU TERAPAN',
-            'Teknik Biomedis' => 'ILMU TERAPAN',
-            'Teknik Penerbangan' => 'ILMU TERAPAN',
-            'Teknik Dirgantara' => 'ILMU TERAPAN',
-            'Teknik Kelautan' => 'ILMU TERAPAN',
-            'Teknik Perkapalan' => 'ILMU TERAPAN',
-            'Teknik Perikanan' => 'ILMU TERAPAN',
-            'Teknik Pertanian' => 'ILMU TERAPAN',
-            'Teknik Pangan' => 'ILMU TERAPAN',
-            'Teknik Biosistem' => 'ILMU TERAPAN',
-            'Arsitektur' => 'ILMU TERAPAN',
-            'Perencanaan Wilayah dan Kota' => 'ILMU TERAPAN',
-            'Teknik Geomatika' => 'ILMU TERAPAN',
-            'Teknik Geodesi' => 'ILMU TERAPAN',
+            'Kimia' => [
+                'required_subjects' => json_encode(['Kimia']),
+                'preferred_subjects' => json_encode(['Matematika', 'Fisika']),
+                'career_prospects' => 'Ahli Kimia, Peneliti, Quality Control, Konsultan',
+                'kurikulum_merdeka_subjects' => json_encode(['Kimia']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Kimia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Kimia']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Kimia']),
+            ],
+            'Fisika' => [
+                'required_subjects' => json_encode(['Fisika']),
+                'preferred_subjects' => json_encode(['Matematika', 'Kimia']),
+                'career_prospects' => 'Fisikawan, Peneliti, Engineer, Dosen',
+                'kurikulum_merdeka_subjects' => json_encode(['Fisika']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Fisika']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Fisika']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Fisika']),
+            ],
+            'Biologi' => [
+                'required_subjects' => json_encode(['Biologi']),
+                'preferred_subjects' => json_encode(['Kimia', 'Matematika']),
+                'career_prospects' => 'Biolog, Peneliti, Konservasionis, Dosen',
+                'kurikulum_merdeka_subjects' => json_encode(['Biologi']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Biologi']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Biologi']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Biologi']),
+            ],
+            
+            // ILMU KESEHATAN
+            'Ilmu atau Sains Kedokteran' => [
+                'required_subjects' => json_encode(['Biologi', 'Kimia']),
+                'preferred_subjects' => json_encode(['Fisika', 'Matematika']),
+                'career_prospects' => 'Dokter, Spesialis, Peneliti Medis, Dosen',
+                'kurikulum_merdeka_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Biologi', 'Kimia']),
+            ],
+            'Ilmu Farmasi' => [
+                'required_subjects' => json_encode(['Biologi', 'Kimia']),
+                'preferred_subjects' => json_encode(['Matematika', 'Fisika']),
+                'career_prospects' => 'Apoteker, Peneliti Farmasi, Quality Control, Dosen',
+                'kurikulum_merdeka_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_ipa_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_ips_subjects' => json_encode(['Biologi', 'Kimia']),
+                'kurikulum_2013_bahasa_subjects' => json_encode(['Biologi', 'Kimia']),
+            ],
         ];
 
-        $updatedCount = 0;
-        $defaultCount = 0;
-
-        foreach ($majors as $major) {
-            $majorName = $major->major_name;
-            $rumpunIlmu = 'ILMU ALAM'; // Default
-
-            // Try to find exact match
-            if (isset($majorMapping[$majorName])) {
-                $rumpunIlmu = $majorMapping[$majorName];
-            } else {
-                // Try partial match
-                foreach ($majorMapping as $key => $value) {
-                    if (stripos($majorName, $key) !== false) {
-                        $rumpunIlmu = $value;
-                        break;
-                    }
-                }
-            }
-
-            // Update the major
+        foreach ($updates as $majorName => $data) {
             DB::table('major_recommendations')
-                ->where('id', $major->id)
-                ->update(['rumpun_ilmu' => $rumpunIlmu]);
-
-            if ($rumpunIlmu !== 'ILMU ALAM') {
-                $updatedCount++;
-            } else {
-                $defaultCount++;
-            }
+                ->where('major_name', $majorName)
+                ->update($data);
         }
-
-        echo "✅ Updated {$updatedCount} majors with specific rumpun_ilmu\n";
-        echo "⚠️ {$defaultCount} majors set to default ILMU ALAM\n";
-
-        // 2. Update subjects data for each major based on rumpun_ilmu
-        echo "\n📖 Step 2: Updating subjects data for each major...\n";
-
-        // Get subjects mapping
-        $subjects = DB::table('subjects')->pluck('id', 'code')->toArray();
-
-        $majorsWithSubjects = DB::table('major_recommendations')->get();
-
-        foreach ($majorsWithSubjects as $major) {
-            $subjectsToAdd = [];
-
-            switch ($major->rumpun_ilmu) {
-                case 'HUMANIORA':
-                    $subjectsToAdd = [
-                        'merdeka' => ['BIN_L', 'BIG_L', 'BAR', 'BJE', 'BPR', 'BJP', 'BKO', 'BMA'],
-                        '2013_ipa' => ['BIN_L', 'BIG_L', 'BAR', 'BJE', 'BPR', 'BJP', 'BKO', 'BMA'],
-                        '2013_ips' => ['BIN_L', 'BIG_L', 'BAR', 'BJE', 'BPR', 'BJP', 'BKO', 'BMA'],
-                        '2013_bahasa' => ['BIN_L', 'BIG_L', 'BAR', 'BJE', 'BPR', 'BJP', 'BKO', 'BMA'],
-                    ];
-                    break;
-
-                case 'ILMU SOSIAL':
-                    $subjectsToAdd = [
-                        'merdeka' => ['MTK_L', 'EKO', 'SOS', 'SEJ', 'GEO', 'ANT', 'PPKN'],
-                        '2013_ipa' => ['MTK_L', 'EKO', 'SOS', 'SEJ', 'GEO', 'ANT', 'PPKN'],
-                        '2013_ips' => ['MTK_L', 'EKO', 'SOS', 'SEJ', 'GEO', 'ANT', 'PPKN'],
-                        '2013_bahasa' => ['MTK_L', 'EKO', 'SOS', 'SEJ', 'GEO', 'ANT', 'PPKN'],
-                    ];
-                    break;
-
-                case 'ILMU ALAM':
-                    $subjectsToAdd = [
-                        'merdeka' => ['MTK_L', 'FIS', 'KIM', 'BIO'],
-                        '2013_ipa' => ['MTK_L', 'FIS', 'KIM', 'BIO'],
-                        '2013_ips' => ['MTK_L', 'FIS', 'KIM', 'BIO'],
-                        '2013_bahasa' => ['MTK_L', 'FIS', 'KIM', 'BIO'],
-                    ];
-                    break;
-
-                case 'ILMU FORMAL':
-                    $subjectsToAdd = [
-                        'merdeka' => ['MTK_L'],
-                        '2013_ipa' => ['MTK_L'],
-                        '2013_ips' => ['MTK_L'],
-                        '2013_bahasa' => ['MTK_L'],
-                    ];
-                    break;
-
-                case 'ILMU TERAPAN':
-                    $subjectsToAdd = [
-                        'merdeka' => ['MTK_L', 'FIS', 'KIM', 'BIO', 'PKK'],
-                        '2013_ipa' => ['MTK_L', 'FIS', 'KIM', 'BIO', 'PKK'],
-                        '2013_ips' => ['MTK_L', 'FIS', 'KIM', 'BIO', 'PKK'],
-                        '2013_bahasa' => ['MTK_L', 'FIS', 'KIM', 'BIO', 'PKK'],
-                    ];
-                    break;
-            }
-
-            // Update major with subjects
-            $updateData = [];
-            foreach ($subjectsToAdd as $kurikulum => $subjectCodes) {
-                $subjectNames = [];
-                foreach ($subjectCodes as $code) {
-                    if (isset($subjects[$code])) {
-                        $subject = DB::table('subjects')->where('code', $code)->first();
-                        if ($subject) {
-                            $subjectNames[] = $subject->name;
-                        }
-                    }
-                }
-                
-                switch ($kurikulum) {
-                    case 'merdeka':
-                        $updateData['kurikulum_merdeka_subjects'] = json_encode($subjectNames);
-                        break;
-                    case '2013_ipa':
-                        $updateData['kurikulum_2013_ipa_subjects'] = json_encode($subjectNames);
-                        break;
-                    case '2013_ips':
-                        $updateData['kurikulum_2013_ips_subjects'] = json_encode($subjectNames);
-                        break;
-                    case '2013_bahasa':
-                        $updateData['kurikulum_2013_bahasa_subjects'] = json_encode($subjectNames);
-                        break;
-                }
-            }
-
-            if (!empty($updateData)) {
-                DB::table('major_recommendations')
-                    ->where('id', $major->id)
-                    ->update($updateData);
-            }
-        }
-
-        echo "✅ Updated subjects data for all majors\n";
-
-        // 3. Show summary by rumpun_ilmu
-        echo "\n📊 Step 3: Summary by rumpun_ilmu...\n";
-        
-        $summary = DB::table('major_recommendations')
-            ->select('rumpun_ilmu', DB::raw('COUNT(*) as count'))
-            ->groupBy('rumpun_ilmu')
-            ->get();
-
-        foreach ($summary as $item) {
-            echo "  - {$item->rumpun_ilmu}: {$item->count} majors\n";
-        }
-
-        echo "\n🎉 Major Recommendations Update Completed Successfully!\n";
     }
 }
