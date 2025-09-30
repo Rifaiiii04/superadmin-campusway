@@ -68,10 +68,19 @@ class StudentWebController extends Controller
             'success' => true,
             'message' => 'Registrasi berhasil',
             'data' => [
-                'student_id' => $student->id,
-                'name' => $student->name,
-                'nisn' => $student->nisn,
-                'school' => $school->name
+                'student' => [
+                    'id' => $student->id,
+                    'nisn' => $student->nisn,
+                    'name' => $student->name,
+                    'kelas' => $student->kelas,
+                    'class' => $student->kelas, // Alias for compatibility
+                    'email' => $student->email,
+                    'phone' => $student->phone,
+                    'parent_phone' => $student->parent_phone,
+                    'school_id' => $student->school_id,
+                    'school_name' => $school->name,
+                    'has_choice' => false // Will be updated later
+                ]
             ]
         ], 201);
     }

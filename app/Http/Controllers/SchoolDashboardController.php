@@ -689,8 +689,46 @@ class SchoolDashboardController extends Controller
     public function importStudents(Request $request)
     {
         try {
+            // Log request data for debugging
+            Log::info('Import students request received', [
+                'school_id' => $request->school_id,
+                'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file',
+                'file_size' => $request->file('file') ? $request->file('file')->getSize() : 0
+            ]);
+            
+            // Custom validation untuk file
+            $file = $request->file('file');
+            $extension = $file->getClientOriginalExtension();
+            $mimeType = $file->getMimeType();
+            
+            // Validasi extension dan MIME type
+            $allowedExtensions = ['csv', 'xlsx', 'xls'];
+            $allowedMimeTypes = [
+                'text/csv',
+                'text/plain',
+                'application/csv',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ];
+            
+            if (!in_array($extension, $allowedExtensions)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Format file tidak didukung. Gunakan file CSV atau Excel (.xlsx, .xls)',
+                    'errors' => ['file' => ['Format file tidak didukung']]
+                ], 422);
+            }
+            
+            if (!in_array($mimeType, $allowedMimeTypes)) {
+                Log::warning('File MIME type not in allowed list', [
+                    'mime_type' => $mimeType,
+                    'extension' => $extension,
+                    'file_name' => $file->getClientOriginalName()
+                ]);
+            }
+            
+            // Validasi school_id
             $request->validate([
-                'file' => 'required|file|mimes:csv,xlsx,xls|max:10240', // Max 10MB
                 'school_id' => 'required|exists:schools,id'
             ]);
 
@@ -701,9 +739,6 @@ class SchoolDashboardController extends Controller
                     'message' => 'Sekolah tidak ditemukan'
                 ], 404);
             }
-
-            $file = $request->file('file');
-            $extension = $file->getClientOriginalExtension();
             
             // Baca file berdasarkan ekstensi
             $data = [];
@@ -721,29 +756,31 @@ class SchoolDashboardController extends Controller
             }
 
             // Validasi header kolom - support both old and new format
-            $requiredColumns = ['nisn', 'name', 'kelas', 'email', 'phone', 'parent_phone', 'password'];
-            $requiredColumnsNew = ['NISN', 'Nama Lengkap', 'Kelas', 'Email', 'No Handphone', 'No Handphone Orang Tua', 'Password'];
+            $requiredColumns = ['nisn', 'name', 'kelas']; // Hanya kolom yang benar-benar wajib
+            $optionalColumns = ['email', 'phone', 'parent_phone', 'password'];
+            $requiredColumnsNew = ['NISN', 'Nama Lengkap', 'Kelas']; // Hanya kolom yang benar-benar wajib
+            $optionalColumnsNew = ['Email', 'No Handphone', 'No Handphone Orang Tua', 'Password'];
             
             $headers = array_keys($data[0]);
             $headersLower = array_map('strtolower', array_map('trim', $headers));
             
             // Check if using new format (with spaces and proper names)
             $isNewFormat = false;
-            $missingColumns = [];
+            $missingRequiredColumns = [];
             
-            if (count(array_intersect($requiredColumnsNew, $headers)) >= 3) {
+            if (count(array_intersect($requiredColumnsNew, $headers)) >= 2) {
                 // Using new format
                 $isNewFormat = true;
-                $missingColumns = array_diff($requiredColumnsNew, $headers);
+                $missingRequiredColumns = array_diff($requiredColumnsNew, $headers);
             } else {
                 // Using old format
-                $missingColumns = array_diff($requiredColumns, $headersLower);
+                $missingRequiredColumns = array_diff($requiredColumns, $headersLower);
             }
             
-            if (!empty($missingColumns)) {
+            if (!empty($missingRequiredColumns)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Kolom yang diperlukan tidak ditemukan: ' . implode(', ', $missingColumns)
+                    'message' => 'Kolom yang diperlukan tidak ditemukan: ' . implode(', ', $missingRequiredColumns)
                 ], 400);
             }
 
@@ -864,6 +901,12 @@ class SchoolDashboardController extends Controller
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Import students validation failed', [
+                'errors' => $e->errors(),
+                'school_id' => $request->school_id ?? 'Not provided',
+                'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file'
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Validasi gagal',

@@ -18,6 +18,7 @@ class Student extends Model
         'phone',
         'parent_phone',
         'password',
+        'status',
     ];
 
     /**
