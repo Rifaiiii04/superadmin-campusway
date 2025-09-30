@@ -45,10 +45,15 @@ Route::prefix('super-admin')->group(function () {
         })->name('super-admin');
         Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('super-admin.dashboard');
         Route::get('/schools', [SuperAdminController::class, 'schools'])->name('super-admin.schools');
+        Route::get('/schools/{school}', [SuperAdminController::class, 'schoolDetail'])->name('super-admin.schools.detail');
+        Route::post('/schools', [SuperAdminController::class, 'storeSchool'])->name('super-admin.schools.store');
+        Route::put('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('super-admin.schools.update');
+        Route::patch('/schools/{school}', [SuperAdminController::class, 'updateSchool'])->name('super-admin.schools.patch');
+        Route::delete('/schools/{school}', [SuperAdminController::class, 'deleteSchool'])->name('super-admin.schools.delete');
         Route::get('/major-recommendations', [SuperAdminController::class, 'majorRecommendations'])->name('super-admin.major-recommendations');
         Route::get('/questions', [SuperAdminController::class, 'questions'])->name('super-admin.questions');
         Route::get('/results', [SuperAdminController::class, 'results'])->name('super-admin.results');
-        Route::get('/tka-schedules', [SuperAdminController::class, 'tkaSchedules'])->name('super-admin.tka-schedules');
+        Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index'])->name('super-admin.tka-schedules');
     });
 });
 

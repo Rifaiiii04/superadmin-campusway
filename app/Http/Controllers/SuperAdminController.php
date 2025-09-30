@@ -241,6 +241,7 @@ class SuperAdminController extends Controller
             'npsn' => $request->npsn,
             'name' => $request->name,
             'password_hash' => Hash::make($request->password),
+            'password' => $request->password, // Store plain password for reference
         ]);
 
         // Clear related caches
@@ -271,6 +272,7 @@ class SuperAdminController extends Controller
 
         if ($request->password) {
             $data['password_hash'] = Hash::make($request->password);
+            $data['password'] = $request->password; // Store plain password for reference
         }
 
         $school->update($data);

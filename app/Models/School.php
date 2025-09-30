@@ -14,6 +14,7 @@ class School extends Model
         'name',
         'school_level',
         'password_hash',
+        'password',
     ];
 
     protected $hidden = [

@@ -140,6 +140,13 @@ Route::prefix('school')->group(function () {
     });
 });
 
+// Super Admin API Routes (for testing)
+Route::prefix('super-admin-api')->group(function () {
+    Route::put('/schools/{school}', [App\Http\Controllers\SuperAdminController::class, 'updateSchool']);
+    Route::post('/schools', [App\Http\Controllers\SuperAdminController::class, 'storeSchool']);
+    Route::delete('/schools/{school}', [App\Http\Controllers\SuperAdminController::class, 'deleteSchool']);
+});
+
 // School Level Major Recommendations API Routes
 Route::prefix('school-level')->group(function () {
     // Get major recommendations by school level
