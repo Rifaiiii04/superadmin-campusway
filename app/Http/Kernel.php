@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
+            \App\Http\Middleware\Cors::class,
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -71,5 +72,7 @@ class Kernel extends HttpKernel
         'admin.auth' => \App\Http\Middleware\AdminAuth::class,
         'admin.auth.nocsrf' => \App\Http\Middleware\AdminAuthWithoutCsrf::class,
         'school.auth' => \App\Http\Middleware\SchoolAuth::class,
+        'superadmin.auth' => \App\Http\Middleware\SuperAdminAuth::class,
+        'cors' => \App\Http\Middleware\Cors::class,
     ];
 }

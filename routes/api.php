@@ -9,6 +9,7 @@ use App\Http\Controllers\OptimizedApiController;
 use App\Http\Controllers\SchoolLevelMajorController;
 use App\Http\Controllers\TkaScheduleController;
 use App\Http\Controllers\StudentSubjectController;
+use App\Http\Controllers\ApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,30 @@ use App\Http\Controllers\StudentSubjectController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
+});
+
+// Public API Routes for Next.js integration
+Route::prefix('public')->middleware('cors')->group(function () {
+    // Health check
+    Route::get('/health', [ApiController::class, 'health']);
+    
+    // Schools
+    Route::get('/schools', [ApiController::class, 'getSchools']);
+    
+    // Questions
+    Route::get('/questions', [ApiController::class, 'getQuestions']);
+    
+    // Results
+    Route::get('/results', [ApiController::class, 'getResults']);
+    
+    // Majors
+    Route::get('/majors', [ApiController::class, 'getMajors']);
+    
+    // School statistics
+    Route::get('/school-stats', [ApiController::class, 'getSchoolStats']);
+    
+    // Cache management
+    Route::post('/clear-cache', [ApiController::class, 'clearCache']);
 });
 
 // Optimized API Routes for better performance
@@ -54,7 +79,7 @@ Route::prefix('performance')->group(function () {
 
 
 // Student Web API Routes (for TKA Web)
-Route::prefix('web')->group(function () {
+Route::prefix('web')->middleware('cors')->group(function () {
     // Student registration
     Route::post('/register-student', [StudentWebController::class, 'register']);
     
@@ -98,7 +123,7 @@ Route::prefix('web')->group(function () {
 });
 
 // School Dashboard API Routes
-Route::prefix('school')->group(function () {
+Route::prefix('school')->middleware('cors')->group(function () {
     // Authentication routes (tidak perlu middleware)
     Route::post('/login', [SchoolAuthController::class, 'login']);
     Route::post('/logout', [SchoolAuthController::class, 'logout']);

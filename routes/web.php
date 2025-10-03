@@ -25,13 +25,13 @@ Route::post('/logout', function () {
     Auth::guard('admin')->logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
-    return redirect('/login');
+    return redirect('/super-admin/login');
 })->name('logout');
 
 // ===========================================
 // PROTECTED SUPER ADMIN ROUTES - FIXED
 // ===========================================
-Route::middleware(['auth:admin'])->group(function () {
+Route::middleware(['superadmin.auth'])->group(function () {
     // Dashboard - HANYA SATU ROUTE
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
     
