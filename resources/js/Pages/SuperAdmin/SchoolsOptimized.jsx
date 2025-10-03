@@ -193,7 +193,7 @@ export default function SchoolsOptimized({ schools: initialSchools }) {
                                             </div>
                                             <div className="flex items-center space-x-2 sm:space-x-3">
                                                 <Link
-                                                    href={`/super-admin/schools/${school.id}`}
+                                                    href={`/schools/${school.id}`}
                                                     className="text-indigo-600 hover:text-indigo-900"
                                                 >
                                                     Lihat Detail

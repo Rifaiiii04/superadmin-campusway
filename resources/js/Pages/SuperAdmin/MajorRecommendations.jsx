@@ -61,7 +61,7 @@ export default function MajorRecommendations({
     // Use subjects from database instead of hardcoded list
 
     const handleAddMajor = () => {
-        post("/super-admin/major-recommendations", {
+        post("/major-recommendations", {
             onSuccess: () => {
                 setShowAddModal(false);
                 reset();
@@ -83,10 +83,10 @@ export default function MajorRecommendations({
 
         console.log(
             "Sending PUT request to:",
-            `/super-admin/major-recommendations/${editingMajor.id}`
+            `/major-recommendations/${editingMajor.id}`
         );
 
-        put(`/super-admin/major-recommendations/${editingMajor.id}`, {
+        put(`/major-recommendations/${editingMajor.id}`, {
             onSuccess: (page) => {
                 console.log("Edit successful:", page);
                 setShowEditModal(false);
@@ -108,13 +108,13 @@ export default function MajorRecommendations({
                 "Apakah Anda yakin ingin menghapus rekomendasi jurusan ini?"
             )
         ) {
-            destroy(`/super-admin/major-recommendations/${id}`);
+            destroy(`/major-recommendations/${id}`);
         }
     };
 
     const handleToggleStatus = (id) => {
         // Use Inertia patch for toggle
-        router.patch(`/super-admin/major-recommendations/${id}/toggle`);
+        router.patch(`/major-recommendations/${id}/toggle`);
     };
 
     // Filter majors based on search term, status, and category
@@ -244,7 +244,7 @@ export default function MajorRecommendations({
                                 <button
                                     onClick={() =>
                                         (window.location.href =
-                                            "/super-admin/major-recommendations/export")
+                                            "/major-recommendations/export")
                                     }
                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                                 >

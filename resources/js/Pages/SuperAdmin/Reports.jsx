@@ -52,7 +52,7 @@ export default function Reports({ errors, flash }) {
 
         // Set processing state
         post(
-            "/super-admin/reports/download",
+            "/reports/download",
             {
                 type: selectedReport,
                 start_date: dateRange.start,
@@ -90,7 +90,7 @@ export default function Reports({ errors, flash }) {
         if (dateRange.end) formData.append("end_date", dateRange.end);
 
         // Gunakan fetch untuk download file langsung
-        fetch("/super-admin/reports/download", {
+        fetch("/reports/download", {
             method: "POST",
             headers: {
                 "X-CSRF-TOKEN": document

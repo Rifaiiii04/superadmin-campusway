@@ -11,7 +11,7 @@ export default function SuperAdminLogin() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post("/super-admin/login");
+        post("/login");
     };
 
     return (

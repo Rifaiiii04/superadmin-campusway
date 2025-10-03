@@ -52,7 +52,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
             }
         }
 
-        post("/super-admin/questions", {
+        post("/questions", {
             onSuccess: () => {
                 setShowAddModal(false);
                 resetForm();
@@ -73,7 +73,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
             }
         }
 
-        put(`/super-admin/questions/${editingQuestion.id}`, {
+        put(`/questions/${editingQuestion.id}`, {
             onSuccess: () => {
                 setShowEditModal(false);
                 setEditingQuestion(null);
@@ -93,7 +93,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
             return;
         }
 
-        router.delete(`/super-admin/questions/${questionId}`, {
+        router.delete(`/questions/${questionId}`, {
             onSuccess: () => {
                 console.log("Soal berhasil dihapus");
             },
@@ -165,7 +165,7 @@ export default function QuestionsFixed({ questions, errors, flash }) {
                     ?.getAttribute("content")
             );
 
-            const response = await fetch("/super-admin/upload-media", {
+            const response = await fetch("/upload-media", {
                 method: "POST",
                 body: formData,
             });

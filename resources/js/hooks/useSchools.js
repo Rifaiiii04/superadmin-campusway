@@ -7,7 +7,7 @@ export function useSchools(page = 1, search = "") {
         queryKey: ["schools", page, search],
         queryFn: async () => {
             const response = await fetch(
-                `/super-admin/schools?page=${page}&search=${search}`
+                `/schools?page=${page}&search=${search}`
             );
             if (!response.ok) {
                 throw new Error("Failed to fetch schools");
@@ -25,7 +25,7 @@ export function useCreateSchool() {
 
     return useMutation({
         mutationFn: async (schoolData) => {
-            const response = await fetch("/super-admin/schools", {
+            const response = await fetch("/schools", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export function useUpdateSchool() {
 
     return useMutation({
         mutationFn: async ({ id, ...schoolData }) => {
-            const response = await fetch(`/super-admin/schools/${id}`, {
+            const response = await fetch(`/schools/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export function useDeleteSchool() {
 
     return useMutation({
         mutationFn: async (id) => {
-            const response = await fetch(`/super-admin/schools/${id}`, {
+            const response = await fetch(`/schools/${id}`, {
                 method: "DELETE",
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector(

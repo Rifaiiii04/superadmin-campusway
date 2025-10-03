@@ -99,10 +99,10 @@ export default function ImportQuestionsModal({ isOpen, onClose, onSuccess }) {
 
         // Debug: check current URL
         console.log("🌐 Current URL:", window.location.href);
-        console.log("🎯 Target URL:", "/super-admin/questions/import");
+        console.log("🎯 Target URL:", "/questions/import");
 
         // Gunakan fetch langsung untuk menghindari masalah redirect
-        fetch("/super-admin/questions/import", {
+        fetch("/questions/import", {
             method: "POST",
             headers: {
                 Accept: "application/json",

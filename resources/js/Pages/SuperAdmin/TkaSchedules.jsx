@@ -89,8 +89,8 @@ export default function TkaSchedules({
 
         try {
             const url = editingSchedule
-                ? `/super-admin/tka-schedules/${editingSchedule.id}`
-                : "/super-admin/tka-schedules";
+                ? `/tka-schedules/${editingSchedule.id}`
+                : "/tka-schedules";
 
             const method = editingSchedule ? "PUT" : "POST";
 
@@ -173,20 +173,17 @@ export default function TkaSchedules({
     // Handle delete
     const handleDelete = async (scheduleId) => {
         try {
-            const response = await fetch(
-                `/super-admin/tka-schedules/${scheduleId}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector(
-                            'meta[name="csrf-token"]'
-                        ).content,
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                }
-            );
+            const response = await fetch(`/tka-schedules/${scheduleId}`, {
+                method: "DELETE",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector(
+                        'meta[name="csrf-token"]'
+                    ).content,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+            });
 
             if (!response.ok) {
                 const textResponse = await response.text();
@@ -211,7 +208,7 @@ export default function TkaSchedules({
     const handleCancel = async (scheduleId) => {
         try {
             const response = await fetch(
-                `/super-admin/tka-schedules/${scheduleId}/cancel`,
+                `/tka-schedules/${scheduleId}/cancel`,
                 {
                     method: "POST",
                     headers: {

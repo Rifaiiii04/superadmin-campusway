@@ -11,7 +11,7 @@ export function useQuestions(page = 1, search = "", subject = "") {
                 ...(subject && { subject }),
             });
 
-            const response = await fetch(`/super-admin/questions?${params}`);
+            const response = await fetch(`/questions?${params}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch questions");
             }
@@ -28,7 +28,7 @@ export function useCreateQuestion() {
 
     return useMutation({
         mutationFn: async (questionData) => {
-            const response = await fetch("/super-admin/questions", {
+            const response = await fetch("/questions", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export function useUpdateQuestion() {
 
     return useMutation({
         mutationFn: async ({ id, ...questionData }) => {
-            const response = await fetch(`/super-admin/questions/${id}`, {
+            const response = await fetch(`/questions/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -88,7 +88,7 @@ export function useDeleteQuestion() {
 
     return useMutation({
         mutationFn: async (id) => {
-            const response = await fetch(`/super-admin/questions/${id}`, {
+            const response = await fetch(`/questions/${id}`, {
                 method: "DELETE",
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector(
@@ -115,7 +115,7 @@ export function useQuestionStats() {
     return useQuery({
         queryKey: ["question-stats"],
         queryFn: async () => {
-            const response = await fetch("/super-admin/questions/stats");
+            const response = await fetch("/questions/stats");
             if (!response.ok) {
                 throw new Error("Failed to fetch question stats");
             }

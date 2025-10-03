@@ -99,10 +99,10 @@ export default function ImportSchoolsModal({ isOpen, onClose, onSuccess }) {
 
         // Debug: check current URL
         console.log("🌐 Current URL:", window.location.href);
-        console.log("🎯 Target URL:", "/super-admin/schools/import");
+        console.log("🎯 Target URL:", "/schools/import");
 
         // Gunakan fetch langsung untuk menghindari masalah redirect
-        fetch("/super-admin/schools/import", {
+        fetch("/schools/import", {
             method: "POST",
             headers: {
                 Accept: "application/json",

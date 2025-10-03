@@ -18,22 +18,22 @@ export default function SuperAdminLayout({ children }) {
     const { auth } = usePage().props;
 
     const navigation = [
-        { name: "Dashboard", href: "/super-admin", icon: Home },
+        { name: "Dashboard", href: "/", icon: Home },
         {
             name: "Sekolah",
-            href: "/super-admin/schools",
+            href: "/schools",
             icon: Building2,
         },
         {
             name: "Jurusan",
-            href: "/super-admin/major-recommendations",
+            href: "/major-recommendations",
             icon: GraduationCap,
         },
-        { name: "Bank Soal", href: "/super-admin/questions", icon: BookOpen },
-        { name: "Hasil Tes", href: "/super-admin/results", icon: FileText },
+        { name: "Bank Soal", href: "/questions", icon: BookOpen },
+        { name: "Hasil Tes", href: "/results", icon: FileText },
         {
             name: "Jadwal TKA",
-            href: "/super-admin/tka-schedules",
+            href: "/tka-schedules",
             icon: Calendar,
         },
     ];
@@ -130,7 +130,7 @@ export default function SuperAdminLayout({ children }) {
                             </div>
                         </div>
                         <Link
-                            href="/super-admin/logout"
+                            href="/logout"
                             method="post"
                             as="button"
                             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"

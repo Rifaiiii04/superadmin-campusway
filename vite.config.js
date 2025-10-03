@@ -10,6 +10,24 @@ export default defineConfig({
         }),
         react(),
     ],
-    // JANGAN pakai base: "/super-admin/" - Biarkan kosong
-    // Apache yang handle subfolder
+    // Production configuration
+    base: process.env.NODE_ENV === "production" ? "/super-admin/" : "/",
+    build: {
+        outDir: "public/build",
+        assetsDir: "assets",
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ["react", "react-dom"],
+                    inertia: ["@inertiajs/react"],
+                    query: ["@tanstack/react-query"],
+                },
+            },
+        },
+    },
+    server: {
+        hmr: {
+            host: "localhost",
+        },
+    },
 });

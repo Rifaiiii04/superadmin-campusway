@@ -24,7 +24,7 @@ export default function Schools({ schools }) {
     );
 
     const handleAddSchool = () => {
-        post("/super-admin/schools", {
+        post("/schools", {
             onSuccess: () => {
                 setShowAddModal(false);
                 reset();
@@ -33,7 +33,7 @@ export default function Schools({ schools }) {
     };
 
     const handleEditSchool = () => {
-        put(`/super-admin/schools/${editingSchool.id}`, {
+        put(`/schools/${editingSchool.id}`, {
             onSuccess: () => {
                 setShowEditModal(false);
                 setEditingSchool(null);
@@ -132,7 +132,7 @@ export default function Schools({ schools }) {
                                         </div>
                                         <div className="flex items-center space-x-2 sm:space-x-3">
                                             <Link
-                                                href={`/super-admin/schools/${school.id}`}
+                                                href={`/schools/${school.id}`}
                                                 className="text-indigo-600 hover:text-indigo-900"
                                             >
                                                 Lihat Detail
@@ -146,7 +146,7 @@ export default function Schools({ schools }) {
                                                 <Edit className="h-4 w-4" />
                                             </button>
                                             <Link
-                                                href={`/super-admin/schools/${school.id}`}
+                                                href={`/schools/${school.id}`}
                                                 method="delete"
                                                 as="button"
                                                 className="text-red-600 hover:text-red-900"
