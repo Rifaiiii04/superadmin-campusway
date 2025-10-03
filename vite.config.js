@@ -10,4 +10,6 @@ export default defineConfig({
         }),
         react(),
     ],
+    // JANGAN pakai base: "/super-admin/" - Biarkan kosong
+    // Apache yang handle subfolder
 });
