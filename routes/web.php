@@ -25,7 +25,7 @@ Route::post('/logout', function () {
     Auth::guard('admin')->logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
-    return redirect('/super-admin/login');
+    return redirect('/login');
 })->name('logout');
 
 // ===========================================

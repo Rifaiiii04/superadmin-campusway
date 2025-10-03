@@ -39,8 +39,8 @@ class SuperAdminController extends Controller
         if (Auth::guard('admin')->attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
             
-            // Redirect EXPLICIT ke dashboard superadmin dengan prefix
-            return redirect()->intended('/super-admin/dashboard');
+            // Redirect EXPLICIT ke dashboard superadmin (tanpa prefix karena route sudah di middleware)
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -52,7 +52,7 @@ class SuperAdminController extends Controller
     {
         // Pastikan guard admin
         if (!Auth::guard('admin')->check()) {
-            return redirect('/super-admin/login');
+            return redirect('/login');
         }
         
         try {
@@ -1219,7 +1219,7 @@ class SuperAdminController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('/super-admin/login');
+        return redirect('/login');
     }
 
     /**
