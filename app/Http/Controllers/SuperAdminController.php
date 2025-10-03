@@ -37,7 +37,8 @@ class SuperAdminController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/super-admin');
+            // Redirect EXPLICIT ke dashboard superadmin tanpa prefix
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -1211,7 +1212,7 @@ class SuperAdminController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('/super-admin/login');
+        return redirect('/login');
     }
 
     /**
