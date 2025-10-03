@@ -5,7 +5,7 @@ import { Building2, Eye, EyeOff } from "lucide-react";
 export default function SuperAdminLogin() {
     const [showPassword, setShowPassword] = React.useState(false);
     const { data, setData, post, processing, errors } = useForm({
-        username: "",
+        email: "",
         password: "",
     });
 
@@ -39,28 +39,28 @@ export default function SuperAdminLogin() {
                         >
                             <div>
                                 <label
-                                    htmlFor="username"
+                                    htmlFor="email"
                                     className="block text-sm font-medium text-gray-700"
                                 >
-                                    Username
+                                    Email
                                 </label>
                                 <div className="mt-1">
                                     <input
-                                        id="username"
-                                        name="username"
-                                        type="text"
+                                        id="email"
+                                        name="email"
+                                        type="email"
                                         required
-                                        value={data.username}
+                                        value={data.email}
                                         onChange={(e) =>
-                                            setData("username", e.target.value)
+                                            setData("email", e.target.value)
                                         }
                                         className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-maroon-500 focus:border-maroon-500 text-sm"
-                                        placeholder="Masukkan username"
+                                        placeholder="Masukkan email"
                                     />
                                 </div>
-                                {errors.username && (
+                                {errors.email && (
                                     <p className="mt-2 text-sm text-red-600">
-                                        {errors.username}
+                                        {errors.email}
                                     </p>
                                 )}
                             </div>
