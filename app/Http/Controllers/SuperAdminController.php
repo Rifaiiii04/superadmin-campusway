@@ -31,23 +31,30 @@ class SuperAdminController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        if (Auth::guard('admin')->attempt($credentials)) {
+        // GUARD EXPLICIT dengan session isolation
+        if (Auth::guard('admin')->attempt($credentials, $request->filled('remember'))) {
             $request->session()->regenerate();
-            // Redirect EXPLICIT ke dashboard superadmin tanpa prefix
+            
+            // Redirect EXPLICIT ke dashboard superadmin
             return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
-            'username' => 'Username atau password salah.',
-        ])->withInput($request->only('username'));
+            'email' => 'Kredensial tidak valid.',
+        ]);
     }
 
     public function dashboard()
     {
+        // Pastikan guard admin
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
         try {
             // Set execution time limit
             set_time_limit(60);

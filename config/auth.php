@@ -43,6 +43,7 @@ return [
         'admin' => [
             'driver' => 'session',
             'provider' => 'admins',
+            'password_timeout' => 10800, // 3 hours
         ],
     ],
 
