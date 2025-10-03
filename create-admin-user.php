@@ -34,15 +34,14 @@ echo "\n2. Creating new admin user:\n";
 
 try {
     // Check if admin already exists
-    $existingAdmin = Admin::where('email', 'admin@example.com')->first();
+    $existingAdmin = Admin::where('username', 'admin')->first();
     
     if ($existingAdmin) {
-        echo "   ⚠️  Admin with email admin@example.com already exists\n";
+        echo "   ⚠️  Admin with username 'admin' already exists\n";
         echo "   🔄 Updating existing admin...\n";
         
         $existingAdmin->update([
             'username' => 'admin',
-            'email' => 'admin@example.com',
             'password' => Hash::make('password123')
         ]);
         
@@ -52,7 +51,6 @@ try {
         
         $admin = Admin::create([
             'username' => 'admin',
-            'email' => 'admin@example.com',
             'password' => Hash::make('password123')
         ]);
         
@@ -61,13 +59,12 @@ try {
     }
     
     echo "\n3. Admin credentials:\n";
-    echo "   📧 Email: admin@example.com\n";
-    echo "   🔑 Password: password123\n";
     echo "   👤 Username: admin\n";
+    echo "   🔑 Password: password123\n";
     
     echo "\n4. Testing login:\n";
     $testCredentials = [
-        'email' => 'admin@example.com',
+        'username' => 'admin',
         'password' => 'password123'
     ];
     
@@ -86,6 +83,6 @@ try {
 echo "\n✅ Admin user creation completed!\n";
 echo "\n💡 You can now login with:\n";
 echo "   URL: http://103.23.198.101/super-admin\n";
-echo "   Email: admin@example.com\n";
+echo "   Username: admin\n";
 echo "   Password: password123\n";
 ?>

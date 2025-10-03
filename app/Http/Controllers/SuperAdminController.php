@@ -31,7 +31,7 @@ class SuperAdminController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'username' => 'required|string',
             'password' => 'required',
         ]);
 
@@ -44,8 +44,8 @@ class SuperAdminController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Kredensial tidak valid.',
-        ]);
+            'username' => 'Username atau password salah.',
+        ])->withInput($request->only('username'));
     }
 
     public function dashboard()
