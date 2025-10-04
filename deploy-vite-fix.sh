@@ -47,17 +47,23 @@ cat > resources/views/app.blade.php << 'EOF'
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>SuperAdmin Login</title>
     
-    <!-- Manual CSS -->
-    <link href="/super-admin/build/assets/<?php echo \File::glob(public_path('build/assets/app-*.css'))[0] ?? 'app.css'; ?>" rel="stylesheet">
-    
-    <title>SuperAdmin</title>
+    <!-- Manual assets loading -->
+    <script type="module" crossorigin src="/super-admin/build/assets/app-DbXShL1P.js"></script>
 </head>
 <body>
-    @inertia
+    <div id="app" data-page="{{ json_encode($page) }}"></div>
     
-    <!-- Manual JS -->
-    <script src="/super-admin/build/assets/<?php echo \File::glob(public_path('build/assets/app-*.js'))[0] ?? 'app.js'; ?>"></script>
+    <script>
+        // Fallback jika assets gagal load
+        setTimeout(() => {
+            if (!window.__INERTIA_APP__) {
+                console.log('Reloading page...');
+                window.location.reload();
+            }
+        }, 1000);
+    </script>
 </body>
 </html>
 EOF
