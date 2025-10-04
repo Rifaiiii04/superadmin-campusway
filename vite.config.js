@@ -12,7 +12,7 @@ export default defineConfig({
     ],
     // Production configuration - WITH BASE PATH for Apache alias
     base: process.env.NODE_ENV === "production" ? "/super-admin/" : "/",
-    
+
     // Ensure manifest is generated correctly
     define: {
         __VUE_OPTIONS_API__: true,

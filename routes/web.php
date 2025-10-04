@@ -17,6 +17,11 @@ Route::get('/', function () {
     return Inertia::render('SuperAdmin/Login');
 });
 
+// Test route sederhana
+Route::get('/test', function () {
+    return response()->json(['status' => 'OK', 'message' => 'Routes working']);
+});
+
 // Super Admin Login (Public) - HANYA INI
 Route::get('/login', [SuperAdminController::class, 'showLogin'])->name('login');
 Route::post('/login', [SuperAdminController::class, 'login']);
@@ -58,11 +63,4 @@ Route::prefix('school')->group(function () {
     Route::get('/login', [SchoolAuthController::class, 'showLogin'])->name('school.login');
     Route::post('/login', [SchoolAuthController::class, 'login']);
     Route::get('/dashboard', [SchoolDashboardController::class, 'index'])->name('school.dashboard');
-});
-
-// ===========================================
-// TEST ROUTE (Optional)
-// ===========================================
-Route::get('/test', function() {
-    return response()->json(['status' => 'OK', 'message' => 'Routes working']);
 });
