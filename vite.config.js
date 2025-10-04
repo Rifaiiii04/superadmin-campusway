@@ -10,8 +10,8 @@ export default defineConfig({
         }),
         react(),
     ],
-    // Production configuration
-    base: process.env.NODE_ENV === "production" ? "/super-admin/" : "/",
+    // Production configuration - NO BASE PATH (Apache handles alias)
+    base: "/",
     build: {
         outDir: "public/build",
         assetsDir: "assets",
