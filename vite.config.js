@@ -1,39 +1,20 @@
-import { defineConfig } from "vite";
-import laravel from "laravel-vite-plugin";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: "resources/js/app.jsx",
+            input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
         }),
         react(),
     ],
-    // Production configuration - WITH BASE PATH for Apache alias
-    base: process.env.NODE_ENV === "production" ? "/super-admin/" : "/",
-
-    // Ensure manifest is generated correctly
-    define: {
-        __VUE_OPTIONS_API__: true,
-        __VUE_PROD_DEVTOOLS__: false,
+    server: {
+        host: '0.0.0.0',
     },
     build: {
-        outDir: "public/build",
-        assetsDir: "assets",
-        rollupOptions: {
-            output: {
-                manualChunks: {
-                    vendor: ["react", "react-dom"],
-                    inertia: ["@inertiajs/react"],
-                    query: ["@tanstack/react-query"],
-                },
-            },
-        },
-    },
-    server: {
-        hmr: {
-            host: "localhost",
-        },
+        outDir: 'public/build',
+        assetsDir: 'assets',
     },
 });
