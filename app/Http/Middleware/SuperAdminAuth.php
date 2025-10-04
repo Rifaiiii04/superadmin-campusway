@@ -22,12 +22,12 @@ class SuperAdminAuth
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Unauthenticated',
-                    'redirect' => '/super-admin/login'
+                    'redirect' => '/login'
                 ], 401);
             }
             
             // Redirect to super admin login
-            return redirect('/super-admin/login');
+            return redirect('/login');
         }
 
         // Ensure we're using the admin guard for all auth operations
