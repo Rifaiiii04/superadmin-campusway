@@ -9,14 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminAuthWithoutCsrf
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if admin is authenticated
         if (!Auth::guard('admin')->check()) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -24,8 +18,8 @@ class AdminAuthWithoutCsrf
                     'message' => 'Unauthorized. Please login first.'
                 ], 401);
             }
-            
-            return redirect()->route('super-admin.login');
+
+            return redirect('login');
         }
 
         return $next($request);

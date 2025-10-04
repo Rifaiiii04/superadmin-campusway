@@ -15,10 +15,10 @@ class SuperAdminAuth
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Unauthenticated',
-                    'redirect' => '/login'
+                    'redirect' => '/super-admin/login'
                 ], 401);
             }
-            return redirect('/login');
+            return redirect('/super-admin/login');
         }
         return $next($request);
     }

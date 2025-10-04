@@ -1,5 +1,15 @@
 <?php
 
+// 🚨 EMERGENCY FIX: BLOCK DOUBLE URL REDIRECT AT ENTRY POINT
+if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/super-admin/super-admin') !== false) {
+    $newUrl = str_replace('/super-admin/super-admin', '/super-admin', $_SERVER['REQUEST_URI']);
+    header("Location: http://103.23.198.101{$newUrl}", true, 301);
+    exit;
+}
+
+// Continue with normal Laravel bootstrap
+require __DIR__.'/../vendor/autoload.php';
+
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 

@@ -2,15 +2,33 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Inertia\Middleware;
 
-class HandleInertiaRequests
+class HandleInertiaRequests extends Middleware  // PASTIKAN EXTENDS Middleware
 {
-    public function handle(Request $request, Closure $next): Response
+    /**
+     * The root template that's loaded on the first page visit.
+     */
+    protected $rootView = 'app';
+
+    /**
+     * Determine the current asset version.
+     */
+    public function version(Request $request): ?string
     {
-        // BYPASS - langsung return next
-        return $next($request);
+        return parent::version($request);
+    }
+
+    /**
+     * Define the props that are shared by default.
+     */
+    public function share(Request $request): array
+    {
+        return array_merge(parent::share($request), [
+            'auth' => [
+                'user' => $request->user(),
+            ],
+        ]);
     }
 }

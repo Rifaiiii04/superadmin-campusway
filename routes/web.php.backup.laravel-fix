@@ -1,0 +1,74 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Inertia\Inertia;
+
+// ===========================================
+// SPECIFIC ROUTES - HARUS DI ATAS
+// ===========================================
+
+Route::get('/super-admin/test', function () {
+    return response()->json([
+        'status' => 'SUCCESS',
+        'message' => 'Minimal route working!',
+        'routes_loaded' => true,
+        'timestamp' => now()
+    ]);
+});
+
+Route::get('/super-admin/debug', function () {
+    return response()->json([
+        'status' => 'DEBUG',
+        'request_uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+        'all_routes' => 'Available routes listed below',
+        'timestamp' => now()
+    ]);
+});
+
+Route::get('/super-admin/login', function () {
+    try {
+        return Inertia::render('SuperAdmin/Login', [
+            'title' => 'SuperAdmin Login',
+            'debug_info' => [
+                'base_url' => url('/'),
+                'current_url' => url()->current(),
+                'routes_working' => true
+            ]
+        ]);
+    } catch (Exception $e) {
+        return response()->json([
+            'error' => 'Inertia render failed',
+            'message' => $e->getMessage(),
+            'fallback' => true
+        ], 500);
+    }
+});
+
+Route::get('/super-admin/dashboard', function () {
+    return response()->json([
+        'status' => 'DASHBOARD',
+        'message' => 'Dashboard page',
+        'timestamp' => now()
+    ]);
+});
+
+// ===========================================
+// CATCH-ALL ROUTE - HARUS DI BAWAH
+// ===========================================
+
+Route::get('/{any}', function ($any) {
+    return response()->json([
+        'status' => 'CATCH_ALL',
+        'requested_path' => $any,
+        'available_routes' => [
+            '/super-admin/test', 
+            '/super-admin/debug', 
+            '/super-admin/login',
+            '/super-admin/dashboard'
+        ],
+        'timestamp' => now()
+    ], 404);
+})->where('any', '.*');
