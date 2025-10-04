@@ -7,14 +7,11 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 class Kernel extends HttpKernel
 {
     protected $middleware = [
-        \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        // \App\Http\Middleware\PerformanceOptimization::class, // DISABLED - CAUSES 500 ERROR
-        // \App\Http\Middleware\RequestTimeout::class, // DISABLED - CAUSES 500 ERROR
     ];
 
     protected $middlewareGroups = [
@@ -26,17 +23,15 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
-            // \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class, // DISABLED - CAUSES VITE MANIFEST ERROR
         ],
 
         'api' => [
-            \App\Http\Middleware\Cors::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
 
-    protected $middlewareAliases = [
+    protected $routeMiddleware = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
@@ -44,14 +39,8 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
-        'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
-        'signed' => \App\Http\Middleware\ValidateSignature::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'admin.auth' => \App\Http\Middleware\AdminAuth::class,
-        'admin.auth.nocsrf' => \App\Http\Middleware\AdminAuthWithoutCsrf::class,
-        'school.auth' => \App\Http\Middleware\SchoolAuth::class,
-        'superadmin.auth' => \App\Http\Middleware\SuperAdminAuth::class,
-        'cors' => \App\Http\Middleware\Cors::class,
     ];
 }
