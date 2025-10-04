@@ -1,3 +1,17 @@
+#!/bin/bash
+
+echo "🔧 Fixing SuperAdmin 500 Error - Middleware Issues..."
+
+# 1. Navigate to the superadmin directory
+cd /var/www/superadmin/superadmin-campusway || { echo "❌ Failed to navigate to superadmin-campusway. Exiting."; exit 1; }
+
+# 2. Backup current Kernel.php
+echo "💾 Backing up current Kernel.php..."
+cp app/Http/Kernel.php app/Http/Kernel.php.backup.$(date +%Y%m%d_%H%M%S)
+
+# 3. Fix Kernel.php - disable problematic middleware
+echo "🔧 Fixing Kernel.php..."
+cat > app/Http/Kernel.php << 'EOF'
 <?php
 
 namespace App\Http;
@@ -6,15 +20,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
 {
-    /**
-     * The application's global HTTP middleware stack.
-     *
-     * These middleware are run during every request to your application.
-     *
-     * @var array<int, class-string|string>
-     */
     protected $middleware = [
-        // \App\Http\Middleware\TrustHosts::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -25,11 +31,6 @@ class Kernel extends HttpKernel
         // \App\Http\Middleware\RequestTimeout::class, // DISABLED - CAUSES 500 ERROR
     ];
 
-    /**
-     * The application's route middleware groups.
-     *
-     * @var array<string, array<int, class-string|string>>
-     */
     protected $middlewareGroups = [
         'web' => [
             \App\Http\Middleware\EncryptCookies::class,
@@ -44,19 +45,11 @@ class Kernel extends HttpKernel
 
         'api' => [
             \App\Http\Middleware\Cors::class,
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
 
-    /**
-     * The application's middleware aliases.
-     *
-     * Aliases may be used instead of class names to conveniently assign middleware to routes and groups.
-     *
-     * @var array<string, class-string|string>
-     */
     protected $middlewareAliases = [
         'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
@@ -76,3 +69,53 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
     ];
 }
+EOF
+
+# 4. Fix app.blade.php - disable Vite for production
+echo "🔧 Fixing app.blade.php..."
+cat > resources/views/app.blade.php << 'EOF'
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        @routes
+        @inertiaHead
+        
+        <!-- Manual asset loading tanpa Vite untuk production -->
+        @if(app()->environment('production'))
+            <script type="module" src="/super-admin/build/assets/app-D_7II1BX.js"></script>
+            <link rel="stylesheet" href="/super-admin/build/assets/app-BHSs9Ase.css">
+        @else
+            @viteReactRefresh
+            @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        @endif
+    </head>
+    <body class="font-sans antialiased">
+        @inertia
+    </body>
+</html>
+EOF
+
+# 5. Clear all caches
+echo "🧹 Clearing all caches..."
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan optimize:clear
+
+# 6. Test the application
+echo "🧪 Testing the application..."
+echo "Testing route /test..."
+curl -s http://103.23.198.101/super-admin/test || echo "❌ Test route failed"
+
+echo "Testing login page..."
+curl -I http://103.23.198.101/super-admin/login || echo "❌ Login page failed"
+
+echo "✅ Middleware fix complete!"
+echo "🌐 Test the application at: http://103.23.198.101/super-admin/login"

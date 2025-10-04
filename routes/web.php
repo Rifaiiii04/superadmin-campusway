@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SchoolAuthController;

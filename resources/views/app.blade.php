@@ -15,9 +15,16 @@
 
         <!-- Scripts -->
         @routes
-        @viteReactRefresh
-        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
         @inertiaHead
+        
+        <!-- Manual asset loading tanpa Vite untuk production -->
+        @if(app()->environment('production'))
+            <script type="module" src="/super-admin/build/assets/app-D_7II1BX.js"></script>
+            <link rel="stylesheet" href="/super-admin/build/assets/app-BHSs9Ase.css">
+        @else
+            @viteReactRefresh
+            @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        @endif
     </head>
     <body class="font-sans antialiased">
         @inertia
