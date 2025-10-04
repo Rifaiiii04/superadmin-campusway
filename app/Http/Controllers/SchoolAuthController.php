@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\Log;
 class SchoolAuthController extends Controller
 {
     /**
+     * Show school login page
+     */
+    public function showLogin()
+    {
+        return inertia('School/Login');
+    }
+
+    /**
      * Login sekolah menggunakan NPSN dan password
      */
     public function login(Request $request)
