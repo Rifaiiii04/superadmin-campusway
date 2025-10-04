@@ -1,0 +1,49 @@
+# MANUAL STEP BY STEP FIX - RUN THESE COMMANDS ONE BY ONE
+
+# 1. Navigate to directory
+cd /var/www/superadmin/superadmin-campusway
+
+# 2. Stop Apache
+sudo systemctl stop apache2
+
+# 3. Remove problematic files
+sudo rm -rf storage/logs/laravel.log
+sudo rm -rf bootstrap/cache/*
+
+# 4. Create directories
+sudo mkdir -p storage/logs
+sudo mkdir -p bootstrap/cache
+
+# 5. Set ownership to current user
+sudo chown -R $USER:$USER storage bootstrap/cache
+
+# 6. Set permissions
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
+
+# 7. Create empty log file
+touch storage/logs/laravel.log
+chmod 664 storage/logs/laravel.log
+
+# 8. Test permissions
+ls -la storage/logs/
+ls -la bootstrap/cache/
+
+# 9. Try to write to log file
+echo "test" > storage/logs/laravel.log
+
+# 10. Run artisan commands
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+
+# 11. Set final ownership
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# 12. Start Apache
+sudo systemctl start apache2
+
+# 13. Test
+curl http://103.23.198.101/super-admin/test
