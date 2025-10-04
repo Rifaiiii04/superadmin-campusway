@@ -6,11 +6,11 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class HandleInertiaRequests
+class AddLinkHeadersForPreloadedAssets
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // BYPASS - langsung return next
+        // Bypass middleware - langsung return next
         return $next($request);
     }
 }
