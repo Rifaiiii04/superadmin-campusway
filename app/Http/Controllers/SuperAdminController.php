@@ -22,7 +22,7 @@ class SuperAdminController extends Controller
 
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/dashboard');
+            return redirect()->intended('/super-admin/dashboard');
         }
 
         return back()->withErrors(['username' => 'Username atau password salah.'])->withInput($request->only('username'));
@@ -31,7 +31,7 @@ class SuperAdminController extends Controller
     public function dashboard()
     {
         if (!Auth::guard('admin')->check()) {
-            return redirect('/login');
+            return redirect('/super-admin/login');
         }
 
         return Inertia::render('SuperAdmin/Dashboard', [
@@ -44,6 +44,6 @@ class SuperAdminController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        return redirect('/super-admin/login');
     }
 }
