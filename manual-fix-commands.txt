@@ -1,0 +1,48 @@
+# MANUAL FIX COMMANDS FOR PERMISSION ISSUES
+# Run these commands one by one in VPS:
+
+# 1. Navigate to directory
+cd /var/www/superadmin/superadmin-campusway
+
+# 2. Stop Apache
+sudo systemctl stop apache2
+
+# 3. Fix ownership
+sudo chown -R www-data:www-data .
+
+# 4. Create directories
+mkdir -p storage/logs
+mkdir -p storage/framework/cache
+mkdir -p storage/framework/sessions
+mkdir -p storage/framework/views
+mkdir -p bootstrap/cache
+
+# 5. Set permissions
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# 6. Clear caches
+sudo rm -rf storage/framework/cache/*
+sudo rm -rf storage/framework/sessions/*
+sudo rm -rf storage/framework/views/*
+sudo rm -rf bootstrap/cache/*
+
+# 7. Set permissions again
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+
+# 8. Test composer
+composer install --no-dev --optimize-autoloader
+
+# 9. Clear Laravel caches
+php artisan config:clear
+php artisan route:clear
+php artisan view:clear
+php artisan cache:clear
+php artisan optimize:clear
+
+# 10. Start Apache
+sudo systemctl start apache2
+
+# 11. Test
+curl http://103.23.198.101/super-admin/test
