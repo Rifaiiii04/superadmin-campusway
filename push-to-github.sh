@@ -5,7 +5,7 @@ echo "=========================================="
 
 # Set repository name
 REPO_NAME="superadmin-campusway"
-GITHUB_USER="Cwinzer321"  # GitHub username
+GITHUB_USER="Rifaiiii04"  # GitHub username
 
 echo "📁 Repository: $GITHUB_USER/$REPO_NAME"
 
