@@ -5,7 +5,7 @@ echo "=========================================="
 
 # Set repository name
 REPO_NAME="superadmin-campusway"
-GITHUB_USER="raihan-yasykur"  # Ganti dengan username GitHub Anda
+GITHUB_USER="Cwinzer321"  # GitHub username
 
 echo "📁 Repository: $GITHUB_USER/$REPO_NAME"
 
@@ -20,7 +20,7 @@ fi
 
 # Push to GitHub
 echo "📤 Pushing to GitHub..."
-git push -u origin master
+git push -u origin main
 
 if [ $? -eq 0 ]; then
     echo "✅ Successfully pushed to GitHub!"
