@@ -1,47 +1,34 @@
 #!/bin/bash
 
-echo "🚀 PUSH TO GITHUB - SUPERADMIN UI FIX"
-echo "====================================="
+echo "🚀 Pushing SuperAdmin Campusway to GitHub"
+echo "=========================================="
 
-cd /var/www/superadmin/superadmin-campusway
+# Set repository name
+REPO_NAME="superadmin-campusway"
+GITHUB_USER="raihan-yasykur"  # Ganti dengan username GitHub Anda
 
-echo ""
-echo "=== STEP 1: CHECK GIT STATUS ==="
-git status
+echo "📁 Repository: $GITHUB_USER/$REPO_NAME"
 
-echo ""
-echo "=== STEP 2: ADD ALL CHANGES ==="
-git add .
+# Check if remote already exists
+if git remote get-url origin >/dev/null 2>&1; then
+    echo "✅ Remote origin already exists"
+    git remote -v
+else
+    echo "➕ Adding remote origin..."
+    git remote add origin https://github.com/$GITHUB_USER/$REPO_NAME.git
+fi
 
-echo ""
-echo "=== STEP 3: COMMIT CHANGES ==="
-git commit -m "🚀 Fix SuperAdmin UI - React + Vite + Laravel
+# Push to GitHub
+echo "📤 Pushing to GitHub..."
+git push -u origin master
 
-✅ Fixed routes to render UI instead of JSON
-✅ Updated app.blade.php for proper Vite integration
-✅ Fixed double URL redirect issues
-✅ Added proper Inertia.js setup
-✅ Ready for production deployment
-
-Changes:
-- routes/web.php: Updated to render Inertia components
-- resources/views/app.blade.php: Fixed Vite asset loading
-- deploy-ui-fix.sh: Added deployment script
-- All UI components ready for production"
-
-echo ""
-echo "=== STEP 4: PUSH TO GITHUB ==="
-git push origin main
-
-echo ""
-echo "🎉 PUSH TO GITHUB COMPLETE!"
-echo "==========================="
-echo "✅ All changes committed"
-echo "✅ Pushed to GitHub"
-echo ""
-echo "📋 Next steps on VPS:"
-echo "1. git pull origin main"
-echo "2. chmod +x deploy-ui-fix.sh"
-echo "3. ./deploy-ui-fix.sh"
-echo ""
-echo "🚀 Ready for production deployment!"
+if [ $? -eq 0 ]; then
+    echo "✅ Successfully pushed to GitHub!"
+    echo "🌐 Repository URL: https://github.com/$GITHUB_USER/$REPO_NAME"
+else
+    echo "❌ Failed to push to GitHub"
+    echo "💡 Make sure you have:"
+    echo "   1. Created repository on GitHub: https://github.com/new"
+    echo "   2. Set correct GitHub username in this script"
+    echo "   3. Authenticated with GitHub (username/password or token)"
+fi
