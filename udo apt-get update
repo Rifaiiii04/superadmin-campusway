@@ -1,0 +1,8 @@
+[0;1;31m×[0m mssql-server.service - Microsoft SQL Server Database Engine
+     Loaded: loaded (]8;;file://MarketingC/usr/lib/systemd/system/mssql-server.service/usr/lib/systemd/system/mssql-server.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Tue 2025-09-23 04:30:13 UTC; 20s ago
+   Duration: 4ms
+       Docs: ]8;;https://docs.microsoft.com/en-us/sql/linuxhttps://docs.microsoft.com/en-us/sql/linux]8;;
+    Process: 35247 ExecStart=/opt/mssql/bin/sqlservr [0;1;31m(code=exited, status=127)[0m
+   Main PID: 35247 (code=exited, status=127)
+        CPU: 2ms
