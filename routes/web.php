@@ -209,9 +209,9 @@ Route::post('/logout', function (Request $request) {
     }
 });
 
-// Root route redirect to login
+// Root route redirect to dashboard (for testing)
 Route::get('/', function () {
-    return redirect('/login');
+    return redirect('/dashboard');
 });
 
 // ===========================================

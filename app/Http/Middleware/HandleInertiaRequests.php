@@ -28,6 +28,7 @@ class HandleInertiaRequests extends Middleware  // PASTIKAN EXTENDS Middleware
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
+                'admin' => $request->user('admin'),
             ],
         ]);
     }
