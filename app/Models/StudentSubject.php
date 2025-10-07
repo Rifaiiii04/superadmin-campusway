@@ -14,6 +14,9 @@ class StudentSubject extends Model
         'subject_name',
     ];
 
+    /**
+     * Get the student that owns the subject
+     */
     public function student()
     {
         return $this->belongsTo(Student::class);

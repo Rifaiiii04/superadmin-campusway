@@ -17,7 +17,7 @@ import {
 export default function MajorRecommendations({
     majorRecommendations = [],
     availableSubjects = [],
-    pagination = null,
+    rumpunIlmu = [],
 }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
@@ -47,7 +47,8 @@ export default function MajorRecommendations({
         reset,
     } = useForm({
         major_name: "",
-        rumpun_ilmu: "ILMU ALAM",
+        category: "",
+        rumpun_ilmu: "",
         description: "",
         required_subjects: [],
         preferred_subjects: [],
@@ -55,6 +56,7 @@ export default function MajorRecommendations({
         kurikulum_2013_ipa_subjects: [],
         kurikulum_2013_ips_subjects: [],
         kurikulum_2013_bahasa_subjects: [],
+        optional_subjects: [],
         career_prospects: "",
         is_active: true,
     });
@@ -119,52 +121,56 @@ export default function MajorRecommendations({
     };
 
     // Filter majors based on search term, status, and category
-    const filteredMajors = majorRecommendations.filter((major) => {
-        const matchesSearch =
-            searchTerm === "" ||
-            major.major_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            major.description
-                ?.toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            major.required_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            ) ||
-            major.preferred_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            ) ||
-            major.kurikulum_merdeka_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            ) ||
-            major.kurikulum_2013_ipa_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            ) ||
-            major.kurikulum_2013_ips_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            ) ||
-            major.kurikulum_2013_bahasa_subjects?.some((subject) =>
-                subject.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+    const filteredMajors = (majorRecommendations?.data || []).filter(
+        (major) => {
+            const matchesSearch =
+                searchTerm === "" ||
+                major.major_name
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                major.description
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                major.required_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ||
+                major.preferred_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ||
+                major.kurikulum_merdeka_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ||
+                major.kurikulum_2013_ipa_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ||
+                major.kurikulum_2013_ips_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                ) ||
+                major.kurikulum_2013_bahasa_subjects?.some((subject) =>
+                    subject.toLowerCase().includes(searchTerm.toLowerCase())
+                );
 
-        const matchesStatus =
-            statusFilter === "all" ||
-            (statusFilter === "active" && major.is_active) ||
-            (statusFilter === "inactive" && !major.is_active);
+            const matchesStatus =
+                statusFilter === "all" ||
+                (statusFilter === "active" && major.is_active) ||
+                (statusFilter === "inactive" && !major.is_active);
 
-        const matchesRumpunIlmu =
-            rumpunIlmuFilter === "all" ||
-            (rumpunIlmuFilter === "HUMANIORA" &&
-                major.rumpun_ilmu === "HUMANIORA") ||
-            (rumpunIlmuFilter === "ILMU SOSIAL" &&
-                major.rumpun_ilmu === "ILMU SOSIAL") ||
-            (rumpunIlmuFilter === "ILMU ALAM" &&
-                major.rumpun_ilmu === "ILMU ALAM") ||
-            (rumpunIlmuFilter === "ILMU FORMAL" &&
-                major.rumpun_ilmu === "ILMU FORMAL") ||
-            (rumpunIlmuFilter === "ILMU TERAPAN" &&
-                major.rumpun_ilmu === "ILMU TERAPAN");
+            const matchesRumpunIlmu =
+                rumpunIlmuFilter === "all" ||
+                (rumpunIlmuFilter === "HUMANIORA" &&
+                    major.rumpun_ilmu === "HUMANIORA") ||
+                (rumpunIlmuFilter === "ILMU SOSIAL" &&
+                    major.rumpun_ilmu === "ILMU SOSIAL") ||
+                (rumpunIlmuFilter === "ILMU ALAM" &&
+                    major.rumpun_ilmu === "ILMU ALAM") ||
+                (rumpunIlmuFilter === "ILMU FORMAL" &&
+                    major.rumpun_ilmu === "ILMU FORMAL") ||
+                (rumpunIlmuFilter === "ILMU TERAPAN" &&
+                    major.rumpun_ilmu === "ILMU TERAPAN");
 
-        return matchesSearch && matchesStatus && matchesRumpunIlmu;
-    });
+            return matchesSearch && matchesStatus && matchesRumpunIlmu;
+        }
+    );
 
     const openEditModal = (major) => {
         console.log("=== OPEN EDIT MODAL DEBUG ===");
@@ -279,7 +285,7 @@ export default function MajorRecommendations({
                                     Total Jurusan
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
-                                    {majorRecommendations.length}
+                                    {majorRecommendations?.total || 0}
                                 </p>
                             </div>
                         </div>
@@ -499,7 +505,7 @@ export default function MajorRecommendations({
                         rumpunIlmuFilter !== "all" ? (
                             <div className="mt-3 text-sm text-gray-600">
                                 Menampilkan {filteredMajors.length} dari{" "}
-                                {majorRecommendations.length} jurusan
+                                {majorRecommendations?.total || 0} jurusan
                                 {searchTerm !== "" && (
                                     <span className="ml-2">
                                         untuk pencarian:{" "}

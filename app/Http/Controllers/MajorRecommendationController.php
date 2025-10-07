@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MajorRecommendation;
 use App\Models\Subject;
+use App\Models\RumpunIlmu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
@@ -14,32 +15,40 @@ class MajorRecommendationController extends Controller
     public function index()
     {
         try {
-            $majors = MajorRecommendation::with(['subjects'])->paginate(10);
-            $subjects = Subject::where('is_active', true)->pluck('name');
+            $majors = MajorRecommendation::with(['rumpunIlmu'])
+                ->orderBy('category')
+                ->orderBy('major_name')
+                ->paginate(10);
+            
+            $subjects = Subject::select('id', 'name', 'code', 'subject_type')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
+            
+            $rumpunIlmu = RumpunIlmu::select('id', 'name')
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get();
             
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
-                'majorRecommendations' => $majors->items(),
+                'majorRecommendations' => $majors,
                 'availableSubjects' => $subjects,
-                'pagination' => [
-                    'current_page' => $majors->currentPage(),
-                    'last_page' => $majors->lastPage(),
-                    'per_page' => $majors->perPage(),
-                    'total' => $majors->total(),
-                ],
+                'rumpunIlmu' => $rumpunIlmu,
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching major recommendations: ' . $e->getMessage());
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
-                'majorRecommendations' => [],
-                'availableSubjects' => [],
-                'pagination' => [
+                'majorRecommendations' => [
+                    'data' => [],
                     'current_page' => 1,
                     'last_page' => 1,
                     'per_page' => 10,
                     'total' => 0,
                 ],
+                'availableSubjects' => [],
+                'rumpunIlmu' => [],
                 'error' => 'Gagal memuat data rekomendasi jurusan'
             ]);
         }
@@ -49,13 +58,16 @@ class MajorRecommendationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'rumpun_ilmu' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'required_subjects' => 'nullable|array',
             'preferred_subjects' => 'nullable|array',
             'kurikulum_merdeka_subjects' => 'nullable|array',
             'kurikulum_2013_ipa_subjects' => 'nullable|array',
             'kurikulum_2013_ips_subjects' => 'nullable|array',
             'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+            'optional_subjects' => 'nullable|array',
             'career_prospects' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -67,13 +79,16 @@ class MajorRecommendationController extends Controller
         try {
             MajorRecommendation::create([
                 'major_name' => $request->major_name,
+                'category' => $request->category,
                 'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
-                'preferred_subjects' => json_encode($request->preferred_subjects ?? []),
-                'kurikulum_merdeka_subjects' => json_encode($request->kurikulum_merdeka_subjects ?? []),
-                'kurikulum_2013_ipa_subjects' => json_encode($request->kurikulum_2013_ipa_subjects ?? []),
-                'kurikulum_2013_ips_subjects' => json_encode($request->kurikulum_2013_ips_subjects ?? []),
-                'kurikulum_2013_bahasa_subjects' => json_encode($request->kurikulum_2013_bahasa_subjects ?? []),
+                'required_subjects' => $request->required_subjects ?? [],
+                'preferred_subjects' => $request->preferred_subjects ?? [],
+                'kurikulum_merdeka_subjects' => $request->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $request->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $request->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $request->kurikulum_2013_bahasa_subjects ?? [],
+                'optional_subjects' => $request->optional_subjects ?? [],
                 'career_prospects' => $request->career_prospects,
                 'is_active' => $request->is_active ?? true,
             ]);
@@ -97,13 +112,16 @@ class MajorRecommendationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'rumpun_ilmu' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'required_subjects' => 'nullable|array',
             'preferred_subjects' => 'nullable|array',
             'kurikulum_merdeka_subjects' => 'nullable|array',
             'kurikulum_2013_ipa_subjects' => 'nullable|array',
             'kurikulum_2013_ips_subjects' => 'nullable|array',
             'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+            'optional_subjects' => 'nullable|array',
             'career_prospects' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -115,13 +133,16 @@ class MajorRecommendationController extends Controller
         try {
             $majorRecommendation->update([
                 'major_name' => $request->major_name,
+                'category' => $request->category,
                 'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
-                'preferred_subjects' => json_encode($request->preferred_subjects ?? []),
-                'kurikulum_merdeka_subjects' => json_encode($request->kurikulum_merdeka_subjects ?? []),
-                'kurikulum_2013_ipa_subjects' => json_encode($request->kurikulum_2013_ipa_subjects ?? []),
-                'kurikulum_2013_ips_subjects' => json_encode($request->kurikulum_2013_ips_subjects ?? []),
-                'kurikulum_2013_bahasa_subjects' => json_encode($request->kurikulum_2013_bahasa_subjects ?? []),
+                'required_subjects' => $request->required_subjects ?? [],
+                'preferred_subjects' => $request->preferred_subjects ?? [],
+                'kurikulum_merdeka_subjects' => $request->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $request->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $request->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $request->kurikulum_2013_bahasa_subjects ?? [],
+                'optional_subjects' => $request->optional_subjects ?? [],
                 'career_prospects' => $request->career_prospects,
                 'is_active' => $request->is_active ?? true,
             ]);
@@ -167,13 +188,16 @@ class MajorRecommendationController extends Controller
             $csvData[] = [
                 'ID',
                 'Nama Jurusan',
+                'Kategori',
                 'Rumpun Ilmu',
                 'Deskripsi',
+                'Mata Pelajaran Wajib',
                 'Mata Pelajaran Pilihan',
                 'Kurikulum Merdeka',
                 'Kurikulum 2013 IPA',
                 'Kurikulum 2013 IPS',
                 'Kurikulum 2013 Bahasa',
+                'Mata Pelajaran Opsional',
                 'Prospek Karir',
                 'Status'
             ];
@@ -182,13 +206,16 @@ class MajorRecommendationController extends Controller
                 $csvData[] = [
                     $major->id,
                     $major->major_name,
+                    $major->category,
                     $major->rumpun_ilmu,
                     $major->description,
-                    implode(';', json_decode($major->preferred_subjects ?? '[]')),
-                    implode(';', json_decode($major->kurikulum_merdeka_subjects ?? '[]')),
-                    implode(';', json_decode($major->kurikulum_2013_ipa_subjects ?? '[]')),
-                    implode(';', json_decode($major->kurikulum_2013_ips_subjects ?? '[]')),
-                    implode(';', json_decode($major->kurikulum_2013_bahasa_subjects ?? '[]')),
+                    implode(';', $major->required_subjects ?? []),
+                    implode(';', $major->preferred_subjects ?? []),
+                    implode(';', $major->kurikulum_merdeka_subjects ?? []),
+                    implode(';', $major->kurikulum_2013_ipa_subjects ?? []),
+                    implode(';', $major->kurikulum_2013_ips_subjects ?? []),
+                    implode(';', $major->kurikulum_2013_bahasa_subjects ?? []),
+                    implode(';', $major->optional_subjects ?? []),
                     $major->career_prospects,
                     $major->is_active ? 'Aktif' : 'Non-Aktif'
                 ];

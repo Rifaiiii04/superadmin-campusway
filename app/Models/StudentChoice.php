@@ -14,11 +14,6 @@ class StudentChoice extends Model
         'major_id',
     ];
 
-    protected $casts = [
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-    ];
-
     /**
      * Get the student that owns the choice
      */
@@ -28,9 +23,9 @@ class StudentChoice extends Model
     }
 
     /**
-     * Get the major that was chosen
+     * Get the major recommendation for this choice
      */
-    public function major()
+    public function majorRecommendation()
     {
         return $this->belongsTo(MajorRecommendation::class, 'major_id');
     }

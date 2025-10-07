@@ -20,6 +20,7 @@ class MajorRecommendation extends Model
         'kurikulum_2013_ipa_subjects',
         'kurikulum_2013_ips_subjects',
         'kurikulum_2013_bahasa_subjects',
+        'optional_subjects',
         'career_prospects',
         'is_active'
     ];
@@ -31,6 +32,7 @@ class MajorRecommendation extends Model
         'kurikulum_2013_ipa_subjects' => 'array',
         'kurikulum_2013_ips_subjects' => 'array',
         'kurikulum_2013_bahasa_subjects' => 'array',
+        'optional_subjects' => 'array',
         'is_active' => 'boolean'
     ];
 

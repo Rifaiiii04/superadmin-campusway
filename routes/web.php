@@ -109,6 +109,14 @@ Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, '
 Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
 Route::post('/schools/import', [App\Http\Controllers\SchoolController::class, 'import']);
 
+// SuperAdmin Students (UI) - Using controller
+Route::get('/students', [App\Http\Controllers\StudentController::class, 'index']);
+Route::post('/students', [App\Http\Controllers\StudentController::class, 'store']);
+Route::get('/students/{student}', [App\Http\Controllers\StudentController::class, 'show']);
+Route::put('/students/{student}', [App\Http\Controllers\StudentController::class, 'update']);
+Route::delete('/students/{student}', [App\Http\Controllers\StudentController::class, 'destroy']);
+Route::get('/students/export', [App\Http\Controllers\StudentController::class, 'export']);
+
 // SuperAdmin Major Recommendations (UI) - Using controller
 Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
 Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
