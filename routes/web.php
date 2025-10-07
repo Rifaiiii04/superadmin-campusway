@@ -84,9 +84,109 @@ Route::get('/dashboard', function () {
         return Inertia::render('SuperAdmin/Dashboard', [
             'title' => 'SuperAdmin Dashboard',
             'user' => Auth::guard('admin')->user(),
+            'stats' => [
+                'total_schools' => 0,
+                'total_students' => 0,
+                'total_majors' => 0,
+            ],
+            'recent_schools' => [],
+            'recent_students' => [],
+            'studentsPerMajor' => [],
         ]);
     } catch (Exception $e) {
         \Log::error('Dashboard error: ' . $e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// SuperAdmin Schools (UI)
+Route::get('/schools', function () {
+    try {
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
+        return Inertia::render('SuperAdmin/Schools', [
+            'title' => 'Manajemen Sekolah',
+            'schools' => [
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 10,
+                'total' => 0,
+            ],
+        ]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// SuperAdmin Major Recommendations (UI)
+Route::get('/major-recommendations', function () {
+    try {
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
+        return Inertia::render('SuperAdmin/MajorRecommendations', [
+            'title' => 'Rekomendasi Jurusan',
+            'majors' => [],
+        ]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// SuperAdmin Questions (UI)
+Route::get('/questions', function () {
+    try {
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
+        return Inertia::render('SuperAdmin/Questions', [
+            'title' => 'Bank Soal',
+            'questions' => [
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 10,
+                'total' => 0,
+            ],
+        ]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// SuperAdmin Results (UI)
+Route::get('/results', function () {
+    try {
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
+        return Inertia::render('SuperAdmin/Results', [
+            'title' => 'Hasil Tes',
+            'results' => [],
+        ]);
+    } catch (Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
+
+// SuperAdmin TKA Schedules (UI)
+Route::get('/tka-schedules', function () {
+    try {
+        if (!Auth::guard('admin')->check()) {
+            return redirect('/login');
+        }
+        
+        return Inertia::render('SuperAdmin/TkaSchedules', [
+            'title' => 'Jadwal TKA',
+            'schedules' => [],
+        ]);
+    } catch (Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
 });
@@ -106,4 +206,132 @@ Route::post('/logout', function (Request $request) {
 // Root route redirect to login
 Route::get('/', function () {
     return redirect('/login');
+});
+
+// ===========================================
+// REDIRECT ROUTES
+// ===========================================
+
+// Redirect to dashboard (if authenticated)
+Route::get('/home', function () {
+    return redirect('/login');
+});
+
+// Redirect to admin panel
+Route::get('/admin', function () {
+    return response()->json(['redirect' => '/dashboard']);
+});
+
+// Redirect to superadmin
+Route::get('/superadmin', function () {
+    return redirect('/dashboard');
+});
+
+// Redirect to main app
+Route::get('/app', function () {
+    return redirect('/dashboard');
+});
+
+// Redirect to management
+Route::get('/management', function () {
+    return redirect('/dashboard');
+});
+
+// Redirect to control panel
+Route::get('/control', function () {
+    return redirect('/dashboard');
+});
+
+// Redirect to admin login
+Route::get('/admin-login', function () {
+    return redirect('/login');
+});
+
+// Redirect to signin
+Route::get('/signin', function () {
+    return redirect('/login');
+});
+
+// Redirect to sign-in
+Route::get('/sign-in', function () {
+    return redirect('/login');
+});
+
+// Redirect to auth
+Route::get('/auth', function () {
+    return redirect('/login');
+});
+
+// Redirect to authentication
+Route::get('/authentication', function () {
+    return redirect('/login');
+});
+
+// ===========================================
+// ADDITIONAL PAGES
+// ===========================================
+
+// About page
+Route::get('/about', function () {
+    return response()->json([
+        'message' => 'About SuperAdmin CampusWay',
+        'version' => app()->version(),
+        'status' => 'success'
+    ]);
+});
+
+// Help page
+Route::get('/help', function () {
+    return Inertia::render('SuperAdmin/Help', [
+        'title' => 'Help & Support',
+        'version' => app()->version(),
+    ]);
+});
+
+// Settings page (requires authentication)
+Route::get('/settings', function () {
+    if (!Auth::guard('admin')->check()) {
+        return redirect('/login');
+    }
+    
+    return Inertia::render('SuperAdmin/Settings', [
+        'title' => 'Settings',
+        'user' => Auth::guard('admin')->user(),
+    ]);
+});
+
+// Profile page (requires authentication)
+Route::get('/profile', function () {
+    if (!Auth::guard('admin')->check()) {
+        return redirect('/login');
+    }
+    
+    return Inertia::render('SuperAdmin/Profile', [
+        'title' => 'Profile',
+        'user' => Auth::guard('admin')->user(),
+    ]);
+});
+
+// Schools management page (requires authentication)
+Route::get('/schools', function () {
+    if (!Auth::guard('admin')->check()) {
+        return redirect('/login');
+    }
+    
+    return Inertia::render('SuperAdmin/Schools', [
+        'title' => 'Schools Management',
+        'user' => Auth::guard('admin')->user(),
+    ]);
+});
+
+// Questions management page (requires authentication)
+Route::get('/questions', function () {
+    if (!Auth::guard('admin')->check()) {
+        return redirect('/login');
+    }
+    
+    return Inertia::render('SuperAdmin/Questions', [
+        'title' => 'Questions Management',
+        'user' => Auth::guard('admin')->user(),
+    ]);
 });
