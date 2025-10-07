@@ -131,24 +131,48 @@ export default function MajorRecommendations({
                 major.description
                     ?.toLowerCase()
                     .includes(searchTerm.toLowerCase()) ||
-                major.required_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                major.preferred_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                major.kurikulum_merdeka_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                major.kurikulum_2013_ipa_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                major.kurikulum_2013_ips_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                major.kurikulum_2013_bahasa_subjects?.some((subject) =>
-                    subject.toLowerCase().includes(searchTerm.toLowerCase())
-                );
+                (Array.isArray(major.required_subjects)
+                    ? major.required_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false) ||
+                (Array.isArray(major.preferred_subjects)
+                    ? major.preferred_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false) ||
+                (Array.isArray(major.kurikulum_merdeka_subjects)
+                    ? major.kurikulum_merdeka_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false) ||
+                (Array.isArray(major.kurikulum_2013_ipa_subjects)
+                    ? major.kurikulum_2013_ipa_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false) ||
+                (Array.isArray(major.kurikulum_2013_ips_subjects)
+                    ? major.kurikulum_2013_ips_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false) ||
+                (Array.isArray(major.kurikulum_2013_bahasa_subjects)
+                    ? major.kurikulum_2013_bahasa_subjects.some((subject) =>
+                          subject
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                      )
+                    : false);
 
             const matchesStatus =
                 statusFilter === "all" ||
@@ -301,7 +325,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-blue-900">
                                     {
-                                        majorRecommendations.filter(
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter(
                                             (m) => m.rumpun_ilmu === "Ilmu Alam"
                                         ).length
                                     }
@@ -320,7 +346,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-green-900">
                                     {
-                                        majorRecommendations.filter(
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter(
                                             (m) =>
                                                 m.rumpun_ilmu === "Ilmu Sosial"
                                         ).length
@@ -340,7 +368,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-purple-900">
                                     {
-                                        majorRecommendations.filter(
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter(
                                             (m) => m.rumpun_ilmu === "Humaniora"
                                         ).length
                                     }
@@ -359,7 +389,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-orange-900">
                                     {
-                                        majorRecommendations.filter(
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter(
                                             (m) =>
                                                 m.rumpun_ilmu === "Ilmu Formal"
                                         ).length
@@ -379,7 +411,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-red-900">
                                     {
-                                        majorRecommendations.filter(
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter(
                                             (m) =>
                                                 m.rumpun_ilmu === "Ilmu Terapan"
                                         ).length
@@ -399,9 +433,9 @@ export default function MajorRecommendations({
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
                                     {
-                                        majorRecommendations.filter(
-                                            (m) => m.is_active
-                                        ).length
+                                        (
+                                            majorRecommendations?.data || []
+                                        ).filter((m) => m.is_active).length
                                     }
                                 </p>
                             </div>
@@ -637,35 +671,43 @@ export default function MajorRecommendations({
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
-                                                {major.mandatory_subjects?.map(
-                                                    (subject, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
-                                                        >
-                                                            {subject}
-                                                        </span>
-                                                    )
-                                                )}
+                                                {Array.isArray(
+                                                    major.mandatory_subjects
+                                                )
+                                                    ? major.mandatory_subjects.map(
+                                                          (subject, index) => (
+                                                              <span
+                                                                  key={index}
+                                                                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                                              >
+                                                                  {subject}
+                                                              </span>
+                                                          )
+                                                      )
+                                                    : null}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
-                                                {major.preferred_subjects?.map(
-                                                    (subject, index) => (
-                                                        <span
-                                                            key={index}
-                                                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                                subject ===
-                                                                "Produk/Projek Kreatif dan Kewirausahaan"
-                                                                    ? "bg-yellow-100 text-yellow-800"
-                                                                    : "bg-green-100 text-green-800"
-                                                            }`}
-                                                        >
-                                                            {subject}
-                                                        </span>
-                                                    )
-                                                )}
+                                                {Array.isArray(
+                                                    major.preferred_subjects
+                                                )
+                                                    ? major.preferred_subjects.map(
+                                                          (subject, index) => (
+                                                              <span
+                                                                  key={index}
+                                                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                                                      subject ===
+                                                                      "Produk/Projek Kreatif dan Kewirausahaan"
+                                                                          ? "bg-yellow-100 text-yellow-800"
+                                                                          : "bg-green-100 text-green-800"
+                                                                  }`}
+                                                              >
+                                                                  {subject}
+                                                              </span>
+                                                          )
+                                                      )
+                                                    : null}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
