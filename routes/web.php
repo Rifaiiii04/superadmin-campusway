@@ -109,79 +109,35 @@ Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, '
 Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
 Route::post('/schools/import', [App\Http\Controllers\SchoolController::class, 'import']);
 
-// SuperAdmin Major Recommendations (UI) - Temporary bypass auth for testing
-Route::get('/major-recommendations', function () {
-    try {
-        // Temporary bypass auth for testing navigation
-        // if (!Auth::guard('admin')->check()) {
-        //     return redirect('/login');
-        // }
-        
-        return Inertia::render('SuperAdmin/MajorRecommendations', [
-            'title' => 'Rekomendasi Jurusan',
-            'majors' => [],
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+// SuperAdmin Major Recommendations (UI) - Using controller
+Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
+Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
+Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
+Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
+Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
+Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
+Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
 
-// SuperAdmin Questions (UI) - Temporary bypass auth for testing
-Route::get('/questions', function () {
-    try {
-        // Temporary bypass auth for testing navigation
-        // if (!Auth::guard('admin')->check()) {
-        //     return redirect('/login');
-        // }
-        
-        return Inertia::render('SuperAdmin/Questions', [
-            'title' => 'Bank Soal',
-            'questions' => [
-                'data' => [],
-                'current_page' => 1,
-                'last_page' => 1,
-                'per_page' => 10,
-                'total' => 0,
-            ],
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+// SuperAdmin Questions (UI) - Using controller
+Route::get('/questions', [App\Http\Controllers\QuestionController::class, 'index']);
+Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
+Route::get('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'show']);
+Route::put('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'update']);
+Route::delete('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'destroy']);
 
-// SuperAdmin Results (UI) - Temporary bypass auth for testing
-Route::get('/results', function () {
-    try {
-        // Temporary bypass auth for testing navigation
-        // if (!Auth::guard('admin')->check()) {
-        //     return redirect('/login');
-        // }
-        
-        return Inertia::render('SuperAdmin/Results', [
-            'title' => 'Hasil Tes',
-            'results' => [],
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+// SuperAdmin Results (UI) - Using controller
+Route::get('/results', [App\Http\Controllers\ResultController::class, 'index']);
+Route::get('/results/{result}', [App\Http\Controllers\ResultController::class, 'show']);
+Route::delete('/results/{result}', [App\Http\Controllers\ResultController::class, 'destroy']);
+Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'export']);
 
-// SuperAdmin TKA Schedules (UI) - Temporary bypass auth for testing
-Route::get('/tka-schedules', function () {
-    try {
-        // Temporary bypass auth for testing navigation
-        // if (!Auth::guard('admin')->check()) {
-        //     return redirect('/login');
-        // }
-        
-        return Inertia::render('SuperAdmin/TkaSchedules', [
-            'title' => 'Jadwal TKA',
-            'schedules' => [],
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+// SuperAdmin TKA Schedules (UI) - Using controller
+Route::get('/tka-schedules', [App\Http\Controllers\TkaScheduleController::class, 'index']);
+Route::post('/tka-schedules', [App\Http\Controllers\TkaScheduleController::class, 'store']);
+Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'show']);
+Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'update']);
+Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'destroy']);
+Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\TkaScheduleController::class, 'toggle']);
 
 // SuperAdmin Logout
 Route::post('/logout', function (Request $request) {

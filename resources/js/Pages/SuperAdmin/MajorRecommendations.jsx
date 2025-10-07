@@ -17,6 +17,7 @@ import {
 export default function MajorRecommendations({
     majorRecommendations = [],
     availableSubjects = [],
+    pagination = null,
 }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
