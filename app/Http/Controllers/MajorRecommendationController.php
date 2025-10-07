@@ -15,8 +15,7 @@ class MajorRecommendationController extends Controller
     public function index()
     {
         try {
-            $majors = MajorRecommendation::with(['rumpunIlmu'])
-                ->orderBy('category')
+            $majors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
                 ->paginate(10);
             
