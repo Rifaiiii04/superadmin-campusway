@@ -1,0 +1,12 @@
+{
+  "resources/js/app.jsx": {
+    "file": "assets/app-4SunCWQ_.js",
+    "src": "resources/js/app.jsx",
+    "isEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-MFl42rpo.css",
+    "src": "resources/css/app.css", 
+    "isEntry": true
+  }
+}

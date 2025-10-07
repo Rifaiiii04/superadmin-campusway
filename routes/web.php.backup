@@ -1,0 +1,81 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\SuperAdminController;
+
+// Redirect root to login
+Route::get('/', function () {
+    return redirect('/login');
+});
+
+// Authentication Routes
+Route::get('/login', [AuthenticatedSessionController::class, 'create'])
+    ->name('login');
+
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->name('logout');
+
+// Protected SuperAdmin Routes - HARUS login dulu
+Route::middleware(['auth:admin'])->group(function () {
+    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])
+        ->name('dashboard');
+    
+    // Tambahkan routes protected lainnya di sini nanti
+});
+
+// Test routes (unprotected)
+Route::get('/test-simple', function () {
+    return Inertia::render('SimpleTest');
+});
+
+Route::get('/test-nodeps', function () {
+    return Inertia::render('NoDepsTest');
+});
+
+// Cache busting route
+Route::get('/clear-cache', function () {
+    return Inertia::render('SuperAdmin/Login', [
+        'title' => 'Super Admin Login - Cache Cleared',
+        'cache_bust' => time()
+    ]);
+});
+
+// Asset test route
+Route::get('/test-assets', function () {
+    return response()->json([
+        'js_file' => 'app-GSvuFT57.js',
+        'css_file' => 'app-MFl42rpo.css', 
+        'js_exists' => file_exists(public_path('build/assets/app-GSvuFT57.js')),
+        'css_exists' => file_exists(public_path('build/assets/app-MFl42rpo.css')),
+        'build_directory' => scandir(public_path('build/assets'))
+    ]);
+});
+
+// Emergency asset serving route
+Route::get('/_assets/{file}', function ($file) {
+    $path = public_path("build/assets/{$file}");
+    
+    if (!file_exists($path)) {
+        $path = public_path("assets/{$file}");
+    }
+    
+    if (!file_exists($path)) {
+        abort(404, "Asset not found: {$file}");
+    }
+    
+    $mimeTypes = [
+        'js' => 'application/javascript',
+        'css' => 'text/css',
+    ];
+    
+    $extension = pathinfo($path, PATHINFO_EXTENSION);
+    $mime = $mimeTypes[$extension] ?? 'text/plain';
+    
+    return response(file_get_contents($path))
+        ->header('Content-Type', $mime)
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+});

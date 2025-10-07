@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super-Admin Path Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Super-Admin Path Test</h1>
+    
+    <div id="js-test">
+        <h3>JavaScript Test:</h3>
+        <p id="js-status">Testing...</p>
+    </div>
+    
+    <div id="css-test">
+        <h3>CSS Test:</h3>
+        <p id="css-status">Testing...</p>
+    </div>
+
+    <script>
+        // Test JavaScript loading
+        fetch('/super-admin/build/assets/app-ul95wB22.js')
+            .then(response => {
+                document.getElementById('js-status').innerHTML = 
+                    'Status: ' + response.status + ' - ' + response.statusText + 
+                    '<br>Content-Type: ' + response.headers.get('Content-Type');
+                
+                if (response.ok) {
+                    document.getElementById('js-status').className = 'success';
+                } else {
+                    document.getElementById('js-status').className = 'error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('js-status').innerHTML = 'Error: ' + error;
+                document.getElementById('js-status').className = 'error';
+            });
+
+        // Test CSS loading
+        fetch('/super-admin/build/assets/app-MFl42rpo.css')
+            .then(response => {
+                document.getElementById('css-status').innerHTML = 
+                    'Status: ' + response.status + ' - ' + response.statusText + 
+                    '<br>Content-Type: ' + response.headers.get('Content-Type');
+                
+                if (response.ok) {
+                    document.getElementById('css-status').className = 'success';
+                } else {
+                    document.getElementById('css-status').className = 'error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('css-status').innerHTML = 'Error: ' + error;
+                document.getElementById('css-status').className = 'error';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Asset Test</title>
+    <style>
+        .success { color: green; }
+        .error { color: red; }
+        .test-result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Asset Loading Test</h1>
+    
+    <div id="js-build-test" class="test-result">
+        <h3>Build JS Test:</h3>
+        <p id="js-build-status">Testing...</p>
+    </div>
+    
+    <div id="css-build-test" class="test-result">
+        <h3>Build CSS Test:</h3>
+        <p id="css-build-status">Testing...</p>
+    </div>
+    
+    <div id="js-assets-test" class="test-result">
+        <h3>Assets JS Test:</h3>
+        <p id="js-assets-status">Testing...</p>
+    </div>
+    
+    <div id="css-assets-test" class="test-result">
+        <h3>Assets CSS Test:</h3>
+        <p id="css-assets-status">Testing...</p>
+    </div>
+
+    <script>
+        // Test semua path assets
+        const tests = [
+            { id: 'js-build', url: '/build/assets/app-GSvuFT57.js', type: 'js' },
+            { id: 'css-build', url: '/build/assets/app-MFl42rpo.css', type: 'css' },
+            { id: 'js-assets', url: '/assets/app.js', type: 'js' },
+            { id: 'css-assets', url: '/assets/app.css', type: 'css' }
+        ];
+        
+        tests.forEach(test => {
+            fetch(test.url)
+                .then(response => {
+                    const statusElement = document.getElementById(`${test.id}-status`);
+                    statusElement.innerHTML = `
+                        URL: ${test.url}<br>
+                        Status: ${response.status} - ${response.statusText}<br>
+                        Content-Type: ${response.headers.get('Content-Type') || 'None'}<br>
+                        Size: ${response.headers.get('Content-Length') || 'Unknown'} bytes
+                    `;
+                    
+                    if (response.ok) {
+                        statusElement.className = 'success';
+                        return response.text();
+                    } else {
+                        statusElement.className = 'error';
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(text => {
+                    if (test.type === 'js') {
+                        if (text.includes('function') || text.includes('var') || text.includes('import')) {
+                            console.log(`✅ ${test.id}: Valid JavaScript`);
+                        } else {
+                            console.log(`❌ ${test.id}: Not valid JavaScript`);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error(`Failed to load ${test.url}:`, error);
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Super Admin Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test-section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; border-left: 4px solid #28a745; }
+        .error { color: #dc3545; border-left: 4px solid #dc3545; }
+        .warning { color: #ffc107; border-left: 4px solid #ffc107; }
+        .info { color: #17a2b8; border-left: 4px solid #17a2b8; }
+        .loading { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h1>🧩 Super Admin System Test</h1>
+    <p>Testing components for: <strong>http://103.23.198.101/super-admin/login</strong></p>
+    
+    <div class="test-section">
+        <h3>1. Route Accessibility</h3>
+        <div id="route-test" class="loading">Testing super-admin route...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. Asset Loading</h3>
+        <div id="asset-test" class="loading">Testing asset loading...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. Inertia.js Response</h3>
+        <div id="inertia-test" class="loading">Testing Inertia response...</div>
+    </div>
+
+    <script>
+        // Test 1: Route accessibility
+        fetch('/super-admin/login')
+            .then(response => {
+                const routeTest = document.getElementById('route-test');
+                routeTest.innerHTML = `
+                    <strong>URL:</strong> /super-admin/login<br>
+                    <strong>Status:</strong> ${response.status} - ${response.statusText}<br>
+                    <strong>Content-Type:</strong> ${response.headers.get('Content-Type') || 'None'}
+                `;
+                
+                if (response.ok) {
+                    routeTest.className = 'success';
+                } else {
+                    routeTest.className = 'error';
+                }
+                return response.text();
+            })
+            .catch(error => {
+                document.getElementById('route-test').innerHTML = 'Error: ' + error;
+                document.getElementById('route-test').className = 'error';
+            });
+
+        // Test 2: Asset loading
+        const assets = [
+            { name: 'JavaScript', url: '/build/assets/app-D0rakMXs.js', type: 'js' },
+            { name: 'CSS', url: '/build/assets/app-DMKHbHeF.css', type: 'css' }
+        ];
+        
+        let assetsTested = 0;
+        const assetTest = document.getElementById('asset-test');
+        
+        assets.forEach(asset => {
+            fetch(asset.url)
+                .then(response => {
+                    let status = `<strong>${asset.name}:</strong> ${response.status} - ${response.statusText}<br>`;
+                    
+                    if (response.ok) {
+                        return response.text().then(text => {
+                            if (asset.type === 'js' && (text.includes('function') || text.includes('var') || text.includes('import'))) {
+                                status += '<span style="color: green;">✅ Valid JavaScript</span>';
+                            } else if (asset.type === 'css' && text.includes('{') && text.includes('}')) {
+                                status += '<span style="color: green;">✅ Valid CSS</span>';
+                            } else {
+                                status += '<span style="color: orange;">⚠️ Unexpected content</span>';
+                            }
+                            assetTest.innerHTML += status + '<br>';
+                            checkAssetsComplete();
+                        });
+                    } else {
+                        assetTest.innerHTML += status + '<span style="color: red;">❌ Failed to load</span><br>';
+                        checkAssetsComplete();
+                    }
+                })
+                .catch(error => {
+                    assetTest.innerHTML += `<strong>${asset.name}:</strong> Error: ${error}<br>`;
+                    checkAssetsComplete();
+                });
+        });
+        
+        function checkAssetsComplete() {
+            assetsTested++;
+            if (assetsTested === assets.length) {
+                if (assetTest.innerHTML.includes('❌')) {
+                    assetTest.className = 'error';
+                } else if (assetTest.innerHTML.includes('⚠️')) {
+                    assetTest.className = 'warning';
+                } else {
+                    assetTest.className = 'success';
+                }
+            }
+        }
+
+        // Test 3: Inertia response
+        fetch('/super-admin/login')
+            .then(response => response.text())
+            .then(html => {
+                const inertiaTest = document.getElementById('inertia-test');
+                
+                if (html.includes('inertia') || html.includes('Inertia')) {
+                    inertiaTest.innerHTML = '✅ Inertia.js detected in response';
+                    inertiaTest.className = 'success';
+                    
+                    // Check for specific components
+                    if (html.includes('SuperAdmin/Login')) {
+                        inertiaTest.innerHTML += '<br>✅ SuperAdmin/Login component found';
+                    } else {
+                        inertiaTest.innerHTML += '<br>⚠️ SuperAdmin/Login component not found';
+                    }
+                } else {
+                    inertiaTest.innerHTML = '❌ No Inertia.js detected';
+                    inertiaTest.className = 'error';
+                }
+            })
+            .catch(error => {
+                document.getElementById('inertia-test').innerHTML = 'Error: ' + error;
+                document.getElementById('inertia-test').className = 'error';
+            });
+    </script>
+</body>
+</html>

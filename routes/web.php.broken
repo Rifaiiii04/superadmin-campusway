@@ -1,0 +1,88 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\SuperAdminController;
+
+// =============================================
+// SUPER ADMIN ROUTES - VERY AGGRESSIVE CONFIG
+// =============================================
+
+// Route khusus untuk bypass conflict
+    return Inertia::render('SuperAdmin/Login', [
+        'title' => 'Super Admin - Campusway',
+        'app_type' => 'super_admin_bypass'
+    ]);
+});
+
+Route::get('/_admin', function () {
+    return Inertia::render('SuperAdmin/Login', [
+        'title' => 'Super Admin - Campusway', 
+        'app_type' => 'admin_bypass'
+    ]);
+});
+
+// SUPER ADMIN ROUTES dengan multiple prefixes
+Route::prefix('super-admin-system')->name('super-admin.')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+    
+    Route::middleware(['auth:admin'])->group(function () {
+        Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+    });
+});
+
+// Alternative prefixes
+Route::prefix('admin-system')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create']);
+});
+
+Route::prefix('sys-admin')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create']);
+});
+
+// Root route - try to capture before Landing
+Route::get('/', function () {
+    return Inertia::render('SuperAdmin/Login', [
+        'title' => 'Super Admin - Campusway',
+    ]);
+});
+
+// Test routes
+Route::get('/test-super-admin', function () {
+    return response()->json([
+        'application' => 'Super Admin Campusway',
+        'status' => 'active',
+        'timestamp' => now(),
+        'path' => base_path()
+    ]);
+});
+
+// TEST ROUTE - Simple HTML
+Route::get('/test-simple', function () {
+    return '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test Page</title>
+        <style>
+            body { background: #800000; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: Arial; }
+            .box { background: white; color: #333; padding: 2rem; border-radius: 12px; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h1>✅ TEST PAGE WORKING</h1>
+            <p>If you can see this, Laravel is working!</p>
+        </div>
+    </body>
+    </html>
+    ';
+});
+
+// FIXED SUPER ADMIN ROUTE
+Route::get('/_super_admin', function () {
+    return view('app');
+});
