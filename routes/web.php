@@ -318,26 +318,6 @@ Route::get('/profile', function () {
     ]);
 });
 
-// Schools management page (requires authentication)
-Route::get('/schools', function () {
-    if (!Auth::guard('admin')->check()) {
-        return redirect('/login');
-    }
-    
-    return Inertia::render('SuperAdmin/Schools', [
-        'title' => 'Schools Management',
-        'user' => Auth::guard('admin')->user(),
-    ]);
-});
+// Schools management page - REMOVED (duplicate route)
 
-// Questions management page (requires authentication)
-Route::get('/questions', function () {
-    if (!Auth::guard('admin')->check()) {
-        return redirect('/login');
-    }
-    
-    return Inertia::render('SuperAdmin/Questions', [
-        'title' => 'Questions Management',
-        'user' => Auth::guard('admin')->user(),
-    ]);
-});
+// Questions management page - REMOVED (duplicate route)
