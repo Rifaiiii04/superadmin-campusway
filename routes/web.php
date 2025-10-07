@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 // ===========================================
@@ -100,28 +101,13 @@ Route::get('/dashboard', function () {
     }
 });
 
-// SuperAdmin Schools (UI) - Temporary bypass auth for testing
-Route::get('/schools', function () {
-    try {
-        // Temporary bypass auth for testing navigation
-        // if (!Auth::guard('admin')->check()) {
-        //     return redirect('/login');
-        // }
-        
-        return Inertia::render('SuperAdmin/Schools', [
-            'title' => 'Manajemen Sekolah',
-            'schools' => [
-                'data' => [],
-                'current_page' => 1,
-                'last_page' => 1,
-                'per_page' => 10,
-                'total' => 0,
-            ],
-        ]);
-    } catch (Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
-});
+// SuperAdmin Schools (UI) - Using controller
+Route::get('/schools', [App\Http\Controllers\SchoolController::class, 'index']);
+Route::post('/schools', [App\Http\Controllers\SchoolController::class, 'store']);
+Route::get('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'show']);
+Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'update']);
+Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
+Route::post('/schools/import', [App\Http\Controllers\SchoolController::class, 'import']);
 
 // SuperAdmin Major Recommendations (UI) - Temporary bypass auth for testing
 Route::get('/major-recommendations', function () {

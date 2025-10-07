@@ -17,7 +17,7 @@ export default function Schools({ schools }) {
         password: "",
     });
 
-    const filteredSchools = schools.data.filter(
+    const filteredSchools = (schools?.data || []).filter(
         (school) =>
             school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             school.npsn.includes(searchTerm)

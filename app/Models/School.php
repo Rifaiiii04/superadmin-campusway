@@ -13,12 +13,11 @@ class School extends Model
         'npsn',
         'name',
         'school_level',
-        'password_hash',
         'password',
     ];
 
     protected $hidden = [
-        'password_hash',
+        'password',
     ];
 
     /**
