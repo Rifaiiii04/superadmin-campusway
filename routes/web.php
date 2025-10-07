@@ -225,7 +225,7 @@ Route::get('/home', function () {
 
 // Redirect to admin panel
 Route::get('/admin', function () {
-    return response()->json(['redirect' => '/dashboard']);
+    return redirect('/dashboard');
 });
 
 // Redirect to superadmin
@@ -279,10 +279,9 @@ Route::get('/authentication', function () {
 
 // About page
 Route::get('/about', function () {
-    return response()->json([
-        'message' => 'About SuperAdmin CampusWay',
+    return Inertia::render('SuperAdmin/About', [
+        'title' => 'About SuperAdmin CampusWay',
         'version' => app()->version(),
-        'status' => 'success'
     ]);
 });
 
