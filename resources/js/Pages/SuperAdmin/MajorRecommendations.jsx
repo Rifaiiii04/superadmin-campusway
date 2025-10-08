@@ -24,6 +24,9 @@ export default function MajorRecommendations({
     console.log("MajorRecommendations data:", majorRecommendations);
     console.log("MajorRecommendations.data:", majorRecommendations?.data);
     console.log("MajorRecommendations.total:", majorRecommendations?.total);
+    console.log("Available subjects:", availableSubjects);
+    console.log("Rumpun ilmu:", rumpunIlmu);
+    console.log("Debug info:", debug);
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);

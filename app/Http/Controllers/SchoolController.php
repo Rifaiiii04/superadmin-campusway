@@ -20,7 +20,7 @@ class SchoolController extends Controller
                 'schools' => $schools,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching schools: ' . $e->getMessage());
+            Log::error('Error fetching schools: ' . $e->getMessage());
             return Inertia::render('SuperAdmin/Schools', [
                 'title' => 'Manajemen Sekolah',
                 'schools' => [
@@ -37,6 +37,11 @@ class SchoolController extends Controller
 
     public function store(Request $request)
     {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->storeJson($request);
+        }
+
         $validator = Validator::make($request->all(), [
             'npsn' => 'required|string|unique:schools,npsn',
             'name' => 'required|string|max:255',
@@ -56,17 +61,92 @@ class SchoolController extends Controller
 
             return redirect()->back()->with('success', 'Sekolah berhasil ditambahkan');
         } catch (\Exception $e) {
-            \Log::error('Error creating school: ' . $e->getMessage());
+            Log::error('Error creating school: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menambahkan sekolah'])->withInput();
+        }
+    }
+
+    /**
+     * Store a newly created school (JSON response)
+     */
+    private function storeJson(Request $request)
+    {
+        try {
+            Log::info('School Store JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'npsn' => 'required|string|unique:schools,npsn',
+                'name' => 'required|string|max:255',
+                'password' => 'required|string|min:6',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $school = School::create([
+                'npsn' => $request->npsn,
+                'name' => $request->name,
+                'password' => bcrypt($request->password),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sekolah berhasil ditambahkan',
+                'data' => $school
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('School store JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan sekolah: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function show(School $school)
     {
-        return Inertia::render('SuperAdmin/SchoolDetail', [
-            'title' => 'Detail Sekolah',
-            'school' => $school,
-        ]);
+        try {
+            // Load students with their choices
+            $school->load(['students.studentChoice.major']);
+            
+            // Get students count
+            $studentsCount = $school->students->count();
+            
+            // Get students with choices count
+            $studentsWithChoices = $school->students->where('studentChoice', '!=', null)->count();
+            
+            // Get students without choices count
+            $studentsWithoutChoices = $studentsCount - $studentsWithChoices;
+            
+            // Debug data
+            Log::info('School Detail - School ID: ' . $school->id);
+            Log::info('School Detail - Students count: ' . $studentsCount);
+            Log::info('School Detail - Students with choices: ' . $studentsWithChoices);
+            
+            return Inertia::render('SuperAdmin/SchoolDetail', [
+                'title' => 'Detail Sekolah',
+                'school' => $school,
+                'studentsCount' => $studentsCount,
+                'studentsWithChoices' => $studentsWithChoices,
+                'studentsWithoutChoices' => $studentsWithoutChoices,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching school detail: ' . $e->getMessage());
+            return Inertia::render('SuperAdmin/SchoolDetail', [
+                'title' => 'Detail Sekolah',
+                'school' => $school,
+                'studentsCount' => 0,
+                'studentsWithChoices' => 0,
+                'studentsWithoutChoices' => 0,
+                'error' => 'Gagal memuat detail sekolah'
+            ]);
+        }
     }
 
     public function update(Request $request, School $school)
@@ -95,7 +175,7 @@ class SchoolController extends Controller
 
             return redirect()->back()->with('success', 'Sekolah berhasil diperbarui');
         } catch (\Exception $e) {
-            \Log::error('Error updating school: ' . $e->getMessage());
+            Log::error('Error updating school: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal memperbarui sekolah'])->withInput();
         }
     }
@@ -106,7 +186,7 @@ class SchoolController extends Controller
             $school->delete();
             return redirect()->back()->with('success', 'Sekolah berhasil dihapus');
         } catch (\Exception $e) {
-            \Log::error('Error deleting school: ' . $e->getMessage());
+            Log::error('Error deleting school: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus sekolah']);
         }
     }
@@ -150,7 +230,7 @@ class SchoolController extends Controller
                 return back()->withErrors(['error' => 'Tidak ada data yang berhasil diimport']);
             }
         } catch (\Exception $e) {
-            \Log::error('Error importing schools: ' . $e->getMessage());
+            Log::error('Error importing schools: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal mengimport sekolah: ' . $e->getMessage()]);
         }
     }

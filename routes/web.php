@@ -146,7 +146,7 @@ Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'ex
 Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
 
 // SuperAdmin TKA Schedules (API) - JSON responses
-Route::middleware(['web'])->group(function () {
+Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
     Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
     Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
     Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);

@@ -3,7 +3,15 @@ import { Head, Link } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { ArrowLeft, Building2, Users, GraduationCap } from "lucide-react";
 
-export default function SchoolDetail({ school }) {
+export default function SchoolDetail({ school, studentsCount, studentsWithChoices, studentsWithoutChoices, error }) {
+    // Debug data
+    console.log("School Detail - School data:", school);
+    console.log("School Detail - Students count:", studentsCount);
+    console.log("School Detail - Students with choices:", studentsWithChoices);
+    console.log("School Detail - Students without choices:", studentsWithoutChoices);
+    console.log("School Detail - Error:", error);
+    console.log("School Detail - Students array:", school?.students);
+
     return (
         <SuperAdminLayout>
             <Head title={`Detail Sekolah - ${school.name}`} />

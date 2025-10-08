@@ -15,19 +15,37 @@ class MajorRecommendationController extends Controller
     public function index()
     {
         try {
+            // Debug: Check if there are any major recommendations in database
+            $totalMajors = MajorRecommendation::count();
+            Log::info('Total major recommendations in database: ' . $totalMajors);
+            
             $majors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
                 ->paginate(10);
+            
+            // Debug: Log pagination data
+            Log::info('Major recommendations pagination data:', [
+                'total' => $majors->total(),
+                'per_page' => $majors->perPage(),
+                'current_page' => $majors->currentPage(),
+                'data_count' => $majors->count()
+            ]);
             
             $subjects = Subject::select('id', 'name', 'code', 'subject_type')
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get();
             
+            // Debug: Log subjects data
+            Log::info('Subjects count: ' . $subjects->count());
+            
             $rumpunIlmu = RumpunIlmu::select('id', 'name')
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get();
+            
+            // Debug: Log rumpun ilmu data
+            Log::info('Rumpun ilmu count: ' . $rumpunIlmu->count());
             
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
@@ -36,7 +54,9 @@ class MajorRecommendationController extends Controller
                 'rumpunIlmu' => $rumpunIlmu,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching major recommendations: ' . $e->getMessage());
+            Log::error('Error fetching major recommendations: ' . $e->getMessage());
+            Log::error('Error stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => [
@@ -48,7 +68,7 @@ class MajorRecommendationController extends Controller
                 ],
                 'availableSubjects' => [],
                 'rumpunIlmu' => [],
-                'error' => 'Gagal memuat data rekomendasi jurusan'
+                'error' => 'Gagal memuat data rekomendasi jurusan: ' . $e->getMessage()
             ]);
         }
     }
@@ -94,7 +114,7 @@ class MajorRecommendationController extends Controller
 
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
         } catch (\Exception $e) {
-            \Log::error('Error creating major recommendation: ' . $e->getMessage());
+            Log::error('Error creating major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menambahkan rekomendasi jurusan'])->withInput();
         }
     }
@@ -148,7 +168,7 @@ class MajorRecommendationController extends Controller
 
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diperbarui');
         } catch (\Exception $e) {
-            \Log::error('Error updating major recommendation: ' . $e->getMessage());
+            Log::error('Error updating major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal memperbarui rekomendasi jurusan'])->withInput();
         }
     }
@@ -159,7 +179,7 @@ class MajorRecommendationController extends Controller
             $majorRecommendation->delete();
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil dihapus');
         } catch (\Exception $e) {
-            \Log::error('Error deleting major recommendation: ' . $e->getMessage());
+            Log::error('Error deleting major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus rekomendasi jurusan']);
         }
     }
@@ -173,7 +193,7 @@ class MajorRecommendationController extends Controller
 
             return redirect()->back()->with('success', 'Status rekomendasi jurusan berhasil diubah');
         } catch (\Exception $e) {
-            \Log::error('Error toggling major recommendation: ' . $e->getMessage());
+            Log::error('Error toggling major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal mengubah status rekomendasi jurusan']);
         }
     }
@@ -235,7 +255,7 @@ class MajorRecommendationController extends Controller
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error exporting major recommendations: ' . $e->getMessage());
+            Log::error('Error exporting major recommendations: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal mengexport data rekomendasi jurusan']);
         }
     }

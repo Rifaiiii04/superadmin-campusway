@@ -28,6 +28,10 @@ class TkaScheduleController extends Controller
                 ->limit(50) // Limit schools to prevent timeout
                 ->get();
 
+            // Debug data
+            Log::info('TKA Schedule Index - Schools count: ' . $schools->count());
+            Log::info('TKA Schedule Index - Schedules count: ' . $schedules->count());
+
             return Inertia::render('SuperAdmin/TkaSchedules', [
                 'title' => 'Jadwal TKA',
                 'schedules' => $schedules,
@@ -95,8 +99,8 @@ class TkaScheduleController extends Controller
         try {
             Log::info('TKA Schedule Store Request Data:', $request->all());
             
-            // Check if request expects JSON response
-            if ($request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json') {
+            // Always return JSON response for AJAX requests
+            if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
                 return $this->storeJson($request);
             }
             
@@ -235,6 +239,85 @@ class TkaScheduleController extends Controller
     }
 
     /**
+     * Update the specified TKA schedule (JSON response)
+     */
+    private function updateJson(Request $request, $id)
+    {
+        try {
+            Log::info('TKA Schedule Update JSON Request Data:', $request->all());
+            
+            $schedule = TkaSchedule::find($id);
+
+            if (!$schedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jadwal TKA tidak ditemukan'
+                ], 404);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'type' => 'required|in:regular,makeup,special',
+                'instructions' => 'nullable|string',
+                'target_schools' => 'nullable|array',
+                'target_schools.*' => 'integer|exists:schools,id',
+                // PUSMENDIK Essential Fields
+                'gelombang' => 'nullable|string|in:1,2',
+                'hari_pelaksanaan' => 'nullable|string|in:Hari Pertama,Hari Kedua',
+                'exam_venue' => 'nullable|string|max:255',
+                'exam_room' => 'nullable|string|max:100',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:20',
+                'requirements' => 'nullable|string',
+                'materials_needed' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $schedule->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'type' => $request->type,
+                'instructions' => $request->instructions,
+                'target_schools' => $request->target_schools,
+                // PUSMENDIK Essential Fields
+                'gelombang' => $request->gelombang,
+                'hari_pelaksanaan' => $request->hari_pelaksanaan,
+                'exam_venue' => $request->exam_venue,
+                'exam_room' => $request->exam_room,
+                'contact_person' => $request->contact_person,
+                'contact_phone' => $request->contact_phone,
+                'requirements' => $request->requirements,
+                'materials_needed' => $request->materials_needed
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jadwal TKA berhasil diperbarui',
+                'data' => $schedule
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Super Admin TKA Schedule update JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui jadwal TKA: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Display the specified TKA schedule
      */
     public function show($id)
@@ -269,6 +352,11 @@ class TkaScheduleController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            // Always return JSON response for AJAX requests
+            if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return $this->updateJson($request, $id);
+            }
+            
             $schedule = TkaSchedule::find($id);
 
             if (!$schedule) {
@@ -320,6 +408,11 @@ class TkaScheduleController extends Controller
     public function cancel($id)
     {
         try {
+            // Always return JSON response for AJAX requests
+            if (request()->ajax() || request()->expectsJson() || request()->is('api/*') || request()->header('Accept') === 'application/json' || request()->header('X-Requested-With') === 'XMLHttpRequest') {
+                return $this->cancelJson($id);
+            }
+            
             $schedule = TkaSchedule::find($id);
 
             if (!$schedule) {
@@ -347,11 +440,50 @@ class TkaScheduleController extends Controller
     }
 
     /**
+     * Cancel TKA schedule (JSON response)
+     */
+    private function cancelJson($id)
+    {
+        try {
+            Log::info('TKA Schedule Cancel JSON Request for ID:', $id);
+            
+            $schedule = TkaSchedule::find($id);
+
+            if (!$schedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jadwal TKA tidak ditemukan'
+                ], 404);
+            }
+
+            $schedule->update(['status' => 'cancelled']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jadwal TKA berhasil dibatalkan',
+                'data' => $schedule
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Super Admin TKA Schedule cancel JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membatalkan jadwal TKA: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Remove the specified TKA schedule
      */
     public function destroy($id)
     {
         try {
+            // Always return JSON response for AJAX requests
+            if (request()->ajax() || request()->expectsJson() || request()->is('api/*') || request()->header('Accept') === 'application/json' || request()->header('X-Requested-With') === 'XMLHttpRequest') {
+                return $this->destroyJson($id);
+            }
+            
             $schedule = TkaSchedule::find($id);
 
             if (!$schedule) {
@@ -374,6 +506,40 @@ class TkaScheduleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menghapus jadwal TKA'
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified TKA schedule (JSON response)
+     */
+    private function destroyJson($id)
+    {
+        try {
+            Log::info('TKA Schedule Destroy JSON Request for ID:', $id);
+            
+            $schedule = TkaSchedule::find($id);
+
+            if (!$schedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jadwal TKA tidak ditemukan'
+                ], 404);
+            }
+
+            // Permanently delete from database
+            $schedule->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jadwal TKA berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Super Admin TKA Schedule destroy JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus jadwal TKA: ' . $e->getMessage()
             ], 500);
         }
     }
