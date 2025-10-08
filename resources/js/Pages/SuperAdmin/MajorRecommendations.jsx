@@ -189,15 +189,15 @@ export default function MajorRecommendations({
             const matchesRumpunIlmu =
                 rumpunIlmuFilter === "all" ||
                 (rumpunIlmuFilter === "Humaniora" &&
-                    major.rumpun_ilmu === "Humaniora") ||
+                    major.category === "Humaniora") ||
                 (rumpunIlmuFilter === "Ilmu Sosial" &&
-                    major.rumpun_ilmu === "Ilmu Sosial") ||
+                    major.category === "Ilmu Sosial") ||
                 (rumpunIlmuFilter === "Ilmu Alam" &&
-                    major.rumpun_ilmu === "Ilmu Alam") ||
+                    major.category === "Ilmu Alam") ||
                 (rumpunIlmuFilter === "Ilmu Formal" &&
-                    major.rumpun_ilmu === "Ilmu Formal") ||
+                    major.category === "Ilmu Formal") ||
                 (rumpunIlmuFilter === "Ilmu Terapan" &&
-                    major.rumpun_ilmu === "Ilmu Terapan");
+                    major.category === "Ilmu Terapan");
 
             return matchesSearch && matchesStatus && matchesRumpunIlmu;
         }
@@ -212,7 +212,7 @@ export default function MajorRecommendations({
         setEditingMajor(major);
         setData({
             major_name: major.major_name,
-            rumpun_ilmu: major.rumpun_ilmu || "ILMU ALAM",
+            rumpun_ilmu: major.category || "ILMU ALAM",
             description: major.description,
             required_subjects: major.required_subjects || [],
             preferred_subjects: major.preferred_subjects || [], // Use preferred_subjects from database
@@ -335,7 +335,7 @@ export default function MajorRecommendations({
                                         (
                                             majorRecommendations?.data || []
                                         ).filter(
-                                            (m) => m.rumpun_ilmu === "Ilmu Alam"
+                                            (m) => m.category === "Ilmu Alam"
                                         ).length
                                     }
                                 </p>
@@ -356,8 +356,7 @@ export default function MajorRecommendations({
                                         (
                                             majorRecommendations?.data || []
                                         ).filter(
-                                            (m) =>
-                                                m.rumpun_ilmu === "Ilmu Sosial"
+                                            (m) => m.category === "Ilmu Sosial"
                                         ).length
                                     }
                                 </p>
@@ -378,7 +377,7 @@ export default function MajorRecommendations({
                                         (
                                             majorRecommendations?.data || []
                                         ).filter(
-                                            (m) => m.rumpun_ilmu === "Humaniora"
+                                            (m) => m.category === "Humaniora"
                                         ).length
                                     }
                                 </p>
@@ -399,8 +398,7 @@ export default function MajorRecommendations({
                                         (
                                             majorRecommendations?.data || []
                                         ).filter(
-                                            (m) =>
-                                                m.rumpun_ilmu === "Ilmu Formal"
+                                            (m) => m.category === "Ilmu Formal"
                                         ).length
                                     }
                                 </p>
@@ -421,8 +419,7 @@ export default function MajorRecommendations({
                                         (
                                             majorRecommendations?.data || []
                                         ).filter(
-                                            (m) =>
-                                                m.rumpun_ilmu === "Ilmu Terapan"
+                                            (m) => m.category === "Ilmu Terapan"
                                         ).length
                                     }
                                 </p>
@@ -636,44 +633,43 @@ export default function MajorRecommendations({
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                    major.rumpun_ilmu ===
+                                                    major.category ===
                                                     "Ilmu Alam"
                                                         ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Sosial"
                                                         ? "bg-green-100 text-green-800 border border-green-200"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Humaniora"
                                                         ? "bg-purple-100 text-purple-800 border border-purple-200"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Formal"
                                                         ? "bg-orange-100 text-orange-800 border border-orange-200"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Terapan"
                                                         ? "bg-red-100 text-red-800 border border-red-200"
                                                         : "bg-gray-100 text-gray-800 border border-gray-200"
                                                 }`}
                                             >
                                                 <span className="mr-1">
-                                                    {major.rumpun_ilmu ===
+                                                    {major.category ===
                                                     "Ilmu Alam"
                                                         ? "🔬"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Sosial"
                                                         ? "👥"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Humaniora"
                                                         ? "🎨"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Formal"
                                                         ? "📐"
-                                                        : major.rumpun_ilmu ===
+                                                        : major.category ===
                                                           "Ilmu Terapan"
                                                         ? "⚙️"
                                                         : "📋"}
                                                 </span>
-                                                {major.rumpun_ilmu ||
-                                                    "Ilmu Alam"}
+                                                {major.category || "Ilmu Alam"}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
