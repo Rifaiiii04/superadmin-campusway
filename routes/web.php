@@ -143,12 +143,12 @@ Route::delete('/results/{result}', [App\Http\Controllers\ResultController::class
 Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'export']);
 
 // SuperAdmin TKA Schedules (UI) - Using controller
-Route::get('/tka-schedules', [App\Http\Controllers\TkaScheduleController::class, 'index']);
-Route::post('/tka-schedules', [App\Http\Controllers\TkaScheduleController::class, 'store']);
-Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'show']);
-Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'update']);
-Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\TkaScheduleController::class, 'destroy']);
-Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\TkaScheduleController::class, 'toggle']);
+Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
+Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
+Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
+Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
 
 // SuperAdmin Logout
 Route::post('/logout', function (Request $request) {

@@ -8,6 +8,7 @@ use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class TkaScheduleController extends Controller
 {
@@ -27,7 +28,8 @@ class TkaScheduleController extends Controller
                 ->limit(50) // Limit schools to prevent timeout
                 ->get();
 
-            return inertia('SuperAdmin/TkaSchedules', [
+            return Inertia::render('SuperAdmin/TkaSchedules', [
+                'title' => 'Jadwal TKA',
                 'schedules' => $schedules,
                 'schools' => $schools,
                 'auth' => [
@@ -39,7 +41,8 @@ class TkaScheduleController extends Controller
             Log::error('Super Admin TKA Schedule index error: ' . $e->getMessage());
             
             // Return minimal data to prevent blank page
-            return inertia('SuperAdmin/TkaSchedules', [
+            return Inertia::render('SuperAdmin/TkaSchedules', [
+                'title' => 'Jadwal TKA',
                 'schedules' => [],
                 'schools' => [],
                 'auth' => [
