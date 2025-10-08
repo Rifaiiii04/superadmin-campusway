@@ -103,27 +103,42 @@ Route::get('/dashboard', function () {
 
 // SuperAdmin Schools (UI) - Using controller
 Route::get('/schools', [App\Http\Controllers\SchoolController::class, 'index']);
-Route::post('/schools', [App\Http\Controllers\SchoolController::class, 'store']);
-Route::get('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'show']);
-Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'update']);
-Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
+
+// SuperAdmin Schools (API) - JSON responses
+Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
+    Route::post('/schools', [App\Http\Controllers\SchoolController::class, 'store']);
+    Route::get('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'show']);
+    Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'update']);
+    Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
+});
+
 Route::post('/schools/import', [App\Http\Controllers\SchoolController::class, 'import']);
 
 // SuperAdmin Students (UI) - Using controller
 Route::get('/students', [App\Http\Controllers\StudentController::class, 'index']);
-Route::post('/students', [App\Http\Controllers\StudentController::class, 'store']);
-Route::get('/students/{student}', [App\Http\Controllers\StudentController::class, 'show']);
-Route::put('/students/{student}', [App\Http\Controllers\StudentController::class, 'update']);
-Route::delete('/students/{student}', [App\Http\Controllers\StudentController::class, 'destroy']);
+
+// SuperAdmin Students (API) - JSON responses
+Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
+    Route::post('/students', [App\Http\Controllers\StudentController::class, 'store']);
+    Route::get('/students/{student}', [App\Http\Controllers\StudentController::class, 'show']);
+    Route::put('/students/{student}', [App\Http\Controllers\StudentController::class, 'update']);
+    Route::delete('/students/{student}', [App\Http\Controllers\StudentController::class, 'destroy']);
+});
+
 Route::get('/students/export', [App\Http\Controllers\StudentController::class, 'export']);
 
 // SuperAdmin Major Recommendations (UI) - Using controller
 Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
-Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
-Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
-Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
-Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
-Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
+
+// SuperAdmin Major Recommendations (API) - JSON responses
+Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
+    Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
+    Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
+    Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
+    Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
+    Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
+});
+
 Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
 
 // Alias route for /jurusan
@@ -131,10 +146,14 @@ Route::get('/jurusan', [App\Http\Controllers\MajorRecommendationController::clas
 
 // SuperAdmin Questions (UI) - Using controller
 Route::get('/questions', [App\Http\Controllers\QuestionController::class, 'index']);
-Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
-Route::get('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'show']);
-Route::put('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'update']);
-Route::delete('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'destroy']);
+
+// SuperAdmin Questions (API) - JSON responses
+Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
+    Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
+    Route::get('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'show']);
+    Route::put('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'update']);
+    Route::delete('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'destroy']);
+});
 
 // SuperAdmin Results (UI) - Using controller
 Route::get('/results', [App\Http\Controllers\ResultController::class, 'index']);
