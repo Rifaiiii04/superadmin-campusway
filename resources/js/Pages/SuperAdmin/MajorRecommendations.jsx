@@ -481,19 +481,19 @@ export default function MajorRecommendations({
                                     <option value="all">
                                         Semua Rumpun Ilmu
                                     </option>
-                                    <option value="HUMANIORA">
+                                    <option value="Humaniora">
                                         🎨 HUMANIORA
                                     </option>
-                                    <option value="ILMU SOSIAL">
+                                    <option value="Ilmu Sosial">
                                         📚 ILMU SOSIAL
                                     </option>
-                                    <option value="ILMU ALAM">
+                                    <option value="Ilmu Alam">
                                         🔬 ILMU ALAM
                                     </option>
-                                    <option value="ILMU FORMAL">
+                                    <option value="Ilmu Formal">
                                         📐 ILMU FORMAL
                                     </option>
-                                    <option value="ILMU TERAPAN">
+                                    <option value="Ilmu Terapan">
                                         ⚙️ ILMU TERAPAN
                                     </option>
                                 </select>
@@ -532,19 +532,19 @@ export default function MajorRecommendations({
                                     <span className="ml-2">
                                         rumpun ilmu:{" "}
                                         <span className="font-medium">
-                                            {rumpunIlmuFilter === "HUMANIORA"
+                                            {rumpunIlmuFilter === "Humaniora"
                                                 ? "🎨 HUMANIORA"
                                                 : rumpunIlmuFilter ===
-                                                  "ILMU SOSIAL"
+                                                  "Ilmu Sosial"
                                                 ? "📚 ILMU SOSIAL"
                                                 : rumpunIlmuFilter ===
-                                                  "ILMU ALAM"
+                                                  "Ilmu Alam"
                                                 ? "🔬 ILMU ALAM"
                                                 : rumpunIlmuFilter ===
-                                                  "ILMU FORMAL"
+                                                  "Ilmu Formal"
                                                 ? "📐 ILMU FORMAL"
                                                 : rumpunIlmuFilter ===
-                                                  "ILMU TERAPAN"
+                                                  "Ilmu Terapan"
                                                 ? "⚙️ ILMU TERAPAN"
                                                 : rumpunIlmuFilter}
                                         </span>
