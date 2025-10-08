@@ -14,14 +14,34 @@ class ResultController extends Controller
     public function index()
     {
         try {
+            // Debug: Log database connection and data count
+            $totalResults = Result::count();
+            Log::info('ResultController::index - Total results in database: ' . $totalResults);
+            
             $results = Result::with(['student'])->paginate(10);
+            
+            // Debug: Log pagination data
+            Log::info('ResultController::index - Pagination data:', [
+                'total' => $results->total(),
+                'per_page' => $results->perPage(),
+                'current_page' => $results->currentPage(),
+                'data_count' => $results->count()
+            ]);
             
             return Inertia::render('SuperAdmin/Results', [
                 'title' => 'Hasil Tes',
                 'results' => $results,
+                'debug' => [
+                    'total_results' => $totalResults,
+                    'pagination_total' => $results->total(),
+                    'current_page' => $results->currentPage(),
+                    'per_page' => $results->perPage()
+                ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching results: ' . $e->getMessage());
+            Log::error('ResultController::index - Error: ' . $e->getMessage());
+            Log::error('ResultController::index - Stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/Results', [
                 'title' => 'Hasil Tes',
                 'results' => [
@@ -31,7 +51,12 @@ class ResultController extends Controller
                     'per_page' => 10,
                     'total' => 0,
                 ],
-                'error' => 'Gagal memuat data hasil tes'
+                'error' => 'Gagal memuat data hasil tes: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }

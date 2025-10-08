@@ -14,14 +14,34 @@ class QuestionController extends Controller
     public function index()
     {
         try {
+            // Debug: Log database connection and data count
+            $totalQuestions = Question::count();
+            Log::info('QuestionController::index - Total questions in database: ' . $totalQuestions);
+            
             $questions = Question::with(['options'])->paginate(10);
+            
+            // Debug: Log pagination data
+            Log::info('QuestionController::index - Pagination data:', [
+                'total' => $questions->total(),
+                'per_page' => $questions->perPage(),
+                'current_page' => $questions->currentPage(),
+                'data_count' => $questions->count()
+            ]);
             
             return Inertia::render('SuperAdmin/Questions', [
                 'title' => 'Bank Soal',
                 'questions' => $questions,
+                'debug' => [
+                    'total_questions' => $totalQuestions,
+                    'pagination_total' => $questions->total(),
+                    'current_page' => $questions->currentPage(),
+                    'per_page' => $questions->perPage()
+                ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching questions: ' . $e->getMessage());
+            Log::error('QuestionController::index - Error: ' . $e->getMessage());
+            Log::error('QuestionController::index - Stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/Questions', [
                 'title' => 'Bank Soal',
                 'questions' => [
@@ -31,7 +51,12 @@ class QuestionController extends Controller
                     'per_page' => 10,
                     'total' => 0,
                 ],
-                'error' => 'Gagal memuat data bank soal'
+                'error' => 'Gagal memuat data bank soal: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }

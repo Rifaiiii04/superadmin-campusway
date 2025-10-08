@@ -14,16 +14,40 @@ class StudentController extends Controller
     public function index()
     {
         try {
+            // Debug: Log database connection and data count
+            $totalStudents = Student::count();
+            Log::info('StudentController::index - Total students in database: ' . $totalStudents);
+            
             $students = Student::with(['school'])->paginate(10);
             $schools = School::select('id', 'name')->get();
+            
+            // Debug: Log pagination data
+            Log::info('StudentController::index - Pagination data:', [
+                'total' => $students->total(),
+                'per_page' => $students->perPage(),
+                'current_page' => $students->currentPage(),
+                'data_count' => $students->count()
+            ]);
+            
+            // Debug: Log schools data
+            Log::info('StudentController::index - Schools count: ' . $schools->count());
             
             return Inertia::render('SuperAdmin/Students', [
                 'title' => 'Manajemen Siswa',
                 'students' => $students,
                 'schools' => $schools,
+                'debug' => [
+                    'total_students' => $totalStudents,
+                    'pagination_total' => $students->total(),
+                    'current_page' => $students->currentPage(),
+                    'per_page' => $students->perPage(),
+                    'schools_count' => $schools->count()
+                ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching students: ' . $e->getMessage());
+            Log::error('StudentController::index - Error: ' . $e->getMessage());
+            Log::error('StudentController::index - Stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/Students', [
                 'title' => 'Manajemen Siswa',
                 'students' => [
@@ -34,7 +58,12 @@ class StudentController extends Controller
                     'total' => 0,
                 ],
                 'schools' => [],
-                'error' => 'Gagal memuat data siswa'
+                'error' => 'Gagal memuat data siswa: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }

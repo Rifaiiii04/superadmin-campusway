@@ -13,14 +13,34 @@ class SchoolController extends Controller
     public function index()
     {
         try {
+            // Debug: Log database connection and data count
+            $totalSchools = School::count();
+            Log::info('SchoolController::index - Total schools in database: ' . $totalSchools);
+            
             $schools = School::paginate(10);
+            
+            // Debug: Log pagination data
+            Log::info('SchoolController::index - Pagination data:', [
+                'total' => $schools->total(),
+                'per_page' => $schools->perPage(),
+                'current_page' => $schools->currentPage(),
+                'data_count' => $schools->count()
+            ]);
             
             return Inertia::render('SuperAdmin/Schools', [
                 'title' => 'Manajemen Sekolah',
                 'schools' => $schools,
+                'debug' => [
+                    'total_schools' => $totalSchools,
+                    'pagination_total' => $schools->total(),
+                    'current_page' => $schools->currentPage(),
+                    'per_page' => $schools->perPage()
+                ]
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching schools: ' . $e->getMessage());
+            Log::error('SchoolController::index - Stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/Schools', [
                 'title' => 'Manajemen Sekolah',
                 'schools' => [
@@ -30,7 +50,12 @@ class SchoolController extends Controller
                     'per_page' => 10,
                     'total' => 0,
                 ],
-                'error' => 'Gagal memuat data sekolah'
+                'error' => 'Gagal memuat data sekolah: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }

@@ -3,12 +3,18 @@ import { Head, useForm, Link } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { User, Plus, Edit, Trash2, Download, Search, Eye } from "lucide-react";
 
-export default function Students({ students, schools = [] }) {
+export default function Students({ students, schools = [], debug, error }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingStudent, setEditingStudent] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    // Debug logging
+    console.log("Students component - students:", students);
+    console.log("Students component - schools:", schools);
+    console.log("Students component - debug:", debug);
+    console.log("Students component - error:", error);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         nisn: "",

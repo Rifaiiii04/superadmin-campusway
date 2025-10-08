@@ -18,19 +18,27 @@ class TkaScheduleController extends Controller
     public function index()
     {
         try {
-            // Optimize queries with timeout protection
+            // Debug: Log database connection and data count
+            $totalSchedules = TkaSchedule::count();
+            Log::info('TkaScheduleController::index - Total schedules in database: ' . $totalSchedules);
+            
+            // Use pagination instead of limit for better performance
             $schedules = TkaSchedule::select('id', 'title', 'description', 'start_date', 'end_date', 'status', 'type', 'instructions', 'target_schools', 'created_by', 'created_at', 'updated_at')
                 ->orderBy('start_date', 'desc')
-                ->limit(100) // Limit results to prevent timeout
-                ->get();
+                ->paginate(10);
             
             $schools = School::select('id', 'name')
                 ->limit(50) // Limit schools to prevent timeout
                 ->get();
 
             // Debug data
-            Log::info('TKA Schedule Index - Schools count: ' . $schools->count());
-            Log::info('TKA Schedule Index - Schedules count: ' . $schedules->count());
+            Log::info('TkaScheduleController::index - Schools count: ' . $schools->count());
+            Log::info('TkaScheduleController::index - Schedules pagination data:', [
+                'total' => $schedules->total(),
+                'per_page' => $schedules->perPage(),
+                'current_page' => $schedules->currentPage(),
+                'data_count' => $schedules->count()
+            ]);
 
             return Inertia::render('SuperAdmin/TkaSchedules', [
                 'title' => 'Jadwal TKA',
@@ -38,21 +46,40 @@ class TkaScheduleController extends Controller
                 'schools' => $schools,
                 'auth' => [
                     'user' => auth()->guard('admin')->user()
+                ],
+                'debug' => [
+                    'total_schedules' => $totalSchedules,
+                    'pagination_total' => $schedules->total(),
+                    'current_page' => $schedules->currentPage(),
+                    'per_page' => $schedules->perPage(),
+                    'schools_count' => $schools->count()
                 ]
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Super Admin TKA Schedule index error: ' . $e->getMessage());
+            Log::error('TkaScheduleController::index - Error: ' . $e->getMessage());
+            Log::error('TkaScheduleController::index - Stack trace: ' . $e->getTraceAsString());
             
             // Return minimal data to prevent blank page
             return Inertia::render('SuperAdmin/TkaSchedules', [
                 'title' => 'Jadwal TKA',
-                'schedules' => [],
+                'schedules' => [
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 10,
+                    'total' => 0,
+                ],
                 'schools' => [],
                 'auth' => [
                     'user' => auth()->guard('admin')->user()
                 ],
-                'error' => 'Gagal memuat data: ' . $e->getMessage()
+                'error' => 'Gagal memuat data: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }

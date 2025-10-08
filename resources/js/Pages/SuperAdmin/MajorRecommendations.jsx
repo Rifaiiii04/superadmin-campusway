@@ -55,7 +55,6 @@ export default function MajorRecommendations({
         reset,
     } = useForm({
         major_name: "",
-        category: "",
         rumpun_ilmu: "",
         description: "",
         required_subjects: [],
@@ -844,46 +843,6 @@ export default function MajorRecommendations({
                                         {errors.major_name && (
                                             <p className="text-red-500 text-xs mt-1">
                                                 {errors.major_name}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Kategori
-                                        </label>
-                                        <select
-                                            value={data.category}
-                                            onChange={(e) =>
-                                                setData({
-                                                    ...data,
-                                                    category: e.target.value,
-                                                })
-                                            }
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                                        >
-                                            <option value="">
-                                                Pilih Kategori
-                                            </option>
-                                            <option value="S1">
-                                                S1 - Sarjana
-                                            </option>
-                                            <option value="D3">
-                                                D3 - Diploma
-                                            </option>
-                                            <option value="D4">
-                                                D4 - Diploma
-                                            </option>
-                                            <option value="S2">
-                                                S2 - Magister
-                                            </option>
-                                            <option value="S3">
-                                                S3 - Doktor
-                                            </option>
-                                        </select>
-                                        {errors.category && (
-                                            <p className="text-red-500 text-xs mt-1">
-                                                {errors.category}
                                             </p>
                                         )}
                                     </div>

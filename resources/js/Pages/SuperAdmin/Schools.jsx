@@ -4,12 +4,17 @@ import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { Building2, Plus, Edit, Trash2, Upload, Search } from "lucide-react";
 import ImportSchoolsModal from "./components/ImportSchoolsModal";
 
-export default function Schools({ schools }) {
+export default function Schools({ schools, debug, error }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showImportModal, setShowImportModal] = useState(false);
     const [editingSchool, setEditingSchool] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Debug logging
+    console.log("Schools component - schools:", schools);
+    console.log("Schools component - debug:", debug);
+    console.log("Schools component - error:", error);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         npsn: "",

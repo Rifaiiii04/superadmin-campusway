@@ -17,14 +17,14 @@ class MajorRecommendationController extends Controller
         try {
             // Debug: Check if there are any major recommendations in database
             $totalMajors = MajorRecommendation::count();
-            Log::info('Total major recommendations in database: ' . $totalMajors);
+            Log::info('MajorRecommendationController::index - Total major recommendations in database: ' . $totalMajors);
             
             $majors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
                 ->paginate(10);
             
             // Debug: Log pagination data
-            Log::info('Major recommendations pagination data:', [
+            Log::info('MajorRecommendationController::index - Pagination data:', [
                 'total' => $majors->total(),
                 'per_page' => $majors->perPage(),
                 'current_page' => $majors->currentPage(),
@@ -37,7 +37,7 @@ class MajorRecommendationController extends Controller
                 ->get();
             
             // Debug: Log subjects data
-            Log::info('Subjects count: ' . $subjects->count());
+            Log::info('MajorRecommendationController::index - Subjects count: ' . $subjects->count());
             
             $rumpunIlmu = RumpunIlmu::select('id', 'name')
                 ->where('is_active', true)
@@ -45,17 +45,25 @@ class MajorRecommendationController extends Controller
                 ->get();
             
             // Debug: Log rumpun ilmu data
-            Log::info('Rumpun ilmu count: ' . $rumpunIlmu->count());
+            Log::info('MajorRecommendationController::index - Rumpun ilmu count: ' . $rumpunIlmu->count());
             
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => $majors,
                 'availableSubjects' => $subjects,
                 'rumpunIlmu' => $rumpunIlmu,
+                'debug' => [
+                    'total_majors' => $totalMajors,
+                    'pagination_total' => $majors->total(),
+                    'current_page' => $majors->currentPage(),
+                    'per_page' => $majors->perPage(),
+                    'subjects_count' => $subjects->count(),
+                    'rumpun_ilmu_count' => $rumpunIlmu->count()
+                ]
             ]);
         } catch (\Exception $e) {
-            Log::error('Error fetching major recommendations: ' . $e->getMessage());
-            Log::error('Error stack trace: ' . $e->getTraceAsString());
+            Log::error('MajorRecommendationController::index - Error: ' . $e->getMessage());
+            Log::error('MajorRecommendationController::index - Stack trace: ' . $e->getTraceAsString());
             
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
@@ -68,7 +76,12 @@ class MajorRecommendationController extends Controller
                 ],
                 'availableSubjects' => [],
                 'rumpunIlmu' => [],
-                'error' => 'Gagal memuat data rekomendasi jurusan: ' . $e->getMessage()
+                'error' => 'Gagal memuat data rekomendasi jurusan: ' . $e->getMessage(),
+                'debug' => [
+                    'error_message' => $e->getMessage(),
+                    'error_file' => $e->getFile(),
+                    'error_line' => $e->getLine()
+                ]
             ]);
         }
     }
@@ -103,7 +116,7 @@ class MajorRecommendationController extends Controller
         try {
             MajorRecommendation::create([
                 'major_name' => $request->major_name,
-                'category' => $request->category,
+                'category' => 'S1', // Default category
                 'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
@@ -134,7 +147,6 @@ class MajorRecommendationController extends Controller
             
             $validator = Validator::make($request->all(), [
                 'major_name' => 'required|string|max:255',
-                'category' => 'required|string|max:255',
                 'rumpun_ilmu' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
@@ -225,7 +237,7 @@ class MajorRecommendationController extends Controller
         try {
             $majorRecommendation->update([
                 'major_name' => $request->major_name,
-                'category' => $request->category,
+                'category' => 'S1', // Default category
                 'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
@@ -256,7 +268,6 @@ class MajorRecommendationController extends Controller
             
             $validator = Validator::make($request->all(), [
                 'major_name' => 'required|string|max:255',
-                'category' => 'required|string|max:255',
                 'rumpun_ilmu' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
@@ -280,7 +291,7 @@ class MajorRecommendationController extends Controller
 
             $majorRecommendation->update([
                 'major_name' => $request->major_name,
-                'category' => $request->category,
+                'category' => 'S1', // Default category
                 'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
