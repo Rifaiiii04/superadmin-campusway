@@ -1,0 +1,29 @@
+# Upload Instructions for Production Server
+
+## Files to upload to: http://103.23.198.101:8080
+
+### 1. Upload these files to /public/build/assets/:
+- public/build/assets/app-B7z8JaNN.css
+- public/build/assets/app-BXuoaa3o.css
+- public/build/assets/app-ZrEbd4JQ.js
+
+### 2. Upload updated source files:
+- resources/js/Pages/SuperAdmin/MajorRecommendations.jsx
+- app/Http/Controllers/MajorRecommendationController.php
+
+### 3. Run these commands on production server:
+cd /path/to/your/laravel/app
+php artisan config:clear
+php artisan cache:clear
+php artisan view:clear
+
+### 4. Check web server configuration:
+Make sure your web server (Apache/Nginx) is configured to serve files from the public/build directory.
+
+### 5. Verify files exist:
+Check that these files exist on production:
+- /public/build/assets/app-BXuoaa3o.css
+- /public/build/assets/app-ZrEbd4JQ.js (or latest app-*.js)
+
+### 6. Browser cache:
+Tell users to hard refresh (Ctrl+F5) or clear browser cache.
