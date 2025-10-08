@@ -28,6 +28,16 @@ export default function MajorRecommendations({
     console.log("Available subjects:", availableSubjects);
     console.log("Rumpun ilmu:", rumpunIlmu);
     console.log("Debug info:", debug);
+
+    // Debug categories in data
+    if (majorRecommendations?.data) {
+        const categories = [
+            ...new Set(
+                majorRecommendations.data.map((major) => major.category)
+            ),
+        ];
+        console.log("Categories in data:", categories);
+    }
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -205,6 +215,13 @@ export default function MajorRecommendations({
                     major.category === "Ilmu Formal") ||
                 (rumpunIlmuFilter === "Ilmu Terapan" &&
                     major.category === "Ilmu Terapan");
+
+            // Debug logging
+            if (rumpunIlmuFilter !== "all") {
+                console.log(
+                    `Filter Debug - Major: ${major.major_name}, Category: "${major.category}", Filter: "${rumpunIlmuFilter}", Matches: ${matchesRumpunIlmu}`
+                );
+            }
 
             return matchesSearch && matchesStatus && matchesRumpunIlmu;
         }
