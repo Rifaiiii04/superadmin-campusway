@@ -126,6 +126,9 @@ Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controll
 Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
 Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
 
+// Alias route for /jurusan
+Route::get('/jurusan', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
+
 // SuperAdmin Questions (UI) - Using controller
 Route::get('/questions', [App\Http\Controllers\QuestionController::class, 'index']);
 Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
