@@ -147,6 +147,11 @@ export default function MajorRecommendations({
     // Filter majors based on search term, status, and category
     const filteredMajors = (majorRecommendations?.data || []).filter(
         (major) => {
+            // Debug: Log all majors and their categories
+            if (majorRecommendations?.data) {
+                console.log("📊 All majors data:", majorRecommendations.data.map(m => ({ name: m.major_name, category: m.category })));
+                console.log("🔍 Current filter:", rumpunIlmuFilter);
+            }
             const matchesSearch =
                 searchTerm === "" ||
                 major.major_name
@@ -230,7 +235,7 @@ export default function MajorRecommendations({
             // Debug logging
             if (rumpunIlmuFilter !== "all") {
                 console.log(
-                    `Filter Debug - Major: ${major.major_name}, Category: "${major.category}" (normalized: "${normalizedCategory}", mapped: "${mappedCategory}"), Filter: "${rumpunIlmuFilter}" (normalized: "${normalizedFilter}"), Matches: ${matchesRumpunIlmu}`
+                    `🔍 Filter Debug - Major: ${major.major_name}, Category: "${major.category}" (normalized: "${normalizedCategory}", mapped: "${mappedCategory}"), Filter: "${rumpunIlmuFilter}" (normalized: "${normalizedFilter}"), Matches: ${matchesRumpunIlmu}`
                 );
             }
 
