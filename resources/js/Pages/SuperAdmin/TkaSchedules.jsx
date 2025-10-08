@@ -141,6 +141,13 @@ export default function TkaSchedules({
                 : "/tka-schedules";
 
             const method = editingSchedule ? "PUT" : "POST";
+            
+            console.log("🔍 URL Debug:", {
+                editingSchedule: editingSchedule,
+                url: url,
+                method: method,
+                isEdit: !!editingSchedule
+            });
 
             // Format data for server
             const submitData = {
@@ -163,6 +170,12 @@ export default function TkaSchedules({
             console.log("🌐 Request URL:", url);
             console.log("🌐 Request Method:", method);
             console.log("🌐 CSRF Token in headers:", csrfToken);
+            console.log("🌐 Full headers:", {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": csrfToken,
+                "X-Requested-With": "XMLHttpRequest",
+            });
 
             const response = await fetch(url, {
                 method,
@@ -175,14 +188,25 @@ export default function TkaSchedules({
                 body: JSON.stringify(submitData),
             });
 
-            const data = await response.json();
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
             console.log("📥 Response Debug:", {
                 status: response.status,
                 statusText: response.statusText,
                 ok: response.ok,
-                headers: Object.fromEntries(response.headers.entries()),
-                data: data
+                contentType: contentType,
+                headers: Object.fromEntries(response.headers.entries())
             });
+
+            let data;
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+                console.log("📥 JSON Response:", data);
+            } else {
+                const textResponse = await response.text();
+                console.log("📥 HTML Response:", textResponse.substring(0, 500) + "...");
+                throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}. Response: ${textResponse.substring(0, 200)}...`);
+            }
 
             if (data.success) {
                 setShowCreateModal(false);
