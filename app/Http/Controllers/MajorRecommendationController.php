@@ -8,6 +8,7 @@ use App\Models\RumpunIlmu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class MajorRecommendationController extends Controller
@@ -47,11 +48,25 @@ class MajorRecommendationController extends Controller
             // Debug: Log rumpun ilmu data
             Log::info('MajorRecommendationController::index - Rumpun ilmu count: ' . $rumpunIlmu->count());
             
+            // Calculate stats directly in controller
+            $activeMajors = MajorRecommendation::where('is_active', true)->count();
+            
+            $categoryStats = MajorRecommendation::select('category', DB::raw('count(*) as count'))
+                ->groupBy('category')
+                ->get()
+                ->pluck('count', 'category')
+                ->toArray();
+            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => $majors,
                 'availableSubjects' => $subjects,
                 'rumpunIlmu' => $rumpunIlmu,
+                'stats' => [
+                    'total_majors' => $totalMajors,
+                    'active_majors' => $activeMajors,
+                    'category_stats' => $categoryStats
+                ],
                 'debug' => [
                     'total_majors' => $totalMajors,
                     'pagination_total' => $majors->total(),
@@ -374,7 +389,7 @@ class MajorRecommendationController extends Controller
             $totalMajors = MajorRecommendation::count();
             $activeMajors = MajorRecommendation::where('is_active', true)->count();
             
-            $categoryStats = MajorRecommendation::select('category', \DB::raw('count(*) as count'))
+            $categoryStats = MajorRecommendation::select('category', DB::raw('count(*) as count'))
                 ->groupBy('category')
                 ->get()
                 ->pluck('count', 'category')
