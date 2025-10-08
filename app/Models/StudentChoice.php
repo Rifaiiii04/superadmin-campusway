@@ -10,7 +10,7 @@ class StudentChoice extends Model
     use HasFactory;
 
     // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
-    protected $table = 'student_choice';
+    protected $table = 'student_choices';
 
     protected $fillable = [
         'student_id',

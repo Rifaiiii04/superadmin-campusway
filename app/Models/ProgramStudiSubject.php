@@ -10,7 +10,7 @@ class ProgramStudiSubject extends Model
     use HasFactory;
 
     // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
-    protected $table = 'program_studi_subject';
+    protected $table = 'program_studi_subjects';
 
     protected $fillable = [
         'program_studi_id',

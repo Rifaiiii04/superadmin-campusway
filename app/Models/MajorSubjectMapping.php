@@ -10,7 +10,7 @@ class MajorSubjectMapping extends Model
     use HasFactory;
 
     // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
-    protected $table = 'major_subject_mapping';
+    protected $table = 'major_subject_mappings';
 
     protected $fillable = [
         'major_id',
