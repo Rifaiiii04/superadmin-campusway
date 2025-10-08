@@ -9,6 +9,9 @@ class ProgramStudi extends Model
 {
     use HasFactory;
 
+    // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
+    protected $table = 'program_studi';
+
     protected $fillable = [
         'name',
         'description',

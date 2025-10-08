@@ -10,6 +10,9 @@ class TkaSchedule extends Model
 {
     use HasFactory;
 
+    // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
+    protected $table = 'tka_schedule';
+
     protected $fillable = [
         'title',
         'description',

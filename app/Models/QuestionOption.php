@@ -9,6 +9,9 @@ class QuestionOption extends Model
 {
     use HasFactory;
 
+    // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
+    protected $table = 'question_option';
+
     protected $fillable = [
         'question_id',
         'option_text',

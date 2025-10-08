@@ -9,6 +9,9 @@ class TkaSubjectArea extends Model
 {
     use HasFactory;
 
+    // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
+    protected $table = 'tka_subject_area';
+
     protected $fillable = [
         'code',
         'name',

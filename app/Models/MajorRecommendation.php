@@ -9,6 +9,9 @@ class MajorRecommendation extends Model
 {
     use HasFactory;
 
+    // Tambahkan property $table untuk memberitahu Laravel nama tabel yang benar
+    protected $table = 'major_recommendation';
+
     protected $fillable = [
         'major_name',
         'category',
