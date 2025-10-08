@@ -1,0 +1,1 @@
+import{j as e}from"./app-BmXzstTo.js";/* empty css            */function t(){return e.jsxs("div",{style:{padding:"20px",background:"#f0f0f0"},children:[e.jsx("h1",{children:"Test Page Works!"}),e.jsx("p",{children:"If you see this, React is working."}),e.jsxs("p",{children:["Time: ",new Date().toLocaleTimeString()]})]})}export{t as default};

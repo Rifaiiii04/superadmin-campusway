@@ -1,0 +1,1 @@
+import{j as e}from"./app-BmXzstTo.js";/* empty css            */function i(){return e.jsxs("div",{children:[e.jsx("h1",{children:"Super Simple Test"}),e.jsx("p",{children:"No dependencies, just plain React"})]})}export{i as default};
