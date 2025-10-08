@@ -31,7 +31,7 @@ export function useCreateSchool() {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
                 body: JSON.stringify(schoolData),
             });
@@ -62,7 +62,7 @@ export function useUpdateSchool() {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
                 body: JSON.stringify(schoolData),
             });
@@ -91,7 +91,7 @@ export function useDeleteSchool() {
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
             });
 

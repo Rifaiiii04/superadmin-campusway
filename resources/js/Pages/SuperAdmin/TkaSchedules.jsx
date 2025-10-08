@@ -98,10 +98,34 @@ export default function TkaSchedules({
         setFilteredSchedules(schedules?.data || []);
     }, [schedules]);
 
+    // Debug CSRF token on component mount
+    useEffect(() => {
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta?.content || '';
+        console.log('🚀 Component Mount CSRF Debug:', {
+            metaElement: csrfMeta,
+            tokenValue: csrfToken,
+            tokenLength: csrfToken.length,
+            hasToken: !!csrfToken,
+            allMetaTags: document.querySelectorAll('meta'),
+            csrfMetaTags: document.querySelectorAll('meta[name="csrf-token"]')
+        });
+    }, []);
+
     // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        // Debug CSRF token
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta?.content || '';
+        console.log('🔐 CSRF Debug:', {
+            metaElement: csrfMeta,
+            tokenValue: csrfToken,
+            tokenLength: csrfToken.length,
+            hasToken: !!csrfToken
+        });
 
         try {
             // Validate required fields
@@ -136,22 +160,29 @@ export default function TkaSchedules({
             };
 
             console.log("Submitting data:", submitData);
+            console.log("🌐 Request URL:", url);
+            console.log("🌐 Request Method:", method);
+            console.log("🌐 CSRF Token in headers:", csrfToken);
 
             const response = await fetch(url, {
                 method,
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    ).content,
+                    "X-CSRF-TOKEN": csrfToken,
                     "X-Requested-With": "XMLHttpRequest",
                 },
                 body: JSON.stringify(submitData),
             });
 
             const data = await response.json();
-            console.log("Response data:", data);
+            console.log("📥 Response Debug:", {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok,
+                headers: Object.fromEntries(response.headers.entries()),
+                data: data
+            });
 
             if (data.success) {
                 setShowCreateModal(false);
@@ -169,7 +200,12 @@ export default function TkaSchedules({
                 }
             }
         } catch (error) {
-            console.error("Error saving schedule:", error);
+            console.error("❌ Error saving schedule:", {
+                error: error,
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
             alert("Terjadi kesalahan saat menyimpan jadwal: " + error.message);
         } finally {
             setLoading(false);
@@ -203,15 +239,22 @@ export default function TkaSchedules({
 
     // Handle delete
     const handleDelete = async (scheduleId) => {
+        // Debug CSRF token for delete
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta?.content || '';
+        console.log('🗑️ Delete CSRF Debug:', {
+            metaElement: csrfMeta,
+            tokenValue: csrfToken,
+            hasToken: !!csrfToken
+        });
+
         try {
             const response = await fetch(`/tka-schedules/${scheduleId}`, {
                 method: "DELETE",
                 headers: {
                     Accept: "application/json",
                     "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    ).content,
+                    "X-CSRF-TOKEN": csrfToken,
                     "X-Requested-With": "XMLHttpRequest",
                 },
             });
@@ -237,6 +280,15 @@ export default function TkaSchedules({
 
     // Handle cancel
     const handleCancel = async (scheduleId) => {
+        // Debug CSRF token for cancel
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        const csrfToken = csrfMeta?.content || '';
+        console.log('❌ Cancel CSRF Debug:', {
+            metaElement: csrfMeta,
+            tokenValue: csrfToken,
+            hasToken: !!csrfToken
+        });
+
         try {
             const response = await fetch(
                 `/tka-schedules/${scheduleId}/cancel`,
@@ -245,9 +297,7 @@ export default function TkaSchedules({
                     headers: {
                         Accept: "application/json",
                         "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector(
-                            'meta[name="csrf-token"]'
-                        ).content,
+                        "X-CSRF-TOKEN": csrfToken,
                         "X-Requested-With": "XMLHttpRequest",
                     },
                 }

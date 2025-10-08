@@ -34,7 +34,7 @@ export function useCreateQuestion() {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
                 body: JSON.stringify(questionData),
             });
@@ -64,7 +64,7 @@ export function useUpdateQuestion() {
                     "Content-Type": "application/json",
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
                 body: JSON.stringify(questionData),
             });
@@ -93,7 +93,7 @@ export function useDeleteQuestion() {
                 headers: {
                     "X-CSRF-TOKEN": document.querySelector(
                         'meta[name="csrf-token"]'
-                    ).content,
+                    )?.content || '',
                 },
             });
 
