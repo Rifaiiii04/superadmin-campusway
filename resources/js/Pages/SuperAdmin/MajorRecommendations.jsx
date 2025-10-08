@@ -21,24 +21,9 @@ export default function MajorRecommendations({
     debug = null,
 }) {
     // Debug data
-    console.log("=== MajorRecommendations Debug ===");
-    console.log("Props received:", {
-        majorRecommendations,
-        availableSubjects,
-        rumpunIlmu,
-    });
-    console.log("MajorRecommendations type:", typeof majorRecommendations);
+    console.log("MajorRecommendations data:", majorRecommendations);
     console.log("MajorRecommendations.data:", majorRecommendations?.data);
-    console.log(
-        "MajorRecommendations.data length:",
-        majorRecommendations?.data?.length
-    );
     console.log("MajorRecommendations.total:", majorRecommendations?.total);
-    console.log(
-        "MajorRecommendations.current_page:",
-        majorRecommendations?.current_page
-    );
-    console.log("=== End Debug ===");
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);

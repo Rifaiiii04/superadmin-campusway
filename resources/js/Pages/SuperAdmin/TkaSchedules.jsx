@@ -23,8 +23,10 @@ export default function TkaSchedules({
     schools = [],
     error = null,
 }) {
-    const [schedulesData, setSchedulesData] = useState(schedules);
-    const [filteredSchedules, setFilteredSchedules] = useState(schedules);
+    const [schedulesData, setSchedulesData] = useState(schedules?.data || []);
+    const [filteredSchedules, setFilteredSchedules] = useState(
+        schedules?.data || []
+    );
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -53,7 +55,7 @@ export default function TkaSchedules({
 
     // Filter schedules
     useEffect(() => {
-        let filtered = [...schedulesData];
+        let filtered = [...(schedulesData || [])];
 
         if (searchTerm) {
             filtered = filtered.filter(
@@ -351,7 +353,9 @@ export default function TkaSchedules({
                                             </dt>
                                             <dd className="text-lg font-medium text-gray-900">
                                                 {
-                                                    schedulesData.filter(
+                                                    (
+                                                        schedulesData || []
+                                                    ).filter(
                                                         (s) =>
                                                             s.status ===
                                                             "scheduled"
@@ -377,7 +381,9 @@ export default function TkaSchedules({
                                             </dt>
                                             <dd className="text-lg font-medium text-gray-900">
                                                 {
-                                                    schedulesData.filter(
+                                                    (
+                                                        schedulesData || []
+                                                    ).filter(
                                                         (s) =>
                                                             s.status ===
                                                             "ongoing"
@@ -403,7 +409,9 @@ export default function TkaSchedules({
                                             </dt>
                                             <dd className="text-lg font-medium text-gray-900">
                                                 {
-                                                    schedulesData.filter(
+                                                    (
+                                                        schedulesData || []
+                                                    ).filter(
                                                         (s) =>
                                                             s.status ===
                                                             "completed"

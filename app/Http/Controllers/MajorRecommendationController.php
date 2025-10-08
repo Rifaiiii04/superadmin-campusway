@@ -15,50 +15,10 @@ class MajorRecommendationController extends Controller
     public function index()
     {
         try {
-            // Test database connection first
-            $majorsCount = MajorRecommendation::count();
-            \Log::info('MajorRecommendations count from database: ' . $majorsCount);
-            
-            if ($majorsCount == 0) {
-                \Log::warning('No major recommendations found in database');
-                return Inertia::render('SuperAdmin/MajorRecommendations', [
-                    'title' => 'Rekomendasi Jurusan',
-                    'majorRecommendations' => [
-                        'data' => [],
-                        'current_page' => 1,
-                        'last_page' => 1,
-                        'per_page' => 10,
-                        'total' => 0,
-                    ],
-                    'availableSubjects' => [],
-                    'rumpunIlmu' => [],
-                    'error' => 'Tidak ada data rekomendasi jurusan di database'
-                ]);
-            }
-            
-            // Get all major recommendations
-            $allMajors = MajorRecommendation::orderBy('category')
+            $majors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
-                ->get();
+                ->paginate(10);
             
-            // Create simple pagination
-            $perPage = 10;
-            $currentPage = request()->get('page', 1);
-            $offset = ($currentPage - 1) * $perPage;
-            $items = $allMajors->slice($offset, $perPage)->values();
-            
-            $majors = new \Illuminate\Pagination\LengthAwarePaginator(
-                $items,
-                $allMajors->count(),
-                $perPage,
-                $currentPage,
-                [
-                    'path' => request()->url(),
-                    'pageName' => 'page',
-                ]
-            );
-            
-            // Get subjects and rumpun ilmu
             $subjects = Subject::select('id', 'name', 'code', 'subject_type')
                 ->where('is_active', true)
                 ->orderBy('name')
@@ -69,17 +29,6 @@ class MajorRecommendationController extends Controller
                 ->orderBy('name')
                 ->get();
             
-            // Log for debugging
-            \Log::info('MajorRecommendations Controller Debug:', [
-                'all_majors_count' => $allMajors->count(),
-                'majors_total' => $majors->total(),
-                'majors_count' => $majors->count(),
-                'current_page' => $majors->currentPage(),
-                'first_item' => $majors->first() ? $majors->first()->major_name : 'No items',
-                'subjects_count' => $subjects->count(),
-                'rumpun_ilmu_count' => $rumpunIlmu->count()
-            ]);
-            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => $majors,
@@ -88,8 +37,6 @@ class MajorRecommendationController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching major recommendations: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => [
@@ -101,7 +48,7 @@ class MajorRecommendationController extends Controller
                 ],
                 'availableSubjects' => [],
                 'rumpunIlmu' => [],
-                'error' => 'Gagal memuat data rekomendasi jurusan: ' . $e->getMessage()
+                'error' => 'Gagal memuat data rekomendasi jurusan'
             ]);
         }
     }
