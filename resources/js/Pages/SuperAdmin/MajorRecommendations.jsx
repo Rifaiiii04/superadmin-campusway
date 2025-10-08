@@ -188,16 +188,16 @@ export default function MajorRecommendations({
 
             const matchesRumpunIlmu =
                 rumpunIlmuFilter === "all" ||
-                (rumpunIlmuFilter === "HUMANIORA" &&
-                    major.rumpun_ilmu === "HUMANIORA") ||
-                (rumpunIlmuFilter === "ILMU SOSIAL" &&
-                    major.rumpun_ilmu === "ILMU SOSIAL") ||
-                (rumpunIlmuFilter === "ILMU ALAM" &&
-                    major.rumpun_ilmu === "ILMU ALAM") ||
-                (rumpunIlmuFilter === "ILMU FORMAL" &&
-                    major.rumpun_ilmu === "ILMU FORMAL") ||
-                (rumpunIlmuFilter === "ILMU TERAPAN" &&
-                    major.rumpun_ilmu === "ILMU TERAPAN");
+                (rumpunIlmuFilter === "Humaniora" &&
+                    major.rumpun_ilmu === "Humaniora") ||
+                (rumpunIlmuFilter === "Ilmu Sosial" &&
+                    major.rumpun_ilmu === "Ilmu Sosial") ||
+                (rumpunIlmuFilter === "Ilmu Alam" &&
+                    major.rumpun_ilmu === "Ilmu Alam") ||
+                (rumpunIlmuFilter === "Ilmu Formal" &&
+                    major.rumpun_ilmu === "Ilmu Formal") ||
+                (rumpunIlmuFilter === "Ilmu Terapan" &&
+                    major.rumpun_ilmu === "Ilmu Terapan");
 
             return matchesSearch && matchesStatus && matchesRumpunIlmu;
         }

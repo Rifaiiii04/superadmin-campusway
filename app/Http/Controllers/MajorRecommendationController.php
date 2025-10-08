@@ -19,7 +19,7 @@ class MajorRecommendationController extends Controller
             $totalMajors = MajorRecommendation::count();
             Log::info('MajorRecommendationController::index - Total major recommendations in database: ' . $totalMajors);
             
-            $majors = MajorRecommendation::orderBy('category')
+            $majors = MajorRecommendation::orderBy('rumpun_ilmu')
                 ->orderBy('major_name')
                 ->paginate(10);
             
