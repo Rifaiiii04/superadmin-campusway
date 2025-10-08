@@ -297,3 +297,4 @@ Route::get('/profile', function () {
 // Schools management page - REMOVED (duplicate route)
 
 // Questions management page - REMOVED (duplicate route)
+Route::get("/major-recommendations/stats", [App\Http\Controllers\MajorRecommendationController::class, "stats"]);
