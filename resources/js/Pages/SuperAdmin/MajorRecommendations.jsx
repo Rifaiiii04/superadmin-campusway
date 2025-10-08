@@ -18,7 +18,24 @@ export default function MajorRecommendations({
     majorRecommendations = [],
     availableSubjects = [],
     rumpunIlmu = [],
+    debug = null,
 }) {
+    // Debug data
+    console.log("MajorRecommendations props:", {
+        majorRecommendations,
+        availableSubjects,
+        rumpunIlmu,
+        debug,
+    });
+
+    // Debug data structure
+    console.log("MajorRecommendations data structure:", {
+        "majorRecommendations type": typeof majorRecommendations,
+        "majorRecommendations.data type": typeof majorRecommendations?.data,
+        "majorRecommendations.data length": majorRecommendations?.data?.length,
+        "majorRecommendations.total": majorRecommendations?.total,
+        "majorRecommendations.current_page": majorRecommendations?.current_page,
+    });
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingMajor, setEditingMajor] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);

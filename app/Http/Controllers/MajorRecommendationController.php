@@ -15,9 +15,27 @@ class MajorRecommendationController extends Controller
     public function index()
     {
         try {
-            $majors = MajorRecommendation::orderBy('category')
+            // Get all major recommendations without pagination first
+            $allMajors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
-                ->paginate(10);
+                ->get();
+            
+            // Create pagination manually
+            $perPage = 10;
+            $currentPage = request()->get('page', 1);
+            $offset = ($currentPage - 1) * $perPage;
+            $items = $allMajors->slice($offset, $perPage)->values();
+            
+            $majors = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $allMajors->count(),
+                $perPage,
+                $currentPage,
+                [
+                    'path' => request()->url(),
+                    'pageName' => 'page',
+                ]
+            );
             
             $subjects = Subject::select('id', 'name', 'code', 'subject_type')
                 ->where('is_active', true)
@@ -29,11 +47,24 @@ class MajorRecommendationController extends Controller
                 ->orderBy('name')
                 ->get();
             
+            \Log::info('MajorRecommendations data:', [
+                'total' => $majors->total(),
+                'count' => $majors->count(),
+                'current_page' => $majors->currentPage(),
+                'first_item' => $majors->first() ? $majors->first()->major_name : 'No items'
+            ]);
+            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => $majors,
                 'availableSubjects' => $subjects,
                 'rumpunIlmu' => $rumpunIlmu,
+                'debug' => [
+                    'total' => $majors->total(),
+                    'count' => $majors->count(),
+                    'current_page' => $majors->currentPage(),
+                    'first_item' => $majors->first() ? $majors->first()->major_name : 'No items'
+                ]
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching major recommendations: ' . $e->getMessage());
