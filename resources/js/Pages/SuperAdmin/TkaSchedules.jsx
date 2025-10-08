@@ -27,6 +27,8 @@ export default function TkaSchedules({
     console.log("TkaSchedules data:", schedules);
     console.log("TkaSchedules.data:", schedules?.data);
     console.log("TkaSchedules.total:", schedules?.total);
+    console.log("🏫 Schools data:", schools);
+    console.log("🏫 Schools count:", schools?.length || 0);
 
     const [schedulesData, setSchedulesData] = useState(schedules?.data || []);
     const [filteredSchedules, setFilteredSchedules] = useState(

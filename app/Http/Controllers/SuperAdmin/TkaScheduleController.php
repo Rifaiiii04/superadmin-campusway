@@ -95,6 +95,11 @@ class TkaScheduleController extends Controller
         try {
             Log::info('TKA Schedule Store Request Data:', $request->all());
             
+            // Check if request expects JSON response
+            if ($request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json') {
+                return $this->storeJson($request);
+            }
+            
             $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -154,6 +159,77 @@ class TkaScheduleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal membuat jadwal TKA'
+            ], 500);
+        }
+    }
+
+    /**
+     * Store a newly created TKA schedule (JSON response)
+     */
+    private function storeJson(Request $request)
+    {
+        try {
+            Log::info('TKA Schedule Store JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'type' => 'required|in:regular,makeup,special',
+                'instructions' => 'nullable|string',
+                'target_schools' => 'nullable|array',
+                'target_schools.*' => 'integer|exists:schools,id',
+                // PUSMENDIK Essential Fields
+                'gelombang' => 'nullable|string|in:1,2',
+                'hari_pelaksanaan' => 'nullable|string|in:Hari Pertama,Hari Kedua',
+                'exam_venue' => 'nullable|string|max:255',
+                'exam_room' => 'nullable|string|max:100',
+                'contact_person' => 'nullable|string|max:255',
+                'contact_phone' => 'nullable|string|max:20',
+                'requirements' => 'nullable|string',
+                'materials_needed' => 'nullable|string'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $schedule = TkaSchedule::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'type' => $request->type,
+                'instructions' => $request->instructions,
+                'target_schools' => $request->target_schools,
+                'created_by' => 'Super Admin',
+                // PUSMENDIK Essential Fields
+                'gelombang' => $request->gelombang,
+                'hari_pelaksanaan' => $request->hari_pelaksanaan,
+                'exam_venue' => $request->exam_venue,
+                'exam_room' => $request->exam_room,
+                'contact_person' => $request->contact_person,
+                'contact_phone' => $request->contact_phone,
+                'requirements' => $request->requirements,
+                'materials_needed' => $request->materials_needed
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Jadwal TKA berhasil dibuat',
+                'data' => $schedule
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Super Admin TKA Schedule store JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat jadwal TKA: ' . $e->getMessage()
             ], 500);
         }
     }

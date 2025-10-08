@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('admins', function (Blueprint ) {
-            ->string('name')->nullable()->after('id');
+        Schema::table('admins', function (Blueprint $table) {
+            $table->string('name')->nullable()->after('id');
         });
     }
 
     public function down()
     {
-        Schema::table('admins', function (Blueprint ) {
-            ->dropColumn('name');
+        Schema::table('admins', function (Blueprint $table) {
+            $table->dropColumn('name');
         });
     }
 };

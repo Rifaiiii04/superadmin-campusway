@@ -74,15 +74,15 @@ Route::post('/login', function (Request $request) {
 Route::get('/dashboard', function () {
     try {
         // Debug: Log dashboard access attempt
-        \Log::info('Dashboard access attempt, admin check: ' . (Auth::guard('admin')->check() ? 'true' : 'false'));
+        Log::info('Dashboard access attempt, admin check: ' . (Auth::guard('admin')->check() ? 'true' : 'false'));
         
         // Temporary bypass auth for testing navigation
         // if (!Auth::guard('admin')->check()) {
-        //     \Log::info('Admin not authenticated, redirecting to login');
+        //     Log::info('Admin not authenticated, redirecting to login');
         //     return redirect('/login');
         // }
         
-        \Log::info('Rendering SuperAdmin Dashboard');
+        Log::info('Rendering SuperAdmin Dashboard');
         return Inertia::render('SuperAdmin/Dashboard', [
             'title' => 'SuperAdmin Dashboard',
             'user' => Auth::guard('admin')->user() ?: (object)['username' => 'Test Admin', 'name' => 'Test Admin'],
@@ -96,7 +96,7 @@ Route::get('/dashboard', function () {
             'studentsPerMajor' => [],
         ]);
     } catch (Exception $e) {
-        \Log::error('Dashboard error: ' . $e->getMessage());
+        Log::error('Dashboard error: ' . $e->getMessage());
         return response()->json(['error' => $e->getMessage()], 500);
     }
 });
@@ -144,11 +144,15 @@ Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'ex
 
 // SuperAdmin TKA Schedules (UI) - Using controller
 Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
-Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
-Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
-Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
-Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
-Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
+
+// SuperAdmin TKA Schedules (API) - JSON responses
+Route::middleware(['web'])->group(function () {
+    Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+    Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
+    Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+    Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
+    Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
+});
 
 // SuperAdmin Logout
 Route::post('/logout', function (Request $request) {
