@@ -21,7 +21,7 @@ class QuestionController extends Controller
                 'questions' => $questions,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching questions: ' . $e->getMessage());
+            Log::error('Error fetching questions: ' . $e->getMessage());
             return Inertia::render('SuperAdmin/Questions', [
                 'title' => 'Bank Soal',
                 'questions' => [
@@ -38,6 +38,11 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->storeJson($request);
+        }
+
         $validator = Validator::make($request->all(), [
             'subject' => 'required|string|max:255',
             'type' => 'required|string|max:255',
@@ -70,8 +75,66 @@ class QuestionController extends Controller
 
             return redirect()->back()->with('success', 'Soal berhasil ditambahkan');
         } catch (\Exception $e) {
-            \Log::error('Error creating question: ' . $e->getMessage());
+            Log::error('Error creating question: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menambahkan soal'])->withInput();
+        }
+    }
+
+    /**
+     * Store a newly created question (JSON response)
+     */
+    private function storeJson(Request $request)
+    {
+        try {
+            Log::info('Question Store JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'subject' => 'required|string|max:255',
+                'type' => 'required|string|max:255',
+                'content' => 'required|string',
+                'media_url' => 'nullable|string|max:255',
+                'options' => 'required|array|min:2',
+                'options.*.option_text' => 'required|string',
+                'options.*.is_correct' => 'boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $question = Question::create([
+                'subject' => $request->subject,
+                'type' => $request->type,
+                'content' => $request->content,
+                'media_url' => $request->media_url,
+            ]);
+
+            foreach ($request->options as $option) {
+                QuestionOption::create([
+                    'question_id' => $question->id,
+                    'option_text' => $option['option_text'],
+                    'is_correct' => $option['is_correct'] ?? false,
+                ]);
+            }
+
+            $question->load('options');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Soal berhasil ditambahkan',
+                'data' => $question
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Question store JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan soal: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -123,7 +186,7 @@ class QuestionController extends Controller
 
             return redirect()->back()->with('success', 'Soal berhasil diperbarui');
         } catch (\Exception $e) {
-            \Log::error('Error updating question: ' . $e->getMessage());
+            Log::error('Error updating question: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal memperbarui soal'])->withInput();
         }
     }
@@ -135,7 +198,7 @@ class QuestionController extends Controller
             $question->delete();
             return redirect()->back()->with('success', 'Soal berhasil dihapus');
         } catch (\Exception $e) {
-            \Log::error('Error deleting question: ' . $e->getMessage());
+            Log::error('Error deleting question: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus soal']);
         }
     }

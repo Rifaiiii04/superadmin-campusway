@@ -23,7 +23,7 @@ class StudentController extends Controller
                 'schools' => $schools,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching students: ' . $e->getMessage());
+            Log::error('Error fetching students: ' . $e->getMessage());
             return Inertia::render('SuperAdmin/Students', [
                 'title' => 'Manajemen Siswa',
                 'students' => [
@@ -41,6 +41,11 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->storeJson($request);
+        }
+
         $validator = Validator::make($request->all(), [
             'nisn' => 'required|string|max:10|unique:students,nisn',
             'name' => 'required|string|max:255',
@@ -72,8 +77,63 @@ class StudentController extends Controller
 
             return redirect()->back()->with('success', 'Siswa berhasil ditambahkan');
         } catch (\Exception $e) {
-            \Log::error('Error creating student: ' . $e->getMessage());
+            Log::error('Error creating student: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menambahkan siswa'])->withInput();
+        }
+    }
+
+    /**
+     * Store a newly created student (JSON response)
+     */
+    private function storeJson(Request $request)
+    {
+        try {
+            Log::info('Student Store JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'nisn' => 'required|string|max:10|unique:students,nisn',
+                'name' => 'required|string|max:255',
+                'school_id' => 'required|exists:schools,id',
+                'kelas' => 'required|string|max:255',
+                'email' => 'nullable|email|max:255',
+                'phone' => 'nullable|string|max:255',
+                'parent_phone' => 'nullable|string|max:20',
+                'password' => 'nullable|string|min:6',
+                'status' => 'required|string|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $student = Student::create([
+                'nisn' => $request->nisn,
+                'name' => $request->name,
+                'school_id' => $request->school_id,
+                'kelas' => $request->kelas,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'parent_phone' => $request->parent_phone,
+                'password' => $request->password ? bcrypt($request->password) : null,
+                'status' => $request->status,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil ditambahkan',
+                'data' => $student
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Student store JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan siswa: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -125,7 +185,7 @@ class StudentController extends Controller
 
             return redirect()->back()->with('success', 'Siswa berhasil diperbarui');
         } catch (\Exception $e) {
-            \Log::error('Error updating student: ' . $e->getMessage());
+            Log::error('Error updating student: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal memperbarui siswa'])->withInput();
         }
     }
@@ -136,7 +196,7 @@ class StudentController extends Controller
             $student->delete();
             return redirect()->back()->with('success', 'Siswa berhasil dihapus');
         } catch (\Exception $e) {
-            \Log::error('Error deleting student: ' . $e->getMessage());
+            Log::error('Error deleting student: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus siswa']);
         }
     }
@@ -190,7 +250,7 @@ class StudentController extends Controller
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error exporting students: ' . $e->getMessage());
+            Log::error('Error exporting students: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal mengexport data siswa']);
         }
     }

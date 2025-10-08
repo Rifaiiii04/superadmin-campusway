@@ -21,7 +21,7 @@ class ResultController extends Controller
                 'results' => $results,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching results: ' . $e->getMessage());
+            Log::error('Error fetching results: ' . $e->getMessage());
             return Inertia::render('SuperAdmin/Results', [
                 'title' => 'Hasil Tes',
                 'results' => [
@@ -52,7 +52,7 @@ class ResultController extends Controller
             $result->delete();
             return redirect()->back()->with('success', 'Hasil tes berhasil dihapus');
         } catch (\Exception $e) {
-            \Log::error('Error deleting result: ' . $e->getMessage());
+            Log::error('Error deleting result: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus hasil tes']);
         }
     }
@@ -100,7 +100,7 @@ class ResultController extends Controller
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error exporting results: ' . $e->getMessage());
+            Log::error('Error exporting results: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal mengexport data hasil tes']);
         }
     }

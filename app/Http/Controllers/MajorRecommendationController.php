@@ -75,6 +75,11 @@ class MajorRecommendationController extends Controller
 
     public function store(Request $request)
     {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->storeJson($request);
+        }
+
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
@@ -119,6 +124,69 @@ class MajorRecommendationController extends Controller
         }
     }
 
+    /**
+     * Store a newly created major recommendation (JSON response)
+     */
+    private function storeJson(Request $request)
+    {
+        try {
+            Log::info('Major Recommendation Store JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'major_name' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
+                'rumpun_ilmu' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'required_subjects' => 'nullable|array',
+                'preferred_subjects' => 'nullable|array',
+                'kurikulum_merdeka_subjects' => 'nullable|array',
+                'kurikulum_2013_ipa_subjects' => 'nullable|array',
+                'kurikulum_2013_ips_subjects' => 'nullable|array',
+                'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+                'optional_subjects' => 'nullable|array',
+                'career_prospects' => 'nullable|string',
+                'is_active' => 'boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $major = MajorRecommendation::create([
+                'major_name' => $request->major_name,
+                'category' => $request->category,
+                'rumpun_ilmu' => $request->rumpun_ilmu,
+                'description' => $request->description,
+                'required_subjects' => $request->required_subjects ?? [],
+                'preferred_subjects' => $request->preferred_subjects ?? [],
+                'kurikulum_merdeka_subjects' => $request->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $request->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $request->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $request->kurikulum_2013_bahasa_subjects ?? [],
+                'optional_subjects' => $request->optional_subjects ?? [],
+                'career_prospects' => $request->career_prospects,
+                'is_active' => $request->is_active ?? true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rekomendasi jurusan berhasil ditambahkan',
+                'data' => $major
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Major Recommendation store JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan rekomendasi jurusan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function show(MajorRecommendation $majorRecommendation)
     {
         return Inertia::render('SuperAdmin/MajorRecommendationDetail', [
@@ -129,6 +197,11 @@ class MajorRecommendationController extends Controller
 
     public function update(Request $request, MajorRecommendation $majorRecommendation)
     {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->updateJson($request, $majorRecommendation);
+        }
+
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
@@ -173,14 +246,106 @@ class MajorRecommendationController extends Controller
         }
     }
 
-    public function destroy(MajorRecommendation $majorRecommendation)
+    /**
+     * Update the specified major recommendation (JSON response)
+     */
+    private function updateJson(Request $request, MajorRecommendation $majorRecommendation)
     {
+        try {
+            Log::info('Major Recommendation Update JSON Request Data:', $request->all());
+            
+            $validator = Validator::make($request->all(), [
+                'major_name' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
+                'rumpun_ilmu' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'required_subjects' => 'nullable|array',
+                'preferred_subjects' => 'nullable|array',
+                'kurikulum_merdeka_subjects' => 'nullable|array',
+                'kurikulum_2013_ipa_subjects' => 'nullable|array',
+                'kurikulum_2013_ips_subjects' => 'nullable|array',
+                'kurikulum_2013_bahasa_subjects' => 'nullable|array',
+                'optional_subjects' => 'nullable|array',
+                'career_prospects' => 'nullable|string',
+                'is_active' => 'boolean',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $majorRecommendation->update([
+                'major_name' => $request->major_name,
+                'category' => $request->category,
+                'rumpun_ilmu' => $request->rumpun_ilmu,
+                'description' => $request->description,
+                'required_subjects' => $request->required_subjects ?? [],
+                'preferred_subjects' => $request->preferred_subjects ?? [],
+                'kurikulum_merdeka_subjects' => $request->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $request->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $request->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $request->kurikulum_2013_bahasa_subjects ?? [],
+                'optional_subjects' => $request->optional_subjects ?? [],
+                'career_prospects' => $request->career_prospects,
+                'is_active' => $request->is_active ?? true,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rekomendasi jurusan berhasil diperbarui',
+                'data' => $majorRecommendation
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Major Recommendation update JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui rekomendasi jurusan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy(Request $request, MajorRecommendation $majorRecommendation)
+    {
+        // Always return JSON response for AJAX requests
+        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return $this->destroyJson($majorRecommendation);
+        }
+
         try {
             $majorRecommendation->delete();
             return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil dihapus');
         } catch (\Exception $e) {
             Log::error('Error deleting major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menghapus rekomendasi jurusan']);
+        }
+    }
+
+    /**
+     * Remove the specified major recommendation (JSON response)
+     */
+    private function destroyJson(MajorRecommendation $majorRecommendation)
+    {
+        try {
+            Log::info('Major Recommendation Destroy JSON Request for ID:', $majorRecommendation->id);
+            
+            $majorRecommendation->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rekomendasi jurusan berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Major Recommendation destroy JSON error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus rekomendasi jurusan: ' . $e->getMessage()
+            ], 500);
         }
     }
 
