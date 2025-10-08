@@ -23,6 +23,11 @@ export default function TkaSchedules({
     schools = [],
     error = null,
 }) {
+    // Debug data
+    console.log("TkaSchedules data:", schedules);
+    console.log("TkaSchedules.data:", schedules?.data);
+    console.log("TkaSchedules.total:", schedules?.total);
+
     const [schedulesData, setSchedulesData] = useState(schedules?.data || []);
     const [filteredSchedules, setFilteredSchedules] = useState(
         schedules?.data || []
@@ -83,6 +88,12 @@ export default function TkaSchedules({
 
         setFilteredSchedules(filtered);
     }, [schedulesData, searchTerm, statusFilter, typeFilter]);
+
+    // Update schedulesData when schedules prop changes
+    useEffect(() => {
+        setSchedulesData(schedules?.data || []);
+        setFilteredSchedules(schedules?.data || []);
+    }, [schedules]);
 
     // Handle form submission
     const handleSubmit = async (e) => {

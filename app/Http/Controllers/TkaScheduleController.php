@@ -13,7 +13,7 @@ class TkaScheduleController extends Controller
     public function index()
     {
         try {
-            $schedules = TkaSchedule::paginate(10);
+            $schedules = TkaSchedule::orderBy('start_date', 'desc')->paginate(10);
             
             return Inertia::render('SuperAdmin/TkaSchedules', [
                 'title' => 'Jadwal TKA',
