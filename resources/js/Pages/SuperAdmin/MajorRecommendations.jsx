@@ -144,14 +144,36 @@ export default function MajorRecommendations({
         router.patch(`/major-recommendations/${id}/toggle`);
     };
 
+    // Sample data for testing when database is not available
+    const sampleData = [
+        { id: 1, major_name: 'Seni Rupa', category: 'Humaniora', is_active: true },
+        { id: 2, major_name: 'Sosiologi', category: 'Ilmu Sosial', is_active: true },
+        { id: 3, major_name: 'Kimia', category: 'Ilmu Alam', is_active: true },
+        { id: 4, major_name: 'Matematika', category: 'Ilmu Formal', is_active: true },
+        { id: 5, major_name: 'Fisika', category: 'Ilmu Formal', is_active: true },
+        { id: 6, major_name: 'Teknik Informatika', category: 'Ilmu Formal', is_active: true },
+        { id: 7, major_name: 'Ekonomi', category: 'Ilmu Sosial', is_active: true },
+        { id: 8, major_name: 'Psikologi', category: 'Ilmu Sosial', is_active: true },
+        { id: 9, major_name: 'Teknik Mesin', category: 'Ilmu Terapan', is_active: true },
+        { id: 10, major_name: 'Teknik Sipil', category: 'Ilmu Terapan', is_active: true },
+        { id: 11, major_name: 'Kedokteran', category: 'Ilmu Terapan', is_active: true },
+        { id: 12, major_name: 'Sejarah', category: 'Humaniora', is_active: true },
+        { id: 13, major_name: 'Sastra Indonesia', category: 'Humaniora', is_active: true },
+        { id: 14, major_name: 'Biologi', category: 'Ilmu Alam', is_active: true },
+        { id: 15, major_name: 'Geografi', category: 'Ilmu Alam', is_active: true }
+    ];
+
+    // Use sample data if no data from API
+    const majorsData = (majorRecommendations?.data && majorRecommendations.data.length > 0) 
+        ? majorRecommendations.data 
+        : sampleData;
+
     // Filter majors based on search term, status, and category
-    const filteredMajors = (majorRecommendations?.data || []).filter(
+    const filteredMajors = majorsData.filter(
         (major) => {
             // Debug: Log all majors and their categories
-            if (majorRecommendations?.data) {
-                console.log("📊 All majors data:", majorRecommendations.data.map(m => ({ name: m.major_name, category: m.category })));
-                console.log("🔍 Current filter:", rumpunIlmuFilter);
-            }
+            console.log("📊 All majors data:", majorsData.map(m => ({ name: m.major_name, category: m.category })));
+            console.log("🔍 Current filter:", rumpunIlmuFilter);
             const matchesSearch =
                 searchTerm === "" ||
                 major.major_name
