@@ -57,6 +57,22 @@ class MajorRecommendationController extends Controller
                 ->pluck('count', 'category')
                 ->toArray();
             
+            // Map old categories to new categories for stats display
+            $mappedCategoryStats = [];
+            foreach ($categoryStats as $category => $count) {
+                $mappedCategory = match(strtolower($category)) {
+                    'soshum' => 'Ilmu Sosial',
+                    'saintek' => 'Ilmu Terapan',
+                    default => $category
+                };
+                
+                if (isset($mappedCategoryStats[$mappedCategory])) {
+                    $mappedCategoryStats[$mappedCategory] += $count;
+                } else {
+                    $mappedCategoryStats[$mappedCategory] = $count;
+                }
+            }
+            
             return Inertia::render('SuperAdmin/MajorRecommendations', [
                 'title' => 'Rekomendasi Jurusan',
                 'majorRecommendations' => $majors,
@@ -65,7 +81,7 @@ class MajorRecommendationController extends Controller
                 'stats' => [
                     'total_majors' => $totalMajors,
                     'active_majors' => $activeMajors,
-                    'category_stats' => $categoryStats
+                    'category_stats' => $mappedCategoryStats
                 ],
                 'debug' => [
                     'total_majors' => $totalMajors,

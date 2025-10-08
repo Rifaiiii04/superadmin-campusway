@@ -203,23 +203,34 @@ export default function MajorRecommendations({
                 (statusFilter === "active" && major.is_active) ||
                 (statusFilter === "inactive" && !major.is_active);
 
+            // Normalize category for comparison (trim and case-insensitive)
+            const normalizedCategory = (major.category || "").trim().toLowerCase();
+            const normalizedFilter = rumpunIlmuFilter.trim().toLowerCase();
+            
+            // Map old categories to new categories for backward compatibility
+            const categoryMapping = {
+                'soshum': 'ilmu sosial',
+                'saintek': 'ilmu terapan',
+                'ilmu kesehatan': 'ilmu terapan',
+                'ilmu lingkungan': 'ilmu terapan',
+                'ilmu teknologi': 'ilmu terapan',
+                'humaniora': 'humaniora',
+                'ilmu sosial': 'ilmu sosial',
+                'ilmu alam': 'ilmu alam',
+                'ilmu formal': 'ilmu formal',
+                'ilmu terapan': 'ilmu terapan'
+            };
+            
+            const mappedCategory = categoryMapping[normalizedCategory] || normalizedCategory;
+            
             const matchesRumpunIlmu =
                 rumpunIlmuFilter === "all" ||
-                (rumpunIlmuFilter === "Humaniora" &&
-                    major.category === "Humaniora") ||
-                (rumpunIlmuFilter === "Ilmu Sosial" &&
-                    major.category === "Ilmu Sosial") ||
-                (rumpunIlmuFilter === "Ilmu Alam" &&
-                    major.category === "Ilmu Alam") ||
-                (rumpunIlmuFilter === "Ilmu Formal" &&
-                    major.category === "Ilmu Formal") ||
-                (rumpunIlmuFilter === "Ilmu Terapan" &&
-                    major.category === "Ilmu Terapan");
+                mappedCategory === normalizedFilter;
 
             // Debug logging
             if (rumpunIlmuFilter !== "all") {
                 console.log(
-                    `Filter Debug - Major: ${major.major_name}, Category: "${major.category}", Filter: "${rumpunIlmuFilter}", Matches: ${matchesRumpunIlmu}`
+                    `Filter Debug - Major: ${major.major_name}, Category: "${major.category}" (normalized: "${normalizedCategory}", mapped: "${mappedCategory}"), Filter: "${rumpunIlmuFilter}" (normalized: "${normalizedFilter}"), Matches: ${matchesRumpunIlmu}`
                 );
             }
 
@@ -234,9 +245,24 @@ export default function MajorRecommendations({
         console.log("Major preferred_subjects:", major.preferred_subjects);
 
         setEditingMajor(major);
+        // Map old categories to new categories for edit modal
+        const categoryMapping = {
+            'Soshum': 'Ilmu Sosial',
+            'Saintek': 'Ilmu Terapan',
+            'Ilmu Kesehatan': 'Ilmu Terapan',
+            'Ilmu Lingkungan': 'Ilmu Terapan',
+            'Ilmu Teknologi': 'Ilmu Terapan',
+            'Humaniora': 'Humaniora',
+            'Ilmu Sosial': 'Ilmu Sosial',
+            'Ilmu Alam': 'Ilmu Alam',
+            'Ilmu Formal': 'Ilmu Formal',
+            'Ilmu Terapan': 'Ilmu Terapan'
+        };
+        const mappedCategory = categoryMapping[major.category] || major.category || "Ilmu Alam";
+        
         setData({
             major_name: major.major_name,
-            rumpun_ilmu: major.category || "ILMU ALAM",
+            rumpun_ilmu: mappedCategory,
             description: major.description,
             required_subjects: major.required_subjects || [],
             preferred_subjects: major.preferred_subjects || [], // Use preferred_subjects from database
@@ -498,19 +524,19 @@ export default function MajorRecommendations({
                                     <option value="all">
                                         Semua Rumpun Ilmu
                                     </option>
-                                    <option value="Humaniora">
+                                    <option value="humaniora">
                                         🎨 HUMANIORA
                                     </option>
-                                    <option value="Ilmu Sosial">
+                                    <option value="ilmu sosial">
                                         📚 ILMU SOSIAL
                                     </option>
-                                    <option value="Ilmu Alam">
+                                    <option value="ilmu alam">
                                         🔬 ILMU ALAM
                                     </option>
-                                    <option value="Ilmu Formal">
+                                    <option value="ilmu formal">
                                         📐 ILMU FORMAL
                                     </option>
-                                    <option value="Ilmu Terapan">
+                                    <option value="ilmu terapan">
                                         ⚙️ ILMU TERAPAN
                                     </option>
                                 </select>
@@ -853,19 +879,19 @@ export default function MajorRecommendations({
                                             <option value="">
                                                 Pilih Rumpun Ilmu
                                             </option>
-                                            <option value="ILMU ALAM">
+                                            <option value="Ilmu Alam">
                                                 🔬 ILMU ALAM
                                             </option>
-                                            <option value="ILMU SOSIAL">
+                                            <option value="Ilmu Sosial">
                                                 📚 ILMU SOSIAL
                                             </option>
-                                            <option value="HUMANIORA">
+                                            <option value="Humaniora">
                                                 🎨 HUMANIORA
                                             </option>
-                                            <option value="ILMU FORMAL">
+                                            <option value="Ilmu Formal">
                                                 📐 ILMU FORMAL
                                             </option>
-                                            <option value="ILMU TERAPAN">
+                                            <option value="Ilmu Terapan">
                                                 ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
@@ -1190,19 +1216,19 @@ export default function MajorRecommendations({
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                         >
-                                            <option value="ILMU ALAM">
+                                            <option value="Ilmu Alam">
                                                 🔬 ILMU ALAM
                                             </option>
-                                            <option value="ILMU SOSIAL">
+                                            <option value="Ilmu Sosial">
                                                 📚 ILMU SOSIAL
                                             </option>
-                                            <option value="HUMANIORA">
+                                            <option value="Humaniora">
                                                 🎨 HUMANIORA
                                             </option>
-                                            <option value="ILMU FORMAL">
+                                            <option value="Ilmu Formal">
                                                 📐 ILMU FORMAL
                                             </option>
-                                            <option value="ILMU TERAPAN">
+                                            <option value="Ilmu Terapan">
                                                 ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
