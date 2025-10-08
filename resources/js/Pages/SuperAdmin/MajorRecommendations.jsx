@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import {
@@ -35,6 +35,32 @@ export default function MajorRecommendations({
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
     const [rumpunIlmuFilter, setRumpunIlmuFilter] = useState("all"); // all, HUMANIORA, ILMU SOSIAL, ILMU ALAM, ILMU FORMAL, ILMU TERAPAN
+    const [stats, setStats] = useState({
+        total_majors: 0,
+        active_majors: 0,
+        category_stats: {},
+    });
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    // Fetch stats on component mount
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                setLoadingStats(true);
+                const response = await fetch("/major-recommendations/stats");
+                const data = await response.json();
+                if (data.success) {
+                    setStats(data.data);
+                }
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+            } finally {
+                setLoadingStats(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
     // Function to truncate text to specified number of words
     const truncateText = (text, maxWords = 15) => {
@@ -316,7 +342,7 @@ export default function MajorRecommendations({
                                     Total Jurusan
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
-                                    {majorRecommendations?.total || 0}
+                                    {loadingStats ? "..." : stats.total_majors}
                                 </p>
                             </div>
                         </div>
@@ -331,13 +357,10 @@ export default function MajorRecommendations({
                                     ILMU ALAM
                                 </p>
                                 <p className="text-xl font-bold text-blue-900">
-                                    {
-                                        (
-                                            majorRecommendations?.data || []
-                                        ).filter(
-                                            (m) => m.category === "Ilmu Alam"
-                                        ).length
-                                    }
+                                    {loadingStats
+                                        ? "..."
+                                        : stats.category_stats["Ilmu Alam"] ||
+                                          0}
                                 </p>
                             </div>
                         </div>
@@ -352,13 +375,10 @@ export default function MajorRecommendations({
                                     ILMU SOSIAL
                                 </p>
                                 <p className="text-xl font-bold text-green-900">
-                                    {
-                                        (
-                                            majorRecommendations?.data || []
-                                        ).filter(
-                                            (m) => m.category === "Ilmu Sosial"
-                                        ).length
-                                    }
+                                    {loadingStats
+                                        ? "..."
+                                        : stats.category_stats["Ilmu Sosial"] ||
+                                          0}
                                 </p>
                             </div>
                         </div>
@@ -373,13 +393,10 @@ export default function MajorRecommendations({
                                     HUMANIORA
                                 </p>
                                 <p className="text-xl font-bold text-purple-900">
-                                    {
-                                        (
-                                            majorRecommendations?.data || []
-                                        ).filter(
-                                            (m) => m.category === "Humaniora"
-                                        ).length
-                                    }
+                                    {loadingStats
+                                        ? "..."
+                                        : stats.category_stats["Humaniora"] ||
+                                          0}
                                 </p>
                             </div>
                         </div>
@@ -436,11 +453,7 @@ export default function MajorRecommendations({
                                     Jurusan Aktif
                                 </p>
                                 <p className="text-xl font-bold text-gray-900">
-                                    {
-                                        (
-                                            majorRecommendations?.data || []
-                                        ).filter((m) => m.is_active).length
-                                    }
+                                    {loadingStats ? "..." : stats.active_majors}
                                 </p>
                             </div>
                         </div>

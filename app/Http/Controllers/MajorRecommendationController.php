@@ -96,7 +96,6 @@ class MajorRecommendationController extends Controller
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'rumpun_ilmu' => 'required|string|max:255',
             'description' => 'nullable|string',
             'required_subjects' => 'nullable|array',
             'preferred_subjects' => 'nullable|array',
@@ -116,8 +115,7 @@ class MajorRecommendationController extends Controller
         try {
             MajorRecommendation::create([
                 'major_name' => $request->major_name,
-                'category' => 'S1', // Default category
-                'rumpun_ilmu' => $request->rumpun_ilmu,
+                'category' => $request->category,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
                 'preferred_subjects' => $request->preferred_subjects ?? [],
@@ -147,7 +145,7 @@ class MajorRecommendationController extends Controller
             
             $validator = Validator::make($request->all(), [
                 'major_name' => 'required|string|max:255',
-                'rumpun_ilmu' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
                 'preferred_subjects' => 'nullable|array',
@@ -171,7 +169,6 @@ class MajorRecommendationController extends Controller
             $major = MajorRecommendation::create([
                 'major_name' => $request->major_name,
                 'category' => $request->category,
-                'rumpun_ilmu' => $request->rumpun_ilmu,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
                 'preferred_subjects' => $request->preferred_subjects ?? [],
@@ -217,7 +214,6 @@ class MajorRecommendationController extends Controller
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
-            'rumpun_ilmu' => 'required|string|max:255',
             'description' => 'nullable|string',
             'required_subjects' => 'nullable|array',
             'preferred_subjects' => 'nullable|array',
@@ -237,8 +233,7 @@ class MajorRecommendationController extends Controller
         try {
             $majorRecommendation->update([
                 'major_name' => $request->major_name,
-                'category' => 'S1', // Default category
-                'rumpun_ilmu' => $request->rumpun_ilmu,
+                'category' => $request->category,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
                 'preferred_subjects' => $request->preferred_subjects ?? [],
@@ -268,7 +263,7 @@ class MajorRecommendationController extends Controller
             
             $validator = Validator::make($request->all(), [
                 'major_name' => 'required|string|max:255',
-                'rumpun_ilmu' => 'required|string|max:255',
+                'category' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'required_subjects' => 'nullable|array',
                 'preferred_subjects' => 'nullable|array',
@@ -291,8 +286,7 @@ class MajorRecommendationController extends Controller
 
             $majorRecommendation->update([
                 'major_name' => $request->major_name,
-                'category' => 'S1', // Default category
-                'rumpun_ilmu' => $request->rumpun_ilmu,
+                'category' => $request->category,
                 'description' => $request->description,
                 'required_subjects' => $request->required_subjects ?? [],
                 'preferred_subjects' => $request->preferred_subjects ?? [],
@@ -374,6 +368,35 @@ class MajorRecommendationController extends Controller
         }
     }
 
+    public function stats()
+    {
+        try {
+            $totalMajors = MajorRecommendation::count();
+            $activeMajors = MajorRecommendation::where('is_active', true)->count();
+            
+            $categoryStats = MajorRecommendation::select('category', \DB::raw('count(*) as count'))
+                ->groupBy('category')
+                ->get()
+                ->pluck('count', 'category')
+                ->toArray();
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_majors' => $totalMajors,
+                    'active_majors' => $activeMajors,
+                    'category_stats' => $categoryStats
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting major recommendations stats: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan statistik rekomendasi jurusan'
+            ], 500);
+        }
+    }
+
     public function export()
     {
         try {
@@ -384,7 +407,6 @@ class MajorRecommendationController extends Controller
                 'ID',
                 'Nama Jurusan',
                 'Kategori',
-                'Rumpun Ilmu',
                 'Deskripsi',
                 'Mata Pelajaran Wajib',
                 'Mata Pelajaran Pilihan',
@@ -402,7 +424,6 @@ class MajorRecommendationController extends Controller
                     $major->id,
                     $major->major_name,
                     $major->category,
-                    $major->rumpun_ilmu,
                     $major->description,
                     implode(';', $major->required_subjects ?? []),
                     implode(';', $major->preferred_subjects ?? []),

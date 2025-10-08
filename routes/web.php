@@ -140,6 +140,7 @@ Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInerti
 });
 
 Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
+Route::get('/major-recommendations/stats', [App\Http\Controllers\MajorRecommendationController::class, 'stats']);
 
 // Alias route for /jurusan
 Route::get('/jurusan', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
