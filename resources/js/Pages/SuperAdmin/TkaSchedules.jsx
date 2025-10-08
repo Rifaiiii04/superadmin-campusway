@@ -45,8 +45,11 @@ export default function TkaSchedules({
         start_date: "",
         end_date: "",
         type: "regular",
+        status: "scheduled",
         instructions: "",
         target_schools: [],
+        is_active: true,
+        created_by: "System",
         // PUSMENDIK Essential Fields
         gelombang: "1",
         hari_pelaksanaan: "Hari Pertama",
@@ -101,6 +104,14 @@ export default function TkaSchedules({
         setLoading(true);
 
         try {
+            // Validate required fields
+            if (!formData.title || !formData.start_date || !formData.end_date) {
+                alert(
+                    "Mohon isi semua field yang wajib diisi (Judul, Tanggal Mulai, Tanggal Selesai)"
+                );
+                return;
+            }
+
             const url = editingSchedule
                 ? `/tka-schedules/${editingSchedule.id}`
                 : "/tka-schedules";
@@ -109,13 +120,19 @@ export default function TkaSchedules({
 
             // Format data for server
             const submitData = {
-                title: formData.title,
-                description: formData.description || null,
-                start_date: formData.start_date || null,
-                end_date: formData.end_date || null,
-                type: formData.type,
-                instructions: formData.instructions || null,
-                target_schools: formData.target_schools || null,
+                title: formData.title || "",
+                description: formData.description || "",
+                start_date: formData.start_date || "",
+                end_date: formData.end_date || "",
+                type: formData.type || "regular",
+                instructions: formData.instructions || "",
+                target_schools: formData.target_schools || [],
+                status: formData.status || "scheduled",
+                is_active:
+                    formData.is_active !== undefined
+                        ? formData.is_active
+                        : true,
+                created_by: formData.created_by || "System",
             };
 
             console.log("Submitting data:", submitData);
@@ -153,6 +170,7 @@ export default function TkaSchedules({
             }
         } catch (error) {
             console.error("Error saving schedule:", error);
+            alert("Terjadi kesalahan saat menyimpan jadwal: " + error.message);
         } finally {
             setLoading(false);
         }
@@ -259,8 +277,20 @@ export default function TkaSchedules({
             start_date: "",
             end_date: "",
             type: "regular",
+            status: "scheduled",
             instructions: "",
             target_schools: [],
+            is_active: true,
+            created_by: "System",
+            // PUSMENDIK Essential Fields
+            gelombang: "1",
+            hari_pelaksanaan: "Hari Pertama",
+            exam_venue: "",
+            exam_room: "",
+            contact_person: "",
+            contact_phone: "",
+            requirements: "",
+            materials_needed: "",
         });
     };
 
