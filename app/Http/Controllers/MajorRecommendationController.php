@@ -117,24 +117,10 @@ class MajorRecommendationController extends Controller
 
     public function store(Request $request)
     {
-        // Debug logging
-        Log::info('Major Recommendation Store Request Debug:', [
-            'url' => $request->url(),
-            'path' => $request->path(),
-            'is_api' => $request->is('api/*'),
-            'accept_header' => $request->header('Accept'),
-            'expects_json' => $request->expectsJson(),
-            'ajax' => $request->ajax(),
-            'xhr' => $request->header('X-Requested-With'),
-        ]);
-        
         // Only return JSON for explicit API requests
         if ($request->is('api/*') || $request->header('Accept') === 'application/json') {
-            Log::info('Returning JSON response for API request');
             return $this->storeJson($request);
         }
-        
-        Log::info('Returning Inertia response for web request');
 
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
