@@ -102,6 +102,9 @@ Route::get('/dashboard', function () {
             ->limit(5)
             ->get();
             
+        // Debug logging
+        Log::info('Recent students data for dashboard:', $recentStudents->toArray());
+            
         // Get students per major
         $studentsPerMajor = DB::table('student_choices')
             ->join('major_recommendations', 'student_choices.major_id', '=', 'major_recommendations.id')

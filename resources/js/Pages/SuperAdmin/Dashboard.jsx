@@ -29,6 +29,9 @@ export default function Dashboard({
     recent_students = [],
     studentsPerMajor = [],
 }) {
+    // Debug logging
+    console.log('Dashboard props:', { stats, recent_schools, recent_students, studentsPerMajor });
+    console.log('Recent students data:', recent_students);
     // Chart data untuk siswa per jurusan
     const chartData = {
         labels: studentsPerMajor.map((item) => item.major_name),
