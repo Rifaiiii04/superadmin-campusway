@@ -30,6 +30,7 @@ class HandleInertiaRequests extends Middleware  // PASTIKAN EXTENDS Middleware
                 'user' => $request->user(),
                 'admin' => $request->user('admin'),
             ],
+            'csrf_token' => csrf_token(),
         ]);
     }
 }

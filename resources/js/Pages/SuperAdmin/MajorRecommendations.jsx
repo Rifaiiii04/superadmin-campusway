@@ -178,6 +178,7 @@ export default function MajorRecommendations({
         };
 
         console.log("Formatted form data:", formData);
+        console.log("CSRF Token:", document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
 
         put(`/major-recommendations/${editingMajor.id}`, formData, {
             onSuccess: (page) => {
