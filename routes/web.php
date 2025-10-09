@@ -21,6 +21,13 @@ Route::get('/health', function () {
     ]);
 });
 
+// Test DELETE endpoint
+Route::middleware(['web'])->group(function () {
+    Route::delete('/test-delete', function () {
+        return response()->json(['message' => 'DELETE method works!']);
+    });
+});
+
 // Test endpoint
 Route::get('/test', function () {
     return response()->json([
@@ -136,26 +143,22 @@ Route::get('/dashboard', function () {
 // SuperAdmin Schools (UI) - Using controller
 Route::get('/schools', [App\Http\Controllers\SchoolController::class, 'index']);
 
-// SuperAdmin Schools (API) - JSON responses
-Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
-    Route::post('/schools', [App\Http\Controllers\SchoolController::class, 'store']);
-    Route::get('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'show']);
-    Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'update']);
-    Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
-});
+// SuperAdmin Schools - Inertia responses (Web)
+Route::post('/schools', [App\Http\Controllers\SchoolController::class, 'store']);
+Route::get('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'show']);
+Route::put('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'update']);
+Route::delete('/schools/{school}', [App\Http\Controllers\SchoolController::class, 'destroy']);
 
 Route::post('/schools/import', [App\Http\Controllers\SchoolController::class, 'import']);
 
 // SuperAdmin Students (UI) - Using controller
 Route::get('/students', [App\Http\Controllers\StudentController::class, 'index']);
 
-// SuperAdmin Students (API) - JSON responses
-Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
-    Route::post('/students', [App\Http\Controllers\StudentController::class, 'store']);
-    Route::get('/students/{student}', [App\Http\Controllers\StudentController::class, 'show']);
-    Route::put('/students/{student}', [App\Http\Controllers\StudentController::class, 'update']);
-    Route::delete('/students/{student}', [App\Http\Controllers\StudentController::class, 'destroy']);
-});
+// SuperAdmin Students - Inertia responses (Web)
+Route::post('/students', [App\Http\Controllers\StudentController::class, 'store']);
+Route::get('/students/{student}', [App\Http\Controllers\StudentController::class, 'show']);
+Route::put('/students/{student}', [App\Http\Controllers\StudentController::class, 'update']);
+Route::delete('/students/{student}', [App\Http\Controllers\StudentController::class, 'destroy']);
 
 Route::get('/students/export', [App\Http\Controllers\StudentController::class, 'export']);
 
@@ -178,13 +181,11 @@ Route::get('/jurusan', [App\Http\Controllers\MajorRecommendationController::clas
 // SuperAdmin Questions (UI) - Using controller
 Route::get('/questions', [App\Http\Controllers\QuestionController::class, 'index']);
 
-// SuperAdmin Questions (API) - JSON responses
-Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
-    Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
-    Route::get('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'show']);
-    Route::put('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'update']);
-    Route::delete('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'destroy']);
-});
+// SuperAdmin Questions - Inertia responses (Web)
+Route::post('/questions', [App\Http\Controllers\QuestionController::class, 'store']);
+Route::get('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'show']);
+Route::put('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'update']);
+Route::delete('/questions/{question}', [App\Http\Controllers\QuestionController::class, 'destroy']);
 
 // SuperAdmin Results (UI) - Using controller
 Route::get('/results', [App\Http\Controllers\ResultController::class, 'index']);
@@ -195,14 +196,12 @@ Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'ex
 // SuperAdmin TKA Schedules (UI) - Using controller
 Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
 
-// SuperAdmin TKA Schedules (API) - JSON responses
-Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
-    Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
-    Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
-    Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
-    Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
-    Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
-});
+// SuperAdmin TKA Schedules - Inertia responses (Web)
+Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+Route::get('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
+Route::put('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::delete('/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
+Route::patch('/tka-schedules/{tkaSchedule}/toggle', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
 
 // SuperAdmin Logout
 Route::post('/logout', function (Request $request) {

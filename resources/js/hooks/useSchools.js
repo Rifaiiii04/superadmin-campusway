@@ -86,17 +86,25 @@ export function useDeleteSchool() {
 
     return useMutation({
         mutationFn: async (id) => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            console.log('CSRF Token for DELETE:', csrfToken);
+            
             const response = await fetch(`/schools/${id}`, {
                 method: "DELETE",
                 headers: {
-                    "X-CSRF-TOKEN": document.querySelector(
-                        'meta[name="csrf-token"]'
-                    )?.content || '',
+                    "X-CSRF-TOKEN": csrfToken || '',
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
                 },
             });
 
+            console.log('DELETE response status:', response.status);
+            console.log('DELETE response headers:', [...response.headers.entries()]);
+
             if (!response.ok) {
                 const error = await response.json();
+                console.error('DELETE error:', error);
                 throw new Error(error.message || "Failed to delete school");
             }
 
