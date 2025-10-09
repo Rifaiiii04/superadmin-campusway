@@ -93,10 +93,12 @@ Route::get('/dashboard', function () {
             ->limit(5)
             ->get();
             
-        // Get recent students
+        // Get recent students with school information
         $recentStudents = DB::table('students')
-            ->where('status', 'active')
-            ->orderBy('created_at', 'desc')
+            ->join('schools', 'students.school_id', '=', 'schools.id')
+            ->select('students.*', 'schools.name as school_name')
+            ->where('students.status', 'active')
+            ->orderBy('students.created_at', 'desc')
             ->limit(5)
             ->get();
             

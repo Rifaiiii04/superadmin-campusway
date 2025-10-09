@@ -249,8 +249,7 @@ export default function Dashboard({
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="text-sm text-gray-900">
-                                                            {student.school
-                                                                ?.name || "N/A"}
+                                                            {student.school_name || "N/A"}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
