@@ -862,9 +862,9 @@ export default function MajorRecommendations({
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex flex-wrap gap-1">
                                                 {Array.isArray(
-                                                    major.preferred_subjects
+                                                    major.optional_subjects
                                                 )
-                                                    ? major.preferred_subjects.map(
+                                                    ? major.optional_subjects.map(
                                                           (subject, index) => (
                                                               <span
                                                                   key={index}

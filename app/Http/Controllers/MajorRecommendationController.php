@@ -20,10 +20,33 @@ class MajorRecommendationController extends Controller
             $totalMajors = MajorRecommendation::count();
             Log::info('MajorRecommendationController::index - Total major recommendations in database: ' . $totalMajors);
             
-            $majors = MajorRecommendation::where('is_active', true)
-                ->orderBy('category')
+            $majors = MajorRecommendation::orderBy('category')
                 ->orderBy('major_name')
-                ->get();
+                ->get()
+                ->map(function($major) {
+                    // Get mandatory subjects from database (3 subjects for all majors)
+                    $mandatorySubjects = \App\Models\Subject::where('subject_type', 'Wajib')
+                        ->pluck('name')
+                        ->toArray();
+                    
+                    // Transform data untuk frontend
+                    return [
+                        'id' => $major->id,
+                        'major_name' => $major->major_name,
+                        'description' => $major->description,
+                        'category' => $major->category,
+                        'mandatory_subjects' => $mandatorySubjects,
+                        'optional_subjects' => $major->preferred_subjects ?? [],
+                        'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+                        'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+                        'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+                        'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? [],
+                        'career_prospects' => $major->career_prospects,
+                        'is_active' => $major->is_active,
+                        'created_at' => $major->created_at,
+                        'updated_at' => $major->updated_at,
+                    ];
+                });
             
             // Debug: Log majors data
             Log::info('MajorRecommendationController::index - Majors data:', [
@@ -49,6 +72,7 @@ class MajorRecommendationController extends Controller
             
             // Calculate stats directly in controller
             $activeMajors = MajorRecommendation::where('is_active', true)->count();
+            $inactiveMajors = MajorRecommendation::where('is_active', false)->count();
             
             $categoryStats = MajorRecommendation::select('category', DB::raw('count(*) as count'))
                 ->groupBy('category')
@@ -80,6 +104,7 @@ class MajorRecommendationController extends Controller
                 'stats' => [
                     'total_majors' => $totalMajors,
                     'active_majors' => $activeMajors,
+                    'inactive_majors' => $inactiveMajors,
                     'category_stats' => $mappedCategoryStats
                 ],
                 'debug' => [
