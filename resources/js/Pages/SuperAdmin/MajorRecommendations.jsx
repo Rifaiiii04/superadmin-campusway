@@ -22,18 +22,19 @@ export default function MajorRecommendations({
     debug = null,
 }) {
     // Debug data
-    console.log("MajorRecommendations data:", majorRecommendations);
-    console.log("MajorRecommendations.data:", majorRecommendations?.data);
-    console.log("MajorRecommendations.total:", majorRecommendations?.total);
-    console.log("Available subjects:", availableSubjects);
-    console.log("Rumpun ilmu:", rumpunIlmu);
-    console.log("Debug info:", debug);
+    console.log("🔍 MajorRecommendations data:", majorRecommendations);
+    console.log("🔍 MajorRecommendations.data:", majorRecommendations?.data);
+    console.log("🔍 MajorRecommendations.total:", majorRecommendations?.total);
+    console.log("🔍 Available subjects:", availableSubjects);
+    console.log("🔍 Rumpun ilmu:", rumpunIlmu);
+    console.log("🔍 Debug info:", debug);
 
     // Debug categories in data
-    if (majorRecommendations?.data) {
+    const majorsArray = majorRecommendations?.data || majorRecommendations || [];
+    if (majorsArray.length > 0) {
         const categories = [
             ...new Set(
-                majorRecommendations.data.map((major) => major.category)
+                majorsArray.map((major) => major.category)
             ),
         ];
         console.log("Categories in data:", categories);
@@ -66,13 +67,14 @@ export default function MajorRecommendations({
         setData,
         post,
         put,
+        patch,
         delete: destroy,
         processing,
         errors,
         reset,
     } = useForm({
         major_name: "",
-        rumpun_ilmu: "",
+        category: "",
         description: "",
         required_subjects: [],
         preferred_subjects: [],
@@ -94,6 +96,28 @@ export default function MajorRecommendations({
                 reset();
             },
         });
+    };
+
+    const handleToggleStatus = (majorId) => {
+        if (confirm('Apakah Anda yakin ingin mengubah status jurusan ini?')) {
+            patch(`/major-recommendations/${majorId}/toggle`, {
+                onSuccess: () => {
+                    // Refresh the page to show updated data
+                    window.location.reload();
+                },
+            });
+        }
+    };
+
+    const handleDeleteMajor = (majorId) => {
+        if (confirm('Apakah Anda yakin ingin menghapus jurusan ini? Tindakan ini tidak dapat dibatalkan.')) {
+            destroy(`/major-recommendations/${majorId}`, {
+                onSuccess: () => {
+                    // Refresh the page to show updated data
+                    window.location.reload();
+                },
+            });
+        }
     };
 
     const handleEditMajor = () => {
@@ -129,20 +153,6 @@ export default function MajorRecommendations({
         });
     };
 
-    const handleDeleteMajor = (id) => {
-        if (
-            confirm(
-                "Apakah Anda yakin ingin menghapus rekomendasi jurusan ini?"
-            )
-        ) {
-            destroy(`/major-recommendations/${id}`);
-        }
-    };
-
-    const handleToggleStatus = (id) => {
-        // Use Inertia patch for toggle
-        router.patch(`/major-recommendations/${id}/toggle`);
-    };
 
     // Sample data for testing when database is not available
     const sampleData = [
@@ -163,10 +173,13 @@ export default function MajorRecommendations({
         { id: 15, major_name: 'Geografi', category: 'Ilmu Alam', is_active: true }
     ];
 
-    // Use sample data if no data from API
-    const majorsData = (majorRecommendations?.data && majorRecommendations.data.length > 0) 
-        ? majorRecommendations.data 
+    // Use data from API or fallback to sample data
+    const majorsData = (majorsArray && majorsArray.length > 0) 
+        ? majorsArray 
         : sampleData;
+    
+    console.log("🔍 Using majorsData:", majorsData.length, "items");
+    console.log("🔍 First few majors:", majorsData.slice(0, 3).map(m => ({ name: m.major_name, category: m.category })));
 
     // Filter majors based on search term, status, and category
     const filteredMajors = majorsData.filter(
@@ -245,7 +258,13 @@ export default function MajorRecommendations({
                 'ilmu sosial': 'ilmu sosial',
                 'ilmu alam': 'ilmu alam',
                 'ilmu formal': 'ilmu formal',
-                'ilmu terapan': 'ilmu terapan'
+                'ilmu terapan': 'ilmu terapan',
+                // Add title case mappings
+                'Humaniora': 'humaniora',
+                'Ilmu Sosial': 'ilmu sosial',
+                'Ilmu Alam': 'ilmu alam',
+                'Ilmu Formal': 'ilmu formal',
+                'Ilmu Terapan': 'ilmu terapan'
             };
             
             const mappedCategory = categoryMapping[normalizedCategory] || normalizedCategory;
@@ -283,13 +302,19 @@ export default function MajorRecommendations({
             'Ilmu Sosial': 'Ilmu Sosial',
             'Ilmu Alam': 'Ilmu Alam',
             'Ilmu Formal': 'Ilmu Formal',
-            'Ilmu Terapan': 'Ilmu Terapan'
+            'Ilmu Terapan': 'Ilmu Terapan',
+            // Add lowercase mappings
+            'humaniora': 'Humaniora',
+            'ilmu sosial': 'Ilmu Sosial',
+            'ilmu alam': 'Ilmu Alam',
+            'ilmu formal': 'Ilmu Formal',
+            'ilmu terapan': 'Ilmu Terapan'
         };
         const mappedCategory = categoryMapping[major.category] || major.category || "Ilmu Alam";
         
         setData({
             major_name: major.major_name,
-            rumpun_ilmu: mappedCategory,
+            category: mappedCategory,
             description: major.description,
             required_subjects: major.required_subjects || [],
             preferred_subjects: major.preferred_subjects || [], // Use preferred_subjects from database
@@ -313,16 +338,31 @@ export default function MajorRecommendations({
 
     const toggleSubject = (subject, type) => {
         console.log(`=== TOGGLE SUBJECT DEBUG ===`);
-        console.log(`Subject: ${subject}`);
+        console.log(`Subject: ${typeof subject === 'object' ? subject.name : subject}`);
         console.log(`Type: ${type}`);
         console.log(`Current data[${type}]:`, data[type]);
 
         const currentSubjects = data[type] || [];
         console.log(`Current subjects array:`, currentSubjects);
-        console.log(`Subject included:`, currentSubjects.includes(subject));
+        
+        // Handle both object and string subjects
+        const subjectValue = typeof subject === 'object' ? subject.name : subject;
+        const isIncluded = currentSubjects.some(s => 
+            typeof s === 'object' ? s.name === subjectValue : s === subjectValue
+        );
+        
+        console.log(`Subject included:`, isIncluded);
 
-        if (currentSubjects.includes(subject)) {
-            const newSubjects = currentSubjects.filter((s) => s !== subject);
+        if (isIncluded) {
+            const newSubjects = currentSubjects.filter((s) => {
+                if (typeof s === 'object' && typeof subject === 'object') {
+                    return s.name !== subject.name;
+                } else if (typeof s === 'string' && typeof subject === 'string') {
+                    return s !== subject;
+                } else {
+                    return s !== subject;
+                }
+            });
             console.log(`Removing subject. New array:`, newSubjects);
             setData({
                 ...data,
@@ -729,7 +769,7 @@ export default function MajorRecommendations({
                                                                   key={index}
                                                                   className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                                               >
-                                                                  {subject}
+                                                                  {typeof subject === 'object' ? subject.name : subject}
                                                               </span>
                                                           )
                                                       )
@@ -746,13 +786,13 @@ export default function MajorRecommendations({
                                                               <span
                                                                   key={index}
                                                                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                                                      subject ===
+                                                                      (typeof subject === 'object' ? subject.name : subject) ===
                                                                       "Produk/Projek Kreatif dan Kewirausahaan"
                                                                           ? "bg-yellow-100 text-yellow-800"
                                                                           : "bg-green-100 text-green-800"
                                                                   }`}
                                                               >
-                                                                  {subject}
+                                                                  {typeof subject === 'object' ? subject.name : subject}
                                                               </span>
                                                           )
                                                       )
@@ -894,11 +934,11 @@ export default function MajorRecommendations({
                                             Rumpun Ilmu
                                         </label>
                                         <select
-                                            value={data.rumpun_ilmu}
+                                            value={data.category}
                                             onChange={(e) =>
                                                 setData({
                                                     ...data,
-                                                    rumpun_ilmu: e.target.value,
+                                                    category: e.target.value,
                                                 })
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -922,9 +962,9 @@ export default function MajorRecommendations({
                                                 ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
-                                        {errors.rumpun_ilmu && (
+                                        {errors.category && (
                                             <p className="text-red-500 text-xs mt-1">
-                                                {errors.rumpun_ilmu}
+                                                {errors.category}
                                             </p>
                                         )}
                                     </div>
@@ -983,7 +1023,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1000,7 +1040,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-green-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1016,7 +1056,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1033,7 +1073,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-purple-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1049,7 +1089,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1066,7 +1106,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-red-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1082,7 +1122,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1099,7 +1139,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-yellow-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1115,7 +1155,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1132,7 +1172,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-indigo-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1234,11 +1274,11 @@ export default function MajorRecommendations({
                                             Rumpun Ilmu
                                         </label>
                                         <select
-                                            value={data.rumpun_ilmu}
+                                            value={data.category}
                                             onChange={(e) =>
                                                 setData({
                                                     ...data,
-                                                    rumpun_ilmu: e.target.value,
+                                                    category: e.target.value,
                                                 })
                                             }
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
@@ -1259,9 +1299,9 @@ export default function MajorRecommendations({
                                                 ⚙️ ILMU TERAPAN
                                             </option>
                                         </select>
-                                        {errors.rumpun_ilmu && (
+                                        {errors.category && (
                                             <p className="text-red-500 text-xs mt-1">
-                                                {errors.rumpun_ilmu}
+                                                {errors.category}
                                             </p>
                                         )}
                                     </div>
@@ -1319,7 +1359,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1336,7 +1376,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-green-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1352,7 +1392,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1369,7 +1409,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-purple-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1385,7 +1425,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1402,7 +1442,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-red-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1418,7 +1458,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1435,7 +1475,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-yellow-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1451,7 +1491,7 @@ export default function MajorRecommendations({
                                             {availableSubjects.map(
                                                 (subject, index) => (
                                                     <label
-                                                        key={`${subject}-${index}`}
+                                                        key={`${typeof subject === 'object' ? subject.id : subject}-${index}`}
                                                         className="flex items-center"
                                                     >
                                                         <input
@@ -1468,7 +1508,7 @@ export default function MajorRecommendations({
                                                             className="rounded border-gray-300 text-indigo-600"
                                                         />
                                                         <span className="ml-2 text-sm text-gray-700">
-                                                            {subject}
+                                                            {typeof subject === 'object' ? subject.name : subject}
                                                         </span>
                                                     </label>
                                                 )
@@ -1577,7 +1617,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}
@@ -1599,7 +1639,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}
@@ -1621,7 +1661,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}
@@ -1643,7 +1683,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}
@@ -1665,7 +1705,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}
@@ -1687,7 +1727,7 @@ export default function MajorRecommendations({
                                                                     key={index}
                                                                     className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
                                                                 >
-                                                                    {subject}
+                                                                    {typeof subject === 'object' ? subject.name : subject}
                                                                 </span>
                                                             )
                                                         )}

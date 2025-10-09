@@ -82,18 +82,45 @@ Route::get('/dashboard', function () {
         //     return redirect('/login');
         // }
         
-        Log::info('Rendering SuperAdmin Dashboard');
+        // Get real data from database
+        $totalSchools = DB::table('schools')->count();
+        $totalStudents = DB::table('students')->where('status', 'active')->count();
+        $totalMajors = DB::table('major_recommendations')->where('is_active', true)->count();
+        
+        // Get recent schools
+        $recentSchools = DB::table('schools')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+            
+        // Get recent students
+        $recentStudents = DB::table('students')
+            ->where('status', 'active')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+            
+        // Get students per major
+        $studentsPerMajor = DB::table('student_choices')
+            ->join('major_recommendations', 'student_choices.major_id', '=', 'major_recommendations.id')
+            ->select('major_recommendations.major_name', DB::raw('COUNT(student_choices.student_id) as student_count'))
+            ->groupBy('major_recommendations.id', 'major_recommendations.major_name')
+            ->orderBy('student_count', 'desc')
+            ->limit(10)
+            ->get();
+        
+        Log::info('Rendering SuperAdmin Dashboard with real data');
         return Inertia::render('SuperAdmin/Dashboard', [
             'title' => 'SuperAdmin Dashboard',
             'user' => Auth::guard('admin')->user() ?: (object)['username' => 'Test Admin', 'name' => 'Test Admin'],
             'stats' => [
-                'total_schools' => 0,
-                'total_students' => 0,
-                'total_majors' => 0,
+                'total_schools' => $totalSchools,
+                'total_students' => $totalStudents,
+                'total_majors' => $totalMajors,
             ],
-            'recent_schools' => [],
-            'recent_students' => [],
-            'studentsPerMajor' => [],
+            'recent_schools' => $recentSchools,
+            'recent_students' => $recentStudents,
+            'studentsPerMajor' => $studentsPerMajor,
         ]);
     } catch (Exception $e) {
         Log::error('Dashboard error: ' . $e->getMessage());

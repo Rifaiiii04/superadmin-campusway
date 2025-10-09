@@ -20,16 +20,15 @@ class MajorRecommendationController extends Controller
             $totalMajors = MajorRecommendation::count();
             Log::info('MajorRecommendationController::index - Total major recommendations in database: ' . $totalMajors);
             
-            $majors = MajorRecommendation::orderBy('category')
+            $majors = MajorRecommendation::where('is_active', true)
+                ->orderBy('category')
                 ->orderBy('major_name')
-                ->paginate(10);
+                ->get();
             
-            // Debug: Log pagination data
-            Log::info('MajorRecommendationController::index - Pagination data:', [
-                'total' => $majors->total(),
-                'per_page' => $majors->perPage(),
-                'current_page' => $majors->currentPage(),
-                'data_count' => $majors->count()
+            // Debug: Log majors data
+            Log::info('MajorRecommendationController::index - Majors data:', [
+                'total' => $majors->count(),
+                'categories' => $majors->pluck('category')->unique()->values()->toArray()
             ]);
             
             $subjects = Subject::select('id', 'name', 'code', 'subject_type')
@@ -85,9 +84,8 @@ class MajorRecommendationController extends Controller
                 ],
                 'debug' => [
                     'total_majors' => $totalMajors,
-                    'pagination_total' => $majors->total(),
-                    'current_page' => $majors->currentPage(),
-                    'per_page' => $majors->perPage(),
+                    'majors_count' => $majors->count(),
+                    'categories' => $majors->pluck('category')->unique()->values()->toArray(),
                     'subjects_count' => $subjects->count(),
                     'rumpun_ilmu_count' => $rumpunIlmu->count()
                 ]
