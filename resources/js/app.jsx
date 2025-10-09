@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { createInertiaApp } from "@inertiajs/react";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import QueryProvider from "./Providers/QueryProvider";
+import { AlertProvider } from "./Providers/AlertProvider";
 import axios from 'axios';
 
 // Configure axios for Inertia
@@ -28,9 +29,11 @@ createInertiaApp({
         const root = createRoot(el);
 
         root.render(
-            <QueryProvider>
-                <App {...props} />
-            </QueryProvider>
+            <AlertProvider>
+                <QueryProvider>
+                    <App {...props} />
+                </QueryProvider>
+            </AlertProvider>
         );
     },
     progress: {

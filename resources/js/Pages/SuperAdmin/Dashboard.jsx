@@ -1,6 +1,7 @@
 import React from "react";
 import { Head } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
+import { useAlertContext } from "@/Providers/AlertProvider";
 import { Building2, Users, GraduationCap, TrendingUp } from "lucide-react";
 import {
     Chart as ChartJS,

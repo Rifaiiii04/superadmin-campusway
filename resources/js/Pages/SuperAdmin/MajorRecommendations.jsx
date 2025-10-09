@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
+import { useAlertContext } from "@/Providers/AlertProvider";
 import {
     Plus,
     Edit,
@@ -21,6 +22,8 @@ export default function MajorRecommendations({
     stats = null,
     debug = null,
 }) {
+    const { showSuccess, showError, showWarning, showInfo } = useAlertContext();
+    
     // Debug data
     console.log("🔍 MajorRecommendations data:", majorRecommendations);
     console.log("🔍 MajorRecommendations.data:", majorRecommendations?.data);
@@ -113,7 +116,7 @@ export default function MajorRecommendations({
             },
             onError: (errors) => {
                 console.error("Add major errors:", errors);
-                alert("Error: " + JSON.stringify(errors));
+                showError("Error: " + JSON.stringify(errors));
             },
         });
     };
@@ -149,14 +152,14 @@ export default function MajorRecommendations({
 
         if (!editingMajor?.id) {
             console.error("No editing major ID found!");
-            alert("Error: No major ID found for editing!");
+            showError("Error: No major ID found for editing!");
             return;
         }
 
         // Validate required fields
         if (!data.major_name || !data.category) {
             console.error("Missing required fields:", { major_name: data.major_name, category: data.category });
-            alert("Error: Nama Jurusan dan Rumpun Ilmu harus diisi!");
+            showError("Error: Nama Jurusan dan Rumpun Ilmu harus diisi!");
             return;
         }
 
@@ -183,7 +186,7 @@ export default function MajorRecommendations({
         put(`/major-recommendations/${editingMajor.id}`, formData, {
             onSuccess: (page) => {
                 console.log("Edit successful:", page);
-                alert("Jurusan berhasil diupdate!");
+                showSuccess("Jurusan berhasil diupdate!");
                 setShowEditModal(false);
                 setEditingMajor(null);
                 reset();
@@ -192,7 +195,7 @@ export default function MajorRecommendations({
             },
             onError: (errors) => {
                 console.error("Edit errors:", errors);
-                alert("Error: " + JSON.stringify(errors));
+                showError("Error: " + JSON.stringify(errors));
             },
             onFinish: () => {
                 console.log("Edit request finished");
