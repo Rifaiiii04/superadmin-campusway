@@ -138,6 +138,17 @@ export default function TkaSchedules({
                 return;
             }
 
+            // Validate date logic
+            const startDate = new Date(formData.start_date);
+            const endDate = new Date(formData.end_date);
+            
+            if (endDate <= startDate) {
+                alert(
+                    "Tanggal selesai harus setelah tanggal mulai. Silakan periksa kembali tanggal yang dimasukkan."
+                );
+                return;
+            }
+
             const url = editingSchedule
                 ? `/tka-schedules/${editingSchedule.id}`
                 : "/tka-schedules";
@@ -902,12 +913,27 @@ export default function TkaSchedules({
                                         id="start_date"
                                         type="datetime-local"
                                         value={formData.start_date}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                            const newStartDate = e.target.value;
                                             setFormData({
                                                 ...formData,
-                                                start_date: e.target.value,
-                                            })
-                                        }
+                                                start_date: newStartDate,
+                                            });
+                                            
+                                            // If end_date exists and is before new start_date, clear it
+                                            if (formData.end_date && newStartDate) {
+                                                const startDate = new Date(newStartDate);
+                                                const endDate = new Date(formData.end_date);
+                                                
+                                                if (endDate <= startDate) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        start_date: newStartDate,
+                                                        end_date: '' // Clear end_date if it's invalid
+                                                    }));
+                                                }
+                                            }
+                                        }}
                                         required
                                     />
                                 </div>
@@ -920,12 +946,25 @@ export default function TkaSchedules({
                                         id="end_date"
                                         type="datetime-local"
                                         value={formData.end_date}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                            const newEndDate = e.target.value;
                                             setFormData({
                                                 ...formData,
-                                                end_date: e.target.value,
-                                            })
-                                        }
+                                                end_date: newEndDate,
+                                            });
+                                            
+                                            // Real-time validation
+                                            if (formData.start_date && newEndDate) {
+                                                const startDate = new Date(formData.start_date);
+                                                const endDate = new Date(newEndDate);
+                                                
+                                                if (endDate <= startDate) {
+                                                    // You could add visual feedback here
+                                                    console.warn('End date should be after start date');
+                                                }
+                                            }
+                                        }}
+                                        min={formData.start_date || ''}
                                         required
                                     />
                                 </div>
