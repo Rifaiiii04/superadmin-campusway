@@ -157,14 +157,21 @@ Route::get('/students/export', [App\Http\Controllers\StudentController::class, '
 // SuperAdmin Major Recommendations (UI) - Using controller
 Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
 
-// SuperAdmin Major Recommendations (API) - JSON responses
-Route::middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
+// SuperAdmin Major Recommendations (API) - JSON responses - Only for explicit API calls
+Route::prefix('api')->middleware(['web'])->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class])->group(function () {
     Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
     Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
     Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
     Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
     Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
 });
+
+// SuperAdmin Major Recommendations (Web) - Inertia responses
+Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
+Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
+Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
+Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
+Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
 
 Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
 Route::get('/major-recommendations/stats', [App\Http\Controllers\MajorRecommendationController::class, 'stats']);
