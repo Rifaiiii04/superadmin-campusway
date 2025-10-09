@@ -240,6 +240,10 @@ class MajorRecommendationController extends Controller
             return $this->updateJson($request, $majorRecommendation);
         }
 
+        // Log the incoming request data for debugging
+        Log::info('Update Major Request Data:', $request->all());
+        Log::info('Required subjects type:', ['type' => gettype($request->required_subjects), 'value' => $request->required_subjects]);
+
         $validator = Validator::make($request->all(), [
             'major_name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
@@ -256,6 +260,7 @@ class MajorRecommendationController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::error('Validation failed:', $validator->errors()->toArray());
             return back()->withErrors($validator)->withInput();
         }
 

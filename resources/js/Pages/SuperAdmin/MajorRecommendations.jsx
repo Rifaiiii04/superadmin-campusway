@@ -90,10 +90,28 @@ export default function MajorRecommendations({
     // Use subjects from database instead of hardcoded list
 
     const handleAddMajor = () => {
-        post("/major-recommendations", {
+        // Ensure all array fields are properly formatted
+        const formData = {
+            ...data,
+            required_subjects: Array.isArray(data.required_subjects) ? data.required_subjects : [],
+            preferred_subjects: Array.isArray(data.preferred_subjects) ? data.preferred_subjects : [],
+            kurikulum_merdeka_subjects: Array.isArray(data.kurikulum_merdeka_subjects) ? data.kurikulum_merdeka_subjects : [],
+            kurikulum_2013_ipa_subjects: Array.isArray(data.kurikulum_2013_ipa_subjects) ? data.kurikulum_2013_ipa_subjects : [],
+            kurikulum_2013_ips_subjects: Array.isArray(data.kurikulum_2013_ips_subjects) ? data.kurikulum_2013_ips_subjects : [],
+            kurikulum_2013_bahasa_subjects: Array.isArray(data.kurikulum_2013_bahasa_subjects) ? data.kurikulum_2013_bahasa_subjects : [],
+            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
+        };
+
+        console.log("Add major form data:", formData);
+
+        post("/major-recommendations", formData, {
             onSuccess: () => {
                 setShowAddModal(false);
                 reset();
+            },
+            onError: (errors) => {
+                console.error("Add major errors:", errors);
+                alert("Error: " + JSON.stringify(errors));
             },
         });
     };
@@ -145,7 +163,21 @@ export default function MajorRecommendations({
             `/major-recommendations/${editingMajor.id}`
         );
 
-        put(`/major-recommendations/${editingMajor.id}`, {
+        // Ensure all array fields are properly formatted
+        const formData = {
+            ...data,
+            required_subjects: Array.isArray(data.required_subjects) ? data.required_subjects : [],
+            preferred_subjects: Array.isArray(data.preferred_subjects) ? data.preferred_subjects : [],
+            kurikulum_merdeka_subjects: Array.isArray(data.kurikulum_merdeka_subjects) ? data.kurikulum_merdeka_subjects : [],
+            kurikulum_2013_ipa_subjects: Array.isArray(data.kurikulum_2013_ipa_subjects) ? data.kurikulum_2013_ipa_subjects : [],
+            kurikulum_2013_ips_subjects: Array.isArray(data.kurikulum_2013_ips_subjects) ? data.kurikulum_2013_ips_subjects : [],
+            kurikulum_2013_bahasa_subjects: Array.isArray(data.kurikulum_2013_bahasa_subjects) ? data.kurikulum_2013_bahasa_subjects : [],
+            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
+        };
+
+        console.log("Formatted form data:", formData);
+
+        put(`/major-recommendations/${editingMajor.id}`, formData, {
             onSuccess: (page) => {
                 console.log("Edit successful:", page);
                 alert("Jurusan berhasil diupdate!");
