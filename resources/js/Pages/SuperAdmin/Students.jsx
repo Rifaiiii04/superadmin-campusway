@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Head, useForm, Link } from "@inertiajs/react";
+import { Head, useForm, Link, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
+import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal";
 import { User, Plus, Edit, Trash2, Download, Search, Eye } from "lucide-react";
 
 export default function Students({ students, schools = [], debug, error }) {
@@ -9,6 +10,9 @@ export default function Students({ students, schools = [], debug, error }) {
     const [editingStudent, setEditingStudent] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingStudent, setDeletingStudent] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Debug logging
     console.log("Students component - students:", students);
@@ -76,6 +80,41 @@ export default function Students({ students, schools = [], debug, error }) {
             status: student.status,
         });
         setShowEditModal(true);
+    };
+
+    const handleDeleteClick = (student) => {
+        setDeletingStudent(student);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deletingStudent) return;
+        
+        setIsDeleting(true);
+        try {
+            router.delete(`/students/${deletingStudent.id}`, {
+                onSuccess: () => {
+                    setShowDeleteModal(false);
+                    setDeletingStudent(null);
+                },
+                onError: (errors) => {
+                    console.error('Delete error:', errors);
+                },
+                onFinish: () => {
+                    setIsDeleting(false);
+                }
+            });
+        } catch (error) {
+            console.error('Delete error:', error);
+            setIsDeleting(false);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        if (!isDeleting) {
+            setShowDeleteModal(false);
+            setDeletingStudent(null);
+        }
     };
 
     return (
@@ -318,14 +357,12 @@ export default function Students({ students, schools = [], debug, error }) {
                                                 >
                                                     <Edit className="h-4 w-4" />
                                                 </button>
-                                                <Link
-                                                    href={`/students/${student.id}`}
-                                                    method="delete"
-                                                    as="button"
+                                                <button
+                                                    onClick={() => handleDeleteClick(student)}
                                                     className="text-red-600 hover:text-red-900"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
-                                                </Link>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -801,6 +838,19 @@ export default function Students({ students, schools = [], debug, error }) {
                         </div>
                     </div>
                 )}
+
+                {/* Delete Confirmation Modal */}
+                <DeleteConfirmationModal
+                    isOpen={showDeleteModal}
+                    onClose={handleCancelDelete}
+                    onConfirm={handleConfirmDelete}
+                    title="Konfirmasi Hapus Siswa"
+                    message="Apakah Anda yakin ingin menghapus siswa ini? Tindakan ini tidak dapat dibatalkan."
+                    itemName={deletingStudent?.name}
+                    isLoading={isDeleting}
+                    confirmText="Ya, Hapus Siswa"
+                    cancelText="Batal"
+                />
             </div>
         </SuperAdminLayout>
     );

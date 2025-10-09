@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Head, useForm, router } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { useAlertContext } from "@/Providers/AlertProvider";
+import DeleteConfirmationModal from "@/Components/DeleteConfirmationModal";
 import {
     Plus,
     Edit,
@@ -50,6 +51,9 @@ export default function MajorRecommendations({
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all"); // all, active, inactive
     const [rumpunIlmuFilter, setRumpunIlmuFilter] = useState("all"); // all, HUMANIORA, ILMU SOSIAL, ILMU ALAM, ILMU FORMAL, ILMU TERAPAN
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingMajor, setDeletingMajor] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     // Use stats from props instead of API
     const statsData = stats || {
         total_majors: 0,
@@ -132,14 +136,43 @@ export default function MajorRecommendations({
         }
     };
 
-    const handleDeleteMajor = (majorId) => {
-        if (confirm('Apakah Anda yakin ingin menghapus jurusan ini? Tindakan ini tidak dapat dibatalkan.')) {
-            destroy(`/major-recommendations/${majorId}`, {
+    const handleDeleteClick = (major) => {
+        setDeletingMajor(major);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deletingMajor) return;
+        
+        setIsDeleting(true);
+        try {
+            destroy(`/major-recommendations/${deletingMajor.id}`, {
                 onSuccess: () => {
+                    setShowDeleteModal(false);
+                    setDeletingMajor(null);
+                    showSuccess("Jurusan berhasil dihapus!");
                     // Refresh the page to show updated data
                     window.location.reload();
                 },
+                onError: (errors) => {
+                    console.error('Delete error:', errors);
+                    showError("Gagal menghapus jurusan: " + JSON.stringify(errors));
+                },
+                onFinish: () => {
+                    setIsDeleting(false);
+                }
             });
+        } catch (error) {
+            console.error('Delete error:', error);
+            showError("Gagal menghapus jurusan: " + error.message);
+            setIsDeleting(false);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        if (!isDeleting) {
+            setShowDeleteModal(false);
+            setDeletingMajor(null);
         }
     };
 
@@ -898,8 +931,8 @@ export default function MajorRecommendations({
                                                 </button>
                                                 <button
                                                     onClick={() =>
-                                                        handleDeleteMajor(
-                                                            major.id
+                                                        handleDeleteClick(
+                                                            major
                                                         )
                                                     }
                                                     className="text-red-600 hover:text-red-900"
@@ -1815,6 +1848,19 @@ export default function MajorRecommendations({
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={showDeleteModal}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                title="Konfirmasi Hapus Jurusan"
+                message="Apakah Anda yakin ingin menghapus jurusan ini? Tindakan ini tidak dapat dibatalkan."
+                itemName={deletingMajor?.major_name}
+                isLoading={isDeleting}
+                confirmText="Ya, Hapus Jurusan"
+                cancelText="Batal"
+            />
         </SuperAdminLayout>
     );
 }

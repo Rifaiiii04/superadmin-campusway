@@ -115,3 +115,40 @@ export function useDeleteSchool() {
         },
     });
 }
+
+// Hook for delete confirmation with Sweet Alert
+export function useDeleteSchoolWithConfirmation() {
+    const deleteSchoolMutation = useDeleteSchool();
+    const { 
+        isOpen, 
+        deleteData, 
+        isLoading, 
+        showDeleteConfirmation, 
+        hideDeleteConfirmation, 
+        confirmDelete 
+    } = useDeleteConfirmation();
+
+    const handleDeleteClick = (school) => {
+        showDeleteConfirmation({
+            id: school.id,
+            name: school.name,
+            type: 'school'
+        });
+    };
+
+    const handleConfirmDelete = async (data) => {
+        await confirmDelete(async (deleteData) => {
+            await deleteSchoolMutation.mutateAsync(deleteData.id);
+        });
+    };
+
+    return {
+        isOpen,
+        deleteData,
+        isLoading: isLoading || deleteSchoolMutation.isPending,
+        showDeleteConfirmation: handleDeleteClick,
+        hideDeleteConfirmation,
+        confirmDelete: handleConfirmDelete,
+        error: deleteSchoolMutation.error
+    };
+}
