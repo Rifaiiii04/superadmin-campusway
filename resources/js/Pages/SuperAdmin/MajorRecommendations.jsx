@@ -129,6 +129,14 @@ export default function MajorRecommendations({
 
         if (!editingMajor?.id) {
             console.error("No editing major ID found!");
+            alert("Error: No major ID found for editing!");
+            return;
+        }
+
+        // Validate required fields
+        if (!data.major_name || !data.category) {
+            console.error("Missing required fields:", { major_name: data.major_name, category: data.category });
+            alert("Error: Nama Jurusan dan Rumpun Ilmu harus diisi!");
             return;
         }
 
@@ -140,12 +148,14 @@ export default function MajorRecommendations({
         put(`/major-recommendations/${editingMajor.id}`, {
             onSuccess: (page) => {
                 console.log("Edit successful:", page);
+                alert("Jurusan berhasil diupdate!");
                 setShowEditModal(false);
                 setEditingMajor(null);
                 reset();
             },
             onError: (errors) => {
                 console.error("Edit errors:", errors);
+                alert("Error: " + JSON.stringify(errors));
             },
             onFinish: () => {
                 console.log("Edit request finished");
