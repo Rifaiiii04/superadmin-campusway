@@ -157,7 +157,7 @@ class MajorRecommendationController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
-            return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
+            return back()->with('success', 'Rekomendasi jurusan berhasil ditambahkan');
         } catch (\Exception $e) {
             Log::error('Error creating major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal menambahkan rekomendasi jurusan'])->withInput();
@@ -280,7 +280,7 @@ class MajorRecommendationController extends Controller
                 'is_active' => $request->is_active ?? true,
             ]);
 
-            return redirect()->back()->with('success', 'Rekomendasi jurusan berhasil diperbarui');
+            return back()->with('success', 'Rekomendasi jurusan berhasil diperbarui');
         } catch (\Exception $e) {
             Log::error('Error updating major recommendation: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Gagal memperbarui rekomendasi jurusan'])->withInput();

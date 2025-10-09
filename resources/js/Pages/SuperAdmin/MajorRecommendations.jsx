@@ -108,6 +108,8 @@ export default function MajorRecommendations({
             onSuccess: () => {
                 setShowAddModal(false);
                 reset();
+                // Force page refresh to show updated data
+                window.location.reload();
             },
             onError: (errors) => {
                 console.error("Add major errors:", errors);
@@ -184,6 +186,8 @@ export default function MajorRecommendations({
                 setShowEditModal(false);
                 setEditingMajor(null);
                 reset();
+                // Force page refresh to show updated data
+                window.location.reload();
             },
             onError: (errors) => {
                 console.error("Edit errors:", errors);
