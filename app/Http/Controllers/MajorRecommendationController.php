@@ -117,8 +117,8 @@ class MajorRecommendationController extends Controller
 
     public function store(Request $request)
     {
-        // Always return JSON response for AJAX requests
-        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        // Only return JSON for explicit API requests
+        if ($request->is('api/*') || $request->header('Accept') === 'application/json') {
             return $this->storeJson($request);
         }
 
@@ -235,8 +235,8 @@ class MajorRecommendationController extends Controller
 
     public function update(Request $request, MajorRecommendation $majorRecommendation)
     {
-        // Always return JSON response for AJAX requests
-        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        // Only return JSON for explicit API requests
+        if ($request->is('api/*') || $request->header('Accept') === 'application/json') {
             return $this->updateJson($request, $majorRecommendation);
         }
 
@@ -345,8 +345,8 @@ class MajorRecommendationController extends Controller
 
     public function destroy(Request $request, MajorRecommendation $majorRecommendation)
     {
-        // Always return JSON response for AJAX requests
-        if ($request->ajax() || $request->expectsJson() || $request->is('api/*') || $request->header('Accept') === 'application/json' || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+        // Only return JSON for explicit API requests
+        if ($request->is('api/*') || $request->header('Accept') === 'application/json') {
             return $this->destroyJson($majorRecommendation);
         }
 
