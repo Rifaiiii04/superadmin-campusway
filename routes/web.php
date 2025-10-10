@@ -260,6 +260,91 @@ Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationCo
 // SuperAdmin Major Recommendations - Inertia responses (Web)
 Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
 Route::get('/major-recommendations/stats', [App\Http\Controllers\MajorRecommendationController::class, 'stats']);
+Route::get('/major-recommendations/export', function() {
+    try {
+        $majors = \App\Models\MajorRecommendation::all();
+        
+        $filename = 'major_recommendations_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        // Create CSV content as string
+        $csvContent = '';
+        
+        // Add BOM for UTF-8
+        $csvContent .= "\xEF\xBB\xBF";
+        
+        // Header
+        $csvContent .= '"ID","Nama Jurusan","Kategori","Deskripsi","Mata Pelajaran Wajib","Mata Pelajaran Pilihan","Prospek Karir","Status"' . "\n";
+
+        // Data rows
+        foreach ($majors as $major) {
+            // Simple array to string conversion
+            $requiredStr = '';
+            if (is_array($major->required_subjects)) {
+                if (!empty($major->required_subjects)) {
+                    $names = [];
+                    foreach ($major->required_subjects as $item) {
+                        if (is_array($item) && isset($item['name'])) {
+                            $names[] = $item['name'];
+                        } else {
+                            $names[] = $item;
+                        }
+                    }
+                    $requiredStr = implode(';', $names);
+                }
+            } elseif (is_string($major->required_subjects)) {
+                $decoded = json_decode($major->required_subjects, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $requiredStr = implode(';', $decoded);
+                } else {
+                    $requiredStr = $major->required_subjects;
+                }
+            }
+            
+            $preferredStr = '';
+            if (is_array($major->preferred_subjects)) {
+                if (!empty($major->preferred_subjects)) {
+                    $names = [];
+                    foreach ($major->preferred_subjects as $item) {
+                        if (is_array($item) && isset($item['name'])) {
+                            $names[] = $item['name'];
+                        } else {
+                            $names[] = $item;
+                        }
+                    }
+                    $preferredStr = implode(';', $names);
+                }
+            } elseif (is_string($major->preferred_subjects)) {
+                $decoded = json_decode($major->preferred_subjects, true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $preferredStr = implode(';', $decoded);
+                } else {
+                    $preferredStr = $major->preferred_subjects;
+                }
+            }
+            
+            $csvContent .= sprintf('"%s","%s","%s","%s","%s","%s","%s","%s"' . "\n",
+                $major->id,
+                str_replace('"', '""', $major->major_name),
+                str_replace('"', '""', $major->category),
+                str_replace('"', '""', $major->description),
+                str_replace('"', '""', $requiredStr),
+                str_replace('"', '""', $preferredStr),
+                str_replace('"', '""', $major->career_prospects ?? ''),
+                $major->is_active ? 'Aktif' : 'Non-Aktif'
+            );
+        }
+
+        return response($csvContent, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => 'Gagal mengexport data: ' . $e->getMessage()], 500);
+    }
+})->withoutMiddleware([\App\Http\Middleware\HandleInertiaRequests::class]);
 Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
 Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
 Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);

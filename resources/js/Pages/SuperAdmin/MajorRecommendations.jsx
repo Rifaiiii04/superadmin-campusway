@@ -478,7 +478,7 @@ export default function MajorRecommendations({
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => {
-                                        window.open('/csv-export', '_blank');
+                                        window.open('/major-recommendations/export', '_blank');
                                     }}
                                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
                                 >
