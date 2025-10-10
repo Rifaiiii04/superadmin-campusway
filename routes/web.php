@@ -11,6 +11,11 @@ use Inertia\Inertia;
 // SUPER ADMIN ROUTES WITH UI RENDERING
 // ===========================================
 
+// CSRF token refresh endpoint
+Route::get('/csrf-token', function () {
+    return response()->json(['csrf_token' => csrf_token()]);
+});
+
 // Health check endpoint
 Route::get('/health', function () {
     return response()->json([
@@ -326,4 +331,3 @@ Route::get('/profile', function () {
 // Schools management page - REMOVED (duplicate route)
 
 // Questions management page - REMOVED (duplicate route)
-Route::get("/major-recommendations/stats", [App\Http\Controllers\MajorRecommendationController::class, "stats"]);
