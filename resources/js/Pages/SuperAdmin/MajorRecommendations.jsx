@@ -83,13 +83,12 @@ export default function MajorRecommendations({
         major_name: "",
         category: "",
         description: "",
-        required_subjects: [],
-        preferred_subjects: [],
+        mandatory_subjects: [],
+        optional_subjects: [],
         kurikulum_merdeka_subjects: [],
         kurikulum_2013_ipa_subjects: [],
         kurikulum_2013_ips_subjects: [],
         kurikulum_2013_bahasa_subjects: [],
-        optional_subjects: [],
         career_prospects: "",
         is_active: true,
     });
@@ -100,13 +99,12 @@ export default function MajorRecommendations({
         // Ensure all array fields are properly formatted
         const formData = {
             ...data,
-            required_subjects: Array.isArray(data.required_subjects) ? data.required_subjects : [],
-            preferred_subjects: Array.isArray(data.preferred_subjects) ? data.preferred_subjects : [],
+            mandatory_subjects: Array.isArray(data.mandatory_subjects) ? data.mandatory_subjects : [],
+            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
             kurikulum_merdeka_subjects: Array.isArray(data.kurikulum_merdeka_subjects) ? data.kurikulum_merdeka_subjects : [],
             kurikulum_2013_ipa_subjects: Array.isArray(data.kurikulum_2013_ipa_subjects) ? data.kurikulum_2013_ipa_subjects : [],
             kurikulum_2013_ips_subjects: Array.isArray(data.kurikulum_2013_ips_subjects) ? data.kurikulum_2013_ips_subjects : [],
             kurikulum_2013_bahasa_subjects: Array.isArray(data.kurikulum_2013_bahasa_subjects) ? data.kurikulum_2013_bahasa_subjects : [],
-            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
         };
 
         console.log("Add major form data:", formData);
@@ -204,13 +202,12 @@ export default function MajorRecommendations({
         // Ensure all array fields are properly formatted
         const formData = {
             ...data,
-            required_subjects: Array.isArray(data.required_subjects) ? data.required_subjects : [],
-            preferred_subjects: Array.isArray(data.preferred_subjects) ? data.preferred_subjects : [],
+            mandatory_subjects: Array.isArray(data.mandatory_subjects) ? data.mandatory_subjects : [],
+            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
             kurikulum_merdeka_subjects: Array.isArray(data.kurikulum_merdeka_subjects) ? data.kurikulum_merdeka_subjects : [],
             kurikulum_2013_ipa_subjects: Array.isArray(data.kurikulum_2013_ipa_subjects) ? data.kurikulum_2013_ipa_subjects : [],
             kurikulum_2013_ips_subjects: Array.isArray(data.kurikulum_2013_ips_subjects) ? data.kurikulum_2013_ips_subjects : [],
             kurikulum_2013_bahasa_subjects: Array.isArray(data.kurikulum_2013_bahasa_subjects) ? data.kurikulum_2013_bahasa_subjects : [],
-            optional_subjects: Array.isArray(data.optional_subjects) ? data.optional_subjects : [],
         };
 
         console.log("Formatted form data:", formData);
@@ -272,50 +269,50 @@ export default function MajorRecommendations({
             console.log("🔍 Current filter:", rumpunIlmuFilter);
             const matchesSearch =
                 searchTerm === "" ||
-                major.major_name
+                (major.major_name || "")
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase()) ||
                 major.description
                     ?.toLowerCase()
-                    .includes(searchTerm.toLowerCase()) ||
-                (Array.isArray(major.required_subjects)
-                    ? major.required_subjects.some((subject) =>
-                          subject
+                    ?.includes(searchTerm.toLowerCase()) ||
+                (Array.isArray(major.mandatory_subjects)
+                    ? major.mandatory_subjects.some((subject) =>
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
                     : false) ||
-                (Array.isArray(major.preferred_subjects)
-                    ? major.preferred_subjects.some((subject) =>
-                          subject
+                (Array.isArray(major.optional_subjects)
+                    ? major.optional_subjects.some((subject) =>
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
                     : false) ||
                 (Array.isArray(major.kurikulum_merdeka_subjects)
                     ? major.kurikulum_merdeka_subjects.some((subject) =>
-                          subject
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
                     : false) ||
                 (Array.isArray(major.kurikulum_2013_ipa_subjects)
                     ? major.kurikulum_2013_ipa_subjects.some((subject) =>
-                          subject
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
                     : false) ||
                 (Array.isArray(major.kurikulum_2013_ips_subjects)
                     ? major.kurikulum_2013_ips_subjects.some((subject) =>
-                          subject
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
                     : false) ||
                 (Array.isArray(major.kurikulum_2013_bahasa_subjects)
                     ? major.kurikulum_2013_bahasa_subjects.some((subject) =>
-                          subject
+                          (typeof subject === 'object' ? subject.name : subject)
                               .toLowerCase()
                               .includes(searchTerm.toLowerCase())
                       )
@@ -371,7 +368,7 @@ export default function MajorRecommendations({
         console.log("=== OPEN EDIT MODAL DEBUG ===");
         console.log("Major data received:", major);
         console.log("Major ID:", major.id);
-        console.log("Major preferred_subjects:", major.preferred_subjects);
+        console.log("Major optional_subjects:", major.optional_subjects);
 
         setEditingMajor(major);
         // Map old categories to new categories for edit modal
@@ -399,8 +396,8 @@ export default function MajorRecommendations({
             major_name: major.major_name,
             category: mappedCategory,
             description: major.description,
-            required_subjects: major.required_subjects || [],
-            preferred_subjects: major.preferred_subjects || [], // Use preferred_subjects from database
+            mandatory_subjects: major.mandatory_subjects || [],
+            optional_subjects: major.optional_subjects || [], // Use optional_subjects from controller
             kurikulum_merdeka_subjects: major.kurikulum_merdeka_subjects || [],
             kurikulum_2013_ipa_subjects:
                 major.kurikulum_2013_ipa_subjects || [],
@@ -1111,13 +1108,13 @@ export default function MajorRecommendations({
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            checked={data.preferred_subjects?.includes(
+                                                            checked={data.optional_subjects?.includes(
                                                                 subject
                                                             )}
                                                             onChange={() =>
                                                                 toggleSubject(
                                                                     subject,
-                                                                    "preferred_subjects"
+                                                                    "optional_subjects"
                                                                 )
                                                             }
                                                             className="rounded border-gray-300 text-green-600"
@@ -1447,13 +1444,13 @@ export default function MajorRecommendations({
                                                     >
                                                         <input
                                                             type="checkbox"
-                                                            checked={data.preferred_subjects?.includes(
+                                                            checked={data.optional_subjects?.includes(
                                                                 subject
                                                             )}
                                                             onChange={() =>
                                                                 toggleSubject(
                                                                     subject,
-                                                                    "preferred_subjects"
+                                                                    "optional_subjects"
                                                                 )
                                                             }
                                                             className="rounded border-gray-300 text-green-600"
@@ -1713,7 +1710,7 @@ export default function MajorRecommendations({
                                                         Mata Pelajaran Pilihan
                                                     </h4>
                                                     <div className="flex flex-wrap gap-2">
-                                                        {selectedMajor.preferred_subjects?.map(
+                                                        {selectedMajor.optional_subjects?.map(
                                                             (
                                                                 subject,
                                                                 index
