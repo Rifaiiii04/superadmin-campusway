@@ -12,6 +12,9 @@ Route::prefix('web')->group(function () {
     Route::get('/health', [ApiController::class, 'healthCheck']);
 });
 
+// Export routes (no middleware)
+Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
+
 // School API routes (with authentication)
 Route::prefix('school')->middleware('auth:sanctum')->group(function () {
     Route::get('/schools', [ApiController::class, 'getSchools']);

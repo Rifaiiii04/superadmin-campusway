@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
+// Export routes (outside web middleware)
+Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
+
 // ===========================================
 // SUPER ADMIN ROUTES WITH UI RENDERING
 // ===========================================
@@ -172,13 +175,11 @@ Route::get('/major-recommendations', [App\Http\Controllers\MajorRecommendationCo
 
 // SuperAdmin Major Recommendations - Inertia responses (Web)
 Route::post('/major-recommendations', [App\Http\Controllers\MajorRecommendationController::class, 'store']);
+Route::get('/major-recommendations/stats', [App\Http\Controllers\MajorRecommendationController::class, 'stats']);
 Route::get('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'show']);
 Route::put('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'update']);
 Route::delete('/major-recommendations/{majorRecommendation}', [App\Http\Controllers\MajorRecommendationController::class, 'destroy']);
 Route::patch('/major-recommendations/{majorRecommendation}/toggle', [App\Http\Controllers\MajorRecommendationController::class, 'toggle']);
-
-Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
-Route::get('/major-recommendations/stats', [App\Http\Controllers\MajorRecommendationController::class, 'stats']);
 
 // Alias route for /jurusan
 Route::get('/jurusan', [App\Http\Controllers\MajorRecommendationController::class, 'index']);
