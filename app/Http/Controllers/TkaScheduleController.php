@@ -12,9 +12,14 @@ class TkaScheduleController extends Controller
 {
     public function index(Request $request)
     {
+        // Force API response for /api/* paths
+        $isApiRequest = $request->wantsJson() || 
+                       $request->is('api/*') || 
+                       str_contains($request->path(), 'api/');
+        
         try {
             // Check if this is an API request
-            if ($request->wantsJson() || $request->is('api/*')) {
+            if ($isApiRequest) {
                 $schoolId = $request->query('school_id');
                 
                 $query = TkaSchedule::where('is_active', true)
@@ -46,7 +51,7 @@ class TkaScheduleController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error fetching TKA schedules: ' . $e->getMessage());
             
-            if ($request->wantsJson() || $request->is('api/*')) {
+            if ($isApiRequest) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Gagal memuat data jadwal TKA',
