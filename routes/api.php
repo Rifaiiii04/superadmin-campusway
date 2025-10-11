@@ -90,5 +90,4 @@ Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommend
 // ===========================================
 // TKA SCHEDULES PUBLIC ROUTES
 // ===========================================
-Route::get('/tka-schedules', [TkaScheduleController::class, 'index']);
-Route::get('/tka-schedules/upcoming', [TkaScheduleController::class, 'upcoming']);
+// Note: TKA Schedules routes are already defined in web and school groups above
