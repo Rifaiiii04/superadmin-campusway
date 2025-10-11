@@ -369,7 +369,7 @@ Route::delete('/results/{result}', [App\Http\Controllers\ResultController::class
 Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'export']);
 
 // SuperAdmin TKA Schedules (UI) - Using controller
-Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
+Route::get('/admin/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
 
 // SuperAdmin TKA Schedules - Inertia responses (Web)
 Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
