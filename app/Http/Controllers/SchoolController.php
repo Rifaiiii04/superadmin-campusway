@@ -137,8 +137,14 @@ class SchoolController extends Controller
     public function show(School $school)
     {
         try {
-            // Load students with their choices
-            $school->load(['students.studentChoice.major']);
+            // Load students with their choices and major recommendations
+            $school->load([
+                'students' => function($query) {
+                    $query->orderBy('created_at', 'desc');
+                },
+                'students.studentChoice.major',
+                'students.studentChoice.majorRecommendation'
+            ]);
             
             // Get students count
             $studentsCount = $school->students->count();
@@ -153,6 +159,7 @@ class SchoolController extends Controller
             Log::info('School Detail - School ID: ' . $school->id);
             Log::info('School Detail - Students count: ' . $studentsCount);
             Log::info('School Detail - Students with choices: ' . $studentsWithChoices);
+            Log::info('School Detail - Students data: ', $school->students->toArray());
             
             return Inertia::render('SuperAdmin/SchoolDetail', [
                 'title' => 'Detail Sekolah',
@@ -163,13 +170,15 @@ class SchoolController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error fetching school detail: ' . $e->getMessage());
+            Log::error('SchoolController::show - Stack trace: ' . $e->getTraceAsString());
+            
             return Inertia::render('SuperAdmin/SchoolDetail', [
                 'title' => 'Detail Sekolah',
                 'school' => $school,
                 'studentsCount' => 0,
                 'studentsWithChoices' => 0,
                 'studentsWithoutChoices' => 0,
-                'error' => 'Gagal memuat detail sekolah'
+                'error' => 'Gagal memuat detail sekolah: ' . $e->getMessage()
             ]);
         }
     }

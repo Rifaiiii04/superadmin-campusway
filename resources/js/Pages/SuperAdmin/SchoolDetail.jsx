@@ -51,7 +51,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {school.students_count || 0}
+                                    {studentsCount || 0}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
@@ -62,9 +62,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {school.students?.filter(
-                                        (s) => s.major_choices?.length > 0
-                                    ).length || 0}
+                                    {studentsWithChoices || 0}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
@@ -135,7 +133,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900">
-                                                    {student.kelas}
+                                                    {student.kelas || "N/A"}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
@@ -165,23 +163,12 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {student.major_choices &&
-                                                student.major_choices.length >
-                                                    0 ? (
+                                                {student.student_choice &&
+                                                student.student_choice.major_recommendation ? (
                                                     <div className="space-y-1">
-                                                        {student.major_choices.map(
-                                                            (choice, index) => (
-                                                                <span
-                                                                    key={index}
-                                                                    className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800 mr-1"
-                                                                >
-                                                                    {choice
-                                                                        .major
-                                                                        ?.major_name ||
-                                                                        "Unknown"}
-                                                                </span>
-                                                            )
-                                                        )}
+                                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
+                                                            {student.student_choice.major_recommendation.major_name || "Unknown"}
+                                                        </span>
                                                     </div>
                                                 ) : (
                                                     <span className="text-sm text-gray-500">
