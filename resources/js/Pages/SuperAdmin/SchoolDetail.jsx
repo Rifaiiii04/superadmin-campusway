@@ -11,6 +11,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
     console.log("School Detail - Students without choices:", studentsWithoutChoices);
     console.log("School Detail - Error:", error);
     console.log("School Detail - Students array:", school?.students);
+    console.log("School Detail - All props:", { school, studentsCount, studentsWithChoices, studentsWithoutChoices, error });
 
     return (
         <SuperAdminLayout>
@@ -51,7 +52,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {studentsCount || 0}
+                                    {studentsCount !== undefined ? studentsCount : (school?.students?.length || 0)}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
@@ -62,7 +63,7 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {studentsWithChoices || 0}
+                                    {studentsWithChoices !== undefined ? studentsWithChoices : 0}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">

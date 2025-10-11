@@ -161,13 +161,18 @@ class SchoolController extends Controller
             Log::info('School Detail - Students without choices: ' . $studentsWithoutChoices);
             Log::info('School Detail - Students data: ', $school->students->toArray());
             
-            return Inertia::render('SuperAdmin/SchoolDetail', [
+            // Additional debug for Inertia data
+            $inertiaData = [
                 'title' => 'Detail Sekolah',
                 'school' => $school,
                 'studentsCount' => $studentsCount,
                 'studentsWithChoices' => $studentsWithChoices,
                 'studentsWithoutChoices' => $studentsWithoutChoices,
-            ]);
+            ];
+            
+            Log::info('School Detail - Inertia data being sent:', $inertiaData);
+            
+            return Inertia::render('SuperAdmin/SchoolDetail', $inertiaData);
         } catch (\Exception $e) {
             Log::error('Error fetching school detail: ' . $e->getMessage());
             Log::error('SchoolController::show - Stack trace: ' . $e->getTraceAsString());
