@@ -86,10 +86,19 @@ class SchoolAuthController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('School login error: ' . $e->getMessage());
+            Log::error('School login error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan server'
+                'message' => 'Terjadi kesalahan server',
+                'debug' => [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
     }
