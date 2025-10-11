@@ -56,7 +56,7 @@ class SchoolAuthController extends Controller
             }
 
             // Verifikasi password
-            if (!Hash::check($password, $school->password_hash)) {
+            if (!Hash::check($password, $school->password)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Password salah'
@@ -196,7 +196,7 @@ class SchoolAuthController extends Controller
             }
 
             // Update password
-            $school->password_hash = Hash::make($request->new_password);
+            $school->password = Hash::make($request->new_password);
             $school->save();
 
             Log::info('School password updated successfully', [
