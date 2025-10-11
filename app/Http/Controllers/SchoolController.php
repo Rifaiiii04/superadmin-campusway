@@ -137,20 +137,19 @@ class SchoolController extends Controller
     public function show(School $school)
     {
         try {
-            // Load students with their choices and major recommendations
+            // Load students with their choices
             $school->load([
                 'students' => function($query) {
                     $query->orderBy('created_at', 'desc');
                 },
-                'students.studentChoice.major',
-                'students.studentChoice.majorRecommendation'
+                'students.studentChoice'
             ]);
             
-            // Get students count
-            $studentsCount = $school->students->count();
+            // Get students count - use fresh query to ensure accurate count
+            $studentsCount = $school->students()->count();
             
             // Get students with choices count
-            $studentsWithChoices = $school->students->where('studentChoice', '!=', null)->count();
+            $studentsWithChoices = $school->students()->whereHas('studentChoice')->count();
             
             // Get students without choices count
             $studentsWithoutChoices = $studentsCount - $studentsWithChoices;
@@ -159,6 +158,7 @@ class SchoolController extends Controller
             Log::info('School Detail - School ID: ' . $school->id);
             Log::info('School Detail - Students count: ' . $studentsCount);
             Log::info('School Detail - Students with choices: ' . $studentsWithChoices);
+            Log::info('School Detail - Students without choices: ' . $studentsWithoutChoices);
             Log::info('School Detail - Students data: ', $school->students->toArray());
             
             return Inertia::render('SuperAdmin/SchoolDetail', [
