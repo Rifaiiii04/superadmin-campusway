@@ -15,23 +15,29 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'super-admin/api/*'],
 
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
         'http://103.23.198.101',
+        'http://103.23.198.101:3000',
         'http://localhost:3000',
         'http://127.0.0.1:3000',
+        'http://10.112.234.213:3000',
+        'http://10.112.234.213',
     ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '/^http:\/\/10\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?$/',
+        '/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/',
+    ],
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Content-Disposition', 'Content-Type', 'Content-Length'],
+    'exposed_headers' => ['Content-Disposition', 'Content-Type', 'Content-Length', 'Authorization'],
 
-    'max_age' => 0,
+    'max_age' => 3600,
 
     'supports_credentials' => true,
 
