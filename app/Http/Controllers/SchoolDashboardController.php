@@ -229,35 +229,64 @@ class SchoolDashboardController extends Controller
      */
     private function getMajorWithSubjects($major)
     {
-        $educationLevel = $this->determineEducationLevel($major->rumpun_ilmu);
-        
-        // Get subjects from database mapping
-        $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
-            ->with('subject')
-            ->get();
-        
-        $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
-            ->pluck('subject.name')
-            ->toArray();
+        try {
+            $educationLevel = $this->determineEducationLevel($major->category ?? 'Saintek');
             
-        $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
-            ->pluck('subject.name')
-            ->toArray();
+            // Get subjects from database mapping with error handling
+            $mandatorySubjects = [];
+            $optionalSubjects = [];
+            
+            try {
+                $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+                    ->with('subject')
+                    ->get();
+                
+                $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
+                    ->pluck('subject.name')
+                    ->filter()
+                    ->toArray();
+                    
+                $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
+                    ->pluck('subject.name')
+                    ->filter()
+                    ->toArray();
+            } catch (\Exception $e) {
+                // If mapping fails, use empty arrays
+                Log::warning('Failed to load subject mappings for major ' . $major->id . ': ' . $e->getMessage());
+            }
         
-        return [
-            'id' => $major->id,
-            'name' => $major->major_name,
-            'description' => $major->description,
-            'career_prospects' => $major->career_prospects,
-            'category' => $major->rumpun_ilmu ?? 'Saintek',
-            'education_level' => $educationLevel,
-            'required_subjects' => $mandatorySubjects,
-            'preferred_subjects' => $optionalSubjects,
-            'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
-            'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
-            'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
-            'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
-        ];
+            return [
+                'id' => $major->id,
+                'name' => $major->major_name,
+                'description' => $major->description,
+                'career_prospects' => $major->career_prospects,
+                'category' => $major->category ?? 'Saintek',
+                'education_level' => $educationLevel,
+                'required_subjects' => $mandatorySubjects,
+                'preferred_subjects' => $optionalSubjects,
+                'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
+            // Return basic major data without subjects
+            return [
+                'id' => $major->id ?? 0,
+                'name' => $major->major_name ?? 'Unknown Major',
+                'description' => $major->description ?? '',
+                'career_prospects' => $major->career_prospects ?? '',
+                'category' => $major->category ?? 'Saintek',
+                'education_level' => 'SMA/MA',
+                'required_subjects' => [],
+                'preferred_subjects' => [],
+                'kurikulum_merdeka_subjects' => [],
+                'kurikulum_2013_ipa_subjects' => [],
+                'kurikulum_2013_ips_subjects' => [],
+                'kurikulum_2013_bahasa_subjects' => []
+            ];
+        }
     }
 
     /**
