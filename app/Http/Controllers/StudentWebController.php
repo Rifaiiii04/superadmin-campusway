@@ -297,7 +297,7 @@ class StudentWebController extends Controller
     public function getStudentChoice($studentId)
     {
         try {
-            $choice = StudentChoice::with('major')
+            $choice = StudentChoice::with('majorRecommendation')
                 ->where('student_id', $studentId)
                 ->first();
 
