@@ -12,6 +12,14 @@ use Illuminate\Support\Facades\Log;
 class SchoolDashboardController extends Controller
 {
     /**
+     * Get dashboard overview data untuk sekolah (alias for dashboard)
+     */
+    public function index(Request $request)
+    {
+        return $this->dashboard($request);
+    }
+
+    /**
      * Get dashboard overview data untuk sekolah
      */
     public function dashboard(Request $request)
