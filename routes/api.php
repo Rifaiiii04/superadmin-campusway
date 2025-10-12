@@ -41,10 +41,10 @@ Route::prefix('web')->group(function () {
 Route::prefix('school')->group(function () {
     // School authentication
     Route::post('/login', [SchoolAuthController::class, 'login']);
-    Route::post('/logout', [SchoolAuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::post('/logout', [SchoolAuthController::class, 'logout'])->middleware('school.auth');
     
     // Protected routes (require authentication)
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('school.auth')->group(function () {
         Route::get('/profile', [SchoolAuthController::class, 'profile']);
         Route::get('/dashboard', [SchoolDashboardController::class, 'index']);
         Route::get('/students', [SchoolDashboardController::class, 'students']);

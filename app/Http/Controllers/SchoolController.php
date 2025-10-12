@@ -137,12 +137,12 @@ class SchoolController extends Controller
     public function show(School $school)
     {
         try {
-            // Load students with their choices
+            // Load students with their choices and major details
             $school->load([
                 'students' => function($query) {
                     $query->orderBy('created_at', 'desc');
                 },
-                'students.studentChoice'
+                'students.studentChoice.majorRecommendation'
             ]);
             
             // Get students count - use fresh query to ensure accurate count

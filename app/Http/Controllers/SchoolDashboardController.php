@@ -105,12 +105,13 @@ class SchoolDashboardController extends Controller
     public function students(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
-
+            // Get school from middleware (SchoolAuth adds school to request)
+            $school = $request->school;
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
+                    'message' => 'Data sekolah tidak ditemukan'
                 ], 404);
             }
 
