@@ -25,12 +25,13 @@ class SchoolDashboardController extends Controller
     public function dashboard(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
-
+            // Get school from middleware (SchoolAuth adds school to request)
+            $school = $request->school;
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
+                    'message' => 'Data sekolah tidak ditemukan'
                 ], 404);
             }
 
@@ -162,7 +163,7 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -279,7 +280,7 @@ class SchoolDashboardController extends Controller
     public function majorStatistics(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -357,7 +358,7 @@ class SchoolDashboardController extends Controller
                 'school_id' => 'required|exists:schools,id'
             ]);
 
-            $school = School::find($request->school_id);
+            $school = $request->school;
             if (!$school) {
                 return response()->json([
                     'success' => false,
@@ -378,7 +379,7 @@ class SchoolDashboardController extends Controller
             $student = Student::create([
                 'nisn' => $request->nisn,
                 'name' => $request->name,
-                'school_id' => $request->school_id,
+                'school_id' => $school->id,
                 'kelas' => $request->kelas,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -426,7 +427,7 @@ class SchoolDashboardController extends Controller
     public function studentsWithoutChoice(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -479,7 +480,7 @@ class SchoolDashboardController extends Controller
     public function exportStudents(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -566,7 +567,7 @@ class SchoolDashboardController extends Controller
     public function updateStudent(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -651,7 +652,7 @@ class SchoolDashboardController extends Controller
     public function deleteStudent(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -700,7 +701,7 @@ class SchoolDashboardController extends Controller
         try {
             // Log request data for debugging
             Log::info('Import students request received', [
-                'school_id' => $request->school_id,
+                'school_id' => $school->id,
                 'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file',
                 'file_size' => $request->file('file') ? $request->file('file')->getSize() : 0
             ]);
@@ -741,7 +742,7 @@ class SchoolDashboardController extends Controller
                 'school_id' => 'required|exists:schools,id'
             ]);
 
-            $school = School::find($request->school_id);
+            $school = $request->school;
             if (!$school) {
                 return response()->json([
                     'success' => false,
@@ -881,7 +882,7 @@ class SchoolDashboardController extends Controller
                     Student::create([
                         'nisn' => $normalizedRow['nisn'],
                         'name' => $normalizedRow['name'],
-                        'school_id' => $request->school_id,
+                        'school_id' => $school->id,
                         'kelas' => $normalizedRow['kelas'],
                         'email' => $normalizedRow['email'] ?: null,
                         'phone' => $normalizedRow['phone'] ?: null,
@@ -912,7 +913,7 @@ class SchoolDashboardController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Import students validation failed', [
                 'errors' => $e->errors(),
-                'school_id' => $request->school_id ?? 'Not provided',
+                'school_id' => $school->id ?? 'Not provided',
                 'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file'
             ]);
             
@@ -1192,7 +1193,7 @@ class SchoolDashboardController extends Controller
     public function getClasses(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
