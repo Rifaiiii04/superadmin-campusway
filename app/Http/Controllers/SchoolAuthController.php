@@ -56,16 +56,30 @@ class SchoolAuthController extends Controller
                 ], 404);
             }
 
-            // Verifikasi password
-            if (!Hash::check($password, $school->password)) {
+            // Verifikasi password - handle both hashed and plain text passwords
+            $passwordValid = false;
+            if (str_starts_with($school->password, '$2y$')) {
+                // Password is hashed
+                $passwordValid = Hash::check($password, $school->password);
+            } else {
+                // Password is plain text
+                $passwordValid = $password === $school->password;
+            }
+            
+            if (!$passwordValid) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Password salah'
                 ], 401);
             }
 
-            // Generate token sederhana (bisa diganti dengan JWT atau Sanctum)
-            $token = base64_encode($school->id . '|' . time() . '|' . $school->npsn);
+            // Generate Sanctum token
+            try {
+                $token = $school->createToken('school-token')->plainTextToken;
+            } catch (\Exception $e) {
+                Log::error('Token creation error: ' . $e->getMessage());
+                throw $e;
+            }
 
             Log::info('School login successful', [
                 'school_id' => $school->id,
@@ -79,7 +93,7 @@ class SchoolAuthController extends Controller
                 'data' => [
                     'token' => $token,
                     'school' => [
-                        'id' => $school->id,
+                        'id' => $school->id,    
                         'npsn' => $school->npsn,
                         'name' => $school->name
                     ]
@@ -204,6 +218,67 @@ class SchoolAuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Update school password error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dashboard data for school
+     */
+    public function dashboard(Request $request)
+    {
+        try {
+            $school = $request->user('sanctum');
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            // Get total students
+            $totalStudents = \App\Models\Student::where('school_id', $school->id)->count();
+            
+            // Get students with choices
+            $studentsWithChoices = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->count();
+            
+            // Get students without choices
+            $studentsWithoutChoices = $totalStudents - $studentsWithChoices;
+            
+            // Get recent students
+            $recentStudents = \App\Models\Student::where('school_id', $school->id)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get(['id', 'name', 'nisn', 'created_at']);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
+                        'address' => $school->address,
+                        'phone' => $school->phone,
+                        'email' => $school->email,
+                    ],
+                    'statistics' => [
+                        'total_students' => $totalStudents,
+                        'students_with_choices' => $studentsWithChoices,
+                        'students_without_choices' => $studentsWithoutChoices,
+                    ],
+                    'recent_students' => $recentStudents
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('School dashboard error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan server'

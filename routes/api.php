@@ -47,6 +47,29 @@ Route::prefix('school')->group(function () {
         ]);
     });
     
+    // Test dashboard without authentication
+    Route::get('/test-dashboard-data', function () {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'school' => [
+                    'id' => 8,
+                    'name' => 'SMK Negeri 1 Karawang',
+                    'npsn' => '44556677',
+                    'address' => 'Test Address',
+                    'phone' => '021-123456',
+                    'email' => 'test@school.com',
+                ],
+                'statistics' => [
+                    'total_students' => 100,
+                    'students_with_choices' => 50,
+                    'students_without_choices' => 50,
+                ],
+                'recent_students' => []
+            ]
+        ]);
+    });
+    
     // Protected school routes (with authentication)
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/schools', [ApiController::class, 'getSchools']);
