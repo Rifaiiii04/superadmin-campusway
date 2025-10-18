@@ -26,6 +26,14 @@ class StudentChoice extends Model
     }
 
     /**
+     * Get the major for this choice
+     */
+    public function major()
+    {
+        return $this->belongsTo(Major::class);
+    }
+
+    /**
      * Get the major recommendation for this choice
      */
     public function majorRecommendation()

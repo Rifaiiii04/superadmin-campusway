@@ -285,4 +285,101 @@ class SchoolAuthController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get all students for the school
+     */
+    public function getStudents(Request $request)
+    {
+        try {
+            $school = $request->user('sanctum');
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            $students = \App\Models\Student::where('school_id', $school->id)
+                ->with(['chosenMajor'])
+                ->orderBy('name')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
+                    ],
+                    'students' => $students,
+                    'total_students' => $students->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get major statistics for the school
+     */
+    public function getMajorStatistics(Request $request)
+    {
+        try {
+            $school = $request->user('sanctum');
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            // Get students with choices
+            $studentsWithChoices = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->with(['major'])->get();
+
+            // Group by major
+            $majorStats = $studentsWithChoices->groupBy('major_id')->map(function($choices, $majorId) {
+                $major = $choices->first()->major;
+                return [
+                    'major_id' => $majorId,
+                    'major_name' => $major->name,
+                    'description' => $major->description,
+                    'category' => $major->rumpun_ilmu ?? 'Umum',
+                    'student_count' => $choices->count(),
+                    'percentage' => 0 // Will be calculated on frontend
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
+                    ],
+                    'total_students_with_choice' => $studentsWithChoices->count(),
+                    'major_statistics' => $majorStats
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get major statistics error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
 }

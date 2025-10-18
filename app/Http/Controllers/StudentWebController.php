@@ -420,6 +420,46 @@ class StudentWebController extends Controller
     }
 
     /**
+     * Get TKA schedules
+     */
+    public function getTkaSchedules(Request $request)
+    {
+        try {
+            // For now, return empty array since TKA schedules functionality is not implemented yet
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Get TKA schedules error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jadwal ArahPotensi'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get upcoming TKA schedules
+     */
+    public function getUpcomingTkaSchedules(Request $request)
+    {
+        try {
+            // For now, return empty array since TKA schedules functionality is not implemented yet
+            return response()->json([
+                'success' => true,
+                'data' => []
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Get upcoming TKA schedules error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jadwal ArahPotensi mendatang'
+            ], 500);
+        }
+    }
+
+    /**
      * Test endpoint untuk debugging
      */
     public function testChooseMajor(Request $request)

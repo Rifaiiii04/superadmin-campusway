@@ -45,6 +45,14 @@ class Student extends Model
         return $this->hasOne(StudentChoice::class);
     }
 
+    /**
+     * Get the chosen major for the student
+     */
+    public function chosenMajor()
+    {
+        return $this->hasOneThrough(Major::class, StudentChoice::class, 'student_id', 'id', 'id', 'major_id');
+    }
+
     public function studentSubjects()
     {
         return $this->hasMany(StudentSubject::class);
