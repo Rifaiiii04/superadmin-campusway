@@ -10,9 +10,38 @@ use Inertia\Inertia;
 
 class TkaScheduleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Force API response for /api/* paths
+        $isApiRequest = $request->wantsJson() || 
+                       $request->is('api/*') || 
+                       str_contains($request->path(), 'api/');
+        
         try {
+            // Check if this is an API request
+            if ($isApiRequest) {
+                $schoolId = $request->query('school_id');
+                
+                $query = TkaSchedule::where('is_active', true)
+                    ->orderBy('start_date', 'desc');
+                
+                // Filter by school if provided
+                if ($schoolId) {
+                    $query->where(function($q) use ($schoolId) {
+                        $q->whereNull('target_schools')
+                          ->orWhereJsonContains('target_schools', $schoolId);
+                    });
+                }
+                
+                $schedules = $query->get();
+                
+                return response()->json([
+                    'success' => true,
+                    'data' => $schedules
+                ], 200);
+            }
+            
+            // For web requests (Inertia)
             $schedules = TkaSchedule::orderBy('start_date', 'desc')->paginate(10);
             
             return Inertia::render('SuperAdmin/TkaSchedules', [
@@ -21,6 +50,15 @@ class TkaScheduleController extends Controller
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching TKA schedules: ' . $e->getMessage());
+            
+            if ($isApiRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memuat data jadwal TKA',
+                    'data' => []
+                ], 500);
+            }
+            
             return Inertia::render('SuperAdmin/TkaSchedules', [
                 'title' => 'Jadwal TKA',
                 'schedules' => [
@@ -32,6 +70,40 @@ class TkaScheduleController extends Controller
                 ],
                 'error' => 'Gagal memuat data jadwal TKA'
             ]);
+        }
+    }
+    
+    public function upcoming(Request $request)
+    {
+        try {
+            $schoolId = $request->query('school_id');
+            $now = now();
+            
+            $query = TkaSchedule::where('is_active', true)
+                ->where('end_date', '>=', $now)
+                ->orderBy('start_date', 'asc');
+            
+            // Filter by school if provided
+            if ($schoolId) {
+                $query->where(function($q) use ($schoolId) {
+                    $q->whereNull('target_schools')
+                      ->orWhereJsonContains('target_schools', $schoolId);
+                });
+            }
+            
+            $schedules = $query->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $schedules
+            ], 200);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching upcoming TKA schedules: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat jadwal TKA mendatang',
+                'data' => []
+            ], 500);
         }
     }
 

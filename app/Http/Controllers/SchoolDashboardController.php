@@ -12,17 +12,26 @@ use Illuminate\Support\Facades\Log;
 class SchoolDashboardController extends Controller
 {
     /**
+     * Get dashboard overview data untuk sekolah (alias for dashboard)
+     */
+    public function index(Request $request)
+    {
+        return $this->dashboard($request);
+    }
+
+    /**
      * Get dashboard overview data untuk sekolah
      */
     public function dashboard(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
-
+            // Get school from middleware (SchoolAuth adds school to request)
+            $school = $request->school;
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
+                    'message' => 'Data sekolah tidak ditemukan'
                 ], 404);
             }
 
@@ -97,12 +106,13 @@ class SchoolDashboardController extends Controller
     public function students(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
-
+            // Get school from middleware (SchoolAuth adds school to request)
+            $school = $request->school;
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
+                    'message' => 'Data sekolah tidak ditemukan'
                 ], 404);
             }
 
@@ -153,7 +163,7 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -219,35 +229,64 @@ class SchoolDashboardController extends Controller
      */
     private function getMajorWithSubjects($major)
     {
-        $educationLevel = $this->determineEducationLevel($major->rumpun_ilmu);
-        
-        // Get subjects from database mapping
-        $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
-            ->with('subject')
-            ->get();
-        
-        $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
-            ->pluck('subject.name')
-            ->toArray();
+        try {
+            $educationLevel = $this->determineEducationLevel($major->category ?? 'Saintek');
             
-        $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
-            ->pluck('subject.name')
-            ->toArray();
+            // Get subjects from database mapping with error handling
+            $mandatorySubjects = [];
+            $optionalSubjects = [];
+            
+            try {
+                $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+                    ->with('subject')
+                    ->get();
+                
+                $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
+                    ->pluck('subject.name')
+                    ->filter()
+                    ->toArray();
+                    
+                $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
+                    ->pluck('subject.name')
+                    ->filter()
+                    ->toArray();
+            } catch (\Exception $e) {
+                // If mapping fails, use empty arrays
+                Log::warning('Failed to load subject mappings for major ' . $major->id . ': ' . $e->getMessage());
+            }
         
-        return [
-            'id' => $major->id,
-            'name' => $major->major_name,
-            'description' => $major->description,
-            'career_prospects' => $major->career_prospects,
-            'category' => $major->rumpun_ilmu ?? 'Saintek',
-            'education_level' => $educationLevel,
-            'required_subjects' => $mandatorySubjects,
-            'preferred_subjects' => $optionalSubjects,
-            'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
-            'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
-            'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
-            'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
-        ];
+            return [
+                'id' => $major->id,
+                'name' => $major->major_name,
+                'description' => $major->description,
+                'career_prospects' => $major->career_prospects,
+                'category' => $major->category ?? 'Saintek',
+                'education_level' => $educationLevel,
+                'required_subjects' => $mandatorySubjects,
+                'preferred_subjects' => $optionalSubjects,
+                'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
+                'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
+                'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
+                'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
+            // Return basic major data without subjects
+            return [
+                'id' => $major->id ?? 0,
+                'name' => $major->major_name ?? 'Unknown Major',
+                'description' => $major->description ?? '',
+                'career_prospects' => $major->career_prospects ?? '',
+                'category' => $major->category ?? 'Saintek',
+                'education_level' => 'SMA/MA',
+                'required_subjects' => [],
+                'preferred_subjects' => [],
+                'kurikulum_merdeka_subjects' => [],
+                'kurikulum_2013_ipa_subjects' => [],
+                'kurikulum_2013_ips_subjects' => [],
+                'kurikulum_2013_bahasa_subjects' => []
+            ];
+        }
     }
 
     /**
@@ -270,7 +309,7 @@ class SchoolDashboardController extends Controller
     public function majorStatistics(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -356,6 +395,13 @@ class SchoolDashboardController extends Controller
                 'password' => 'required|string|min:6'
             ]);
 
+            $school = $request->school;
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
             // Cek apakah NISN sudah ada
             $existingStudent = Student::where('nisn', $request->nisn)->first();
             if ($existingStudent) {
@@ -417,7 +463,7 @@ class SchoolDashboardController extends Controller
     public function studentsWithoutChoice(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -470,7 +516,7 @@ class SchoolDashboardController extends Controller
     public function exportStudents(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -642,7 +688,7 @@ class SchoolDashboardController extends Controller
     public function deleteStudent(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
+            $school = $request->school;
 
             if (!$school) {
                 return response()->json([
@@ -691,7 +737,7 @@ class SchoolDashboardController extends Controller
         try {
             // Log request data for debugging
             Log::info('Import students request received', [
-                'school_id' => $request->school_id,
+                'school_id' => $school->id,
                 'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file',
                 'file_size' => $request->file('file') ? $request->file('file')->getSize() : 0
             ]);
@@ -732,7 +778,7 @@ class SchoolDashboardController extends Controller
                 'school_id' => 'required|exists:schools,id'
             ]);
 
-            $school = School::find($request->school_id);
+            $school = $request->school;
             if (!$school) {
                 return response()->json([
                     'success' => false,
@@ -872,7 +918,7 @@ class SchoolDashboardController extends Controller
                     Student::create([
                         'nisn' => $normalizedRow['nisn'],
                         'name' => $normalizedRow['name'],
-                        'school_id' => $request->school_id,
+                        'school_id' => $school->id,
                         'kelas' => $normalizedRow['kelas'],
                         'email' => $normalizedRow['email'] ?: null,
                         'phone' => $normalizedRow['phone'] ?: null,
@@ -903,7 +949,7 @@ class SchoolDashboardController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Import students validation failed', [
                 'errors' => $e->errors(),
-                'school_id' => $request->school_id ?? 'Not provided',
+                'school_id' => $school->id ?? 'Not provided',
                 'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file'
             ]);
             

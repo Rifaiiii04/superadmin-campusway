@@ -3,15 +3,30 @@ import { Head, Link } from "@inertiajs/react";
 import SuperAdminLayout from "@/Layouts/SuperAdminLayout";
 import { ArrowLeft, Building2, Users, GraduationCap } from "lucide-react";
 
-export default function SchoolDetail({ school, studentsCount, studentsWithChoices, studentsWithoutChoices, error }) {
+export default function SchoolDetail({
+    school,
+    studentsCount,
+    studentsWithChoices,
+    studentsWithoutChoices,
+    error,
+}) {
     // Debug data
     console.log("School Detail - School data:", school);
     console.log("School Detail - Students count:", studentsCount);
     console.log("School Detail - Students with choices:", studentsWithChoices);
-    console.log("School Detail - Students without choices:", studentsWithoutChoices);
+    console.log(
+        "School Detail - Students without choices:",
+        studentsWithoutChoices
+    );
     console.log("School Detail - Error:", error);
     console.log("School Detail - Students array:", school?.students);
-    console.log("School Detail - All props:", { school, studentsCount, studentsWithChoices, studentsWithoutChoices, error });
+    console.log("School Detail - All props:", {
+        school,
+        studentsCount,
+        studentsWithChoices,
+        studentsWithoutChoices,
+        error,
+    });
 
     return (
         <SuperAdminLayout>
@@ -52,7 +67,9 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {studentsCount !== undefined ? studentsCount : (school?.students?.length || 0)}
+                                    {studentsCount !== undefined
+                                        ? studentsCount
+                                        : school?.students?.length || 0}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
@@ -63,7 +80,9 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                     </span>
                                 </div>
                                 <p className="text-2xl font-bold text-gray-900 mt-1">
-                                    {studentsWithChoices !== undefined ? studentsWithChoices : 0}
+                                    {studentsWithChoices !== undefined
+                                        ? studentsWithChoices
+                                        : 0}
                                 </p>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-4">
@@ -164,11 +183,16 @@ export default function SchoolDetail({ school, studentsCount, studentsWithChoice
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {student.student_choice &&
-                                                student.student_choice.major_recommendation ? (
+                                                {student.studentChoice &&
+                                                student.studentChoice
+                                                    .majorRecommendation ? (
                                                     <div className="space-y-1">
                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
-                                                            {student.student_choice.major_recommendation.major_name || "Unknown"}
+                                                            {student
+                                                                .studentChoice
+                                                                .majorRecommendation
+                                                                .major_name ||
+                                                                "Unknown"}
                                                         </span>
                                                     </div>
                                                 ) : (

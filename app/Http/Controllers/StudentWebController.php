@@ -270,10 +270,26 @@ class StudentWebController extends Controller
                 'major_id' => $request->major_id
             ]);
 
+            // Load the choice with major recommendation
+            $choice->load('majorRecommendation');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pilihan jurusan berhasil disimpan',
-                'data' => $choice
+                'data' => [
+                    'id' => $choice->id,
+                    'student_id' => $choice->student_id,
+                    'major_id' => $choice->major_id,
+                    'major' => $choice->majorRecommendation ? [
+                        'id' => $choice->majorRecommendation->id,
+                        'major_name' => $choice->majorRecommendation->major_name,
+                        'description' => $choice->majorRecommendation->description,
+                        'category' => $choice->majorRecommendation->category,
+                    ] : null,
+                    'chosen_at' => $choice->created_at,
+                    'created_at' => $choice->created_at,
+                    'updated_at' => $choice->updated_at
+                ]
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -297,7 +313,7 @@ class StudentWebController extends Controller
     public function getStudentChoice($studentId)
     {
         try {
-            $choice = StudentChoice::with('major')
+            $choice = StudentChoice::with('majorRecommendation')
                 ->where('student_id', $studentId)
                 ->first();
 
@@ -311,7 +327,27 @@ class StudentWebController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $choice
+                'data' => [
+                    'id' => $choice->id,
+                    'student_id' => $choice->student_id,
+                    'major_id' => $choice->major_id,
+                    'major' => $choice->majorRecommendation ? [
+                        'id' => $choice->majorRecommendation->id,
+                        'major_name' => $choice->majorRecommendation->major_name,
+                        'description' => $choice->majorRecommendation->description,
+                        'category' => $choice->majorRecommendation->category,
+                        'career_prospects' => $choice->majorRecommendation->career_prospects,
+                        'required_subjects' => $choice->majorRecommendation->required_subjects,
+                        'preferred_subjects' => $choice->majorRecommendation->preferred_subjects,
+                        'kurikulum_merdeka_subjects' => $choice->majorRecommendation->kurikulum_merdeka_subjects,
+                        'kurikulum_2013_ipa_subjects' => $choice->majorRecommendation->kurikulum_2013_ipa_subjects,
+                        'kurikulum_2013_ips_subjects' => $choice->majorRecommendation->kurikulum_2013_ips_subjects,
+                        'kurikulum_2013_bahasa_subjects' => $choice->majorRecommendation->kurikulum_2013_bahasa_subjects,
+                    ] : null,
+                    'chosen_at' => $choice->created_at,
+                    'created_at' => $choice->created_at,
+                    'updated_at' => $choice->updated_at
+                ]
             ], 200);
         } catch (\Exception $e) {
             Log::error('Get student choice error: ' . $e->getMessage());
@@ -369,10 +405,26 @@ class StudentWebController extends Controller
 
             $choice->update(['major_id' => $request->major_id]);
 
+            // Load the updated choice with major recommendation
+            $choice->load('majorRecommendation');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Pilihan jurusan berhasil diubah',
-                'data' => $choice
+                'data' => [
+                    'id' => $choice->id,
+                    'student_id' => $choice->student_id,
+                    'major_id' => $choice->major_id,
+                    'major' => $choice->majorRecommendation ? [
+                        'id' => $choice->majorRecommendation->id,
+                        'major_name' => $choice->majorRecommendation->major_name,
+                        'description' => $choice->majorRecommendation->description,
+                        'category' => $choice->majorRecommendation->category,
+                    ] : null,
+                    'chosen_at' => $choice->created_at,
+                    'created_at' => $choice->created_at,
+                    'updated_at' => $choice->updated_at
+                ]
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
