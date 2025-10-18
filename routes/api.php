@@ -18,6 +18,7 @@ Route::prefix('web')->group(function () {
     Route::post('/register-student', [StudentWebController::class, 'registerStudent']);
     Route::get('/schools', [StudentWebController::class, 'getSchools']);
     Route::get('/majors', [StudentWebController::class, 'getMajors']);
+    Route::get('/majors/{id}', [StudentWebController::class, 'getMajorDetails']);
     Route::get('/major-status/{studentId}', [StudentWebController::class, 'checkMajorStatus']);
     Route::get('/student-choice/{studentId}', [StudentWebController::class, 'getStudentChoice']);
     Route::post('/choose-major', [StudentWebController::class, 'chooseMajor']);
@@ -78,8 +79,8 @@ Route::prefix('school')->group(function () {
         Route::get('/dashboard', [SchoolAuthController::class, 'dashboard']);
         Route::get('/students', [SchoolAuthController::class, 'getStudents']);
         Route::get('/students/{id}', [SchoolAuthController::class, 'getStudentDetail']);
-        Route::post('/students', [SchoolAuthController::class, 'addStudent']);
-        Route::put('/students/{id}', [SchoolAuthController::class, 'updateStudent']);
+        Route::post('/students', [App\Http\Controllers\SchoolDashboardController::class, 'addStudent']);
+        Route::put('/students/{id}', [App\Http\Controllers\SchoolDashboardController::class, 'updateStudent']);
         Route::delete('/students/{id}', [SchoolAuthController::class, 'deleteStudent']);
         Route::get('/students-without-choice', [SchoolAuthController::class, 'getStudentsWithoutChoice']);
         Route::get('/major-statistics', [SchoolAuthController::class, 'getMajorStatistics']);
@@ -87,7 +88,7 @@ Route::prefix('school')->group(function () {
         Route::post('/import-students', [SchoolAuthController::class, 'importStudents']);
         Route::get('/import-template', [SchoolAuthController::class, 'downloadImportTemplate']);
         Route::get('/import-rules', [SchoolAuthController::class, 'getImportRules']);
-        Route::get('/classes', [SchoolAuthController::class, 'getClasses']);
+        Route::get('/classes', [App\Http\Controllers\SchoolDashboardController::class, 'getClasses']);
     });
 });
 

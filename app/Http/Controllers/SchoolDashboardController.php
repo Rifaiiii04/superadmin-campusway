@@ -337,6 +337,15 @@ class SchoolDashboardController extends Controller
     public function addStudent(Request $request)
     {
         try {
+            $school = $request->user('sanctum');
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
             $request->validate([
                 'nisn' => 'required|string|size:10|unique:students,nisn',
                 'name' => 'required|string|max:255',
@@ -344,17 +353,8 @@ class SchoolDashboardController extends Controller
                 'email' => 'nullable|email|max:255',
                 'phone' => 'nullable|string|max:20',
                 'parent_phone' => 'nullable|string|max:20',
-                'password' => 'required|string|min:6',
-                'school_id' => 'required|exists:schools,id'
+                'password' => 'required|string|min:6'
             ]);
-
-            $school = School::find($request->school_id);
-            if (!$school) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 404);
-            }
 
             // Cek apakah NISN sudah ada
             $existingStudent = Student::where('nisn', $request->nisn)->first();
@@ -369,7 +369,7 @@ class SchoolDashboardController extends Controller
             $student = Student::create([
                 'nisn' => $request->nisn,
                 'name' => $request->name,
-                'school_id' => $request->school_id,
+                'school_id' => $school->id,
                 'kelas' => $request->kelas,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -557,13 +557,13 @@ class SchoolDashboardController extends Controller
     public function updateStudent(Request $request, $studentId)
     {
         try {
-            $school = School::find($request->school_id);
-
+            $school = $request->user('sanctum');
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 404);
+                    'message' => 'Unauthorized'
+                ], 401);
             }
 
             // Cari siswa yang akan diupdate
@@ -581,7 +581,7 @@ class SchoolDashboardController extends Controller
             // Validasi input
             $request->validate([
                 'name' => 'required|string|max:255',
-                'nisn' => 'required|string|max:10|unique:students,nisn,' . $studentId,
+                'nisn' => 'required|string|size:10|unique:students,nisn,' . $studentId . ',id',
                 'kelas' => 'required|string|max:255',
                 'email' => 'nullable|email|max:255',
                 'phone' => 'nullable|string|max:20',
@@ -1183,13 +1183,13 @@ class SchoolDashboardController extends Controller
     public function getClasses(Request $request)
     {
         try {
-            $school = School::find($request->school_id);
-
+            $school = $request->user('sanctum');
+            
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 404);
+                    'message' => 'Unauthorized'
+                ], 401);
             }
 
             // Get unique classes from students data

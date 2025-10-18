@@ -50,7 +50,7 @@ class Student extends Model
      */
     public function chosenMajor()
     {
-        return $this->hasOneThrough(Major::class, StudentChoice::class, 'student_id', 'id', 'id', 'major_id');
+        return $this->hasOneThrough(MajorRecommendation::class, StudentChoice::class, 'student_id', 'id', 'id', 'major_id');
     }
 
     public function studentSubjects()

@@ -30,7 +30,7 @@ class StudentChoice extends Model
      */
     public function major()
     {
-        return $this->belongsTo(Major::class);
+        return $this->belongsTo(MajorRecommendation::class, 'major_id');
     }
 
     /**
