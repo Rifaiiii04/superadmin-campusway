@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\School;
+use App\Models\Student;
+use App\Models\StudentChoice;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
@@ -304,7 +306,30 @@ class SchoolAuthController extends Controller
             $students = \App\Models\Student::where('school_id', $school->id)
                 ->with(['chosenMajor'])
                 ->orderBy('name')
-                ->get();
+                ->get()
+                ->map(function($student) {
+                    return [
+                        'id' => $student->id,
+                        'nisn' => $student->nisn,
+                        'name' => $student->name,
+                        'class' => $student->kelas,
+                        'kelas' => $student->kelas,
+                        'email' => $student->email,
+                        'phone' => $student->phone,
+                        'parent_phone' => $student->parent_phone,
+                        'has_choice' => $student->chosenMajor ? true : false,
+                        'chosen_major' => $student->chosenMajor ? [
+                            'id' => $student->chosenMajor->id,
+                            'name' => $student->chosenMajor->major_name,
+                            'description' => $student->chosenMajor->description,
+                            'career_prospects' => $student->chosenMajor->career_prospects,
+                            'rumpun_ilmu' => $student->chosenMajor->rumpun_ilmu,
+                        ] : null,
+                        'choice_date' => $student->chosenMajor ? $student->chosenMajor->created_at : null,
+                        'created_at' => $student->created_at,
+                        'updated_at' => $student->updated_at,
+                    ];
+                });
 
             return response()->json([
                 'success' => true,
@@ -376,6 +401,59 @@ class SchoolAuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Get major statistics error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete student
+     */
+    public function deleteStudent(Request $request, $studentId)
+    {
+        try {
+            $school = $request->user('sanctum');
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], 401);
+            }
+
+            // Cari siswa yang akan dihapus
+            $student = Student::where('id', $studentId)
+                ->where('school_id', $school->id)
+                ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan'
+                ], 404);
+            }
+
+            // Hapus pilihan jurusan siswa terlebih dahulu (jika ada)
+            StudentChoice::where('student_id', $studentId)->delete();
+
+            // Hapus siswa
+            $student->delete();
+
+            Log::info('Student deleted successfully', [
+                'student_id' => $studentId,
+                'school_id' => $school->id,
+                'student_name' => $student->name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Siswa berhasil dihapus'
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting student: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan server'
