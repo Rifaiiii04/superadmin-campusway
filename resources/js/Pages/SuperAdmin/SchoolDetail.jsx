@@ -183,14 +183,14 @@ export default function SchoolDetail({
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {student.studentChoice &&
-                                                student.studentChoice
-                                                    .majorRecommendation ? (
+                                                {student.student_choice &&
+                                                student.student_choice
+                                                    .major_recommendation ? (
                                                     <div className="space-y-1">
                                                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-maroon-100 text-maroon-800">
                                                             {student
-                                                                .studentChoice
-                                                                .majorRecommendation
+                                                                .student_choice
+                                                                .major_recommendation
                                                                 .major_name ||
                                                                 "Unknown"}
                                                         </span>
