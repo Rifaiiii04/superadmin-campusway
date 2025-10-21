@@ -394,14 +394,6 @@ class SchoolDashboardController extends Controller
                 'parent_phone' => 'nullable|string|max:20',
                 'password' => 'required|string|min:6'
             ]);
-
-            $school = $request->school;
-            if (!$school) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 404);
-            }
             // Cek apakah NISN sudah ada
             $existingStudent = Student::where('nisn', $request->nisn)->first();
             if ($existingStudent) {
