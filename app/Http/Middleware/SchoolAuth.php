@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use App\Models\School;
 use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class SchoolAuth
 {
@@ -33,47 +34,36 @@ class SchoolAuth
                 $token = substr($token, 7);
             }
 
-            // Decode token sederhana
-            $decodedToken = base64_decode($token);
-            if (!$decodedToken) {
+            // Find the token in database
+            $accessToken = PersonalAccessToken::findToken($token);
+            
+            if (!$accessToken) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Token tidak valid'
                 ], 401);
             }
 
-            $tokenParts = explode('|', $decodedToken);
-            if (count($tokenParts) !== 3) {
+            // Get the school model from token
+            $school = $accessToken->tokenable;
+            
+            if (!$school || !($school instanceof School)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Format token tidak valid'
+                    'message' => 'Token tidak valid untuk sekolah'
                 ], 401);
             }
 
-            $schoolId = $tokenParts[0];
-            $timestamp = $tokenParts[1];
-            $npsn = $tokenParts[2];
-
-            // Cek apakah token masih valid (24 jam)
-            $tokenAge = time() - $timestamp;
-            if ($tokenAge > 86400) { // 24 jam dalam detik
+            // Check if token is expired
+            if ($accessToken->expires_at && $accessToken->expires_at->isPast()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Token sudah expired'
                 ], 401);
             }
 
-            // Verifikasi sekolah masih ada
-            $school = School::find($schoolId);
-            if (!$school || $school->npsn !== $npsn) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 401);
-            }
-
             // Tambahkan data sekolah ke request
-            $request->merge(['school_id' => $schoolId]);
+            $request->merge(['school_id' => $school->id]);
             $request->merge(['school' => $school]);
 
             return $next($request);

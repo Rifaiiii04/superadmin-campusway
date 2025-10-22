@@ -54,7 +54,7 @@ Route::prefix('school')->group(function () {
         Route::get('/students-without-choice', [SchoolDashboardController::class, 'studentsWithoutChoice']);
         
         // Student management
-        Route::post('/students', [SchoolDashboardController::class, 'storeStudent']);
+        Route::post('/students', [SchoolDashboardController::class, 'addStudent']);
         Route::put('/students/{id}', [SchoolDashboardController::class, 'updateStudent']);
         Route::delete('/students/{id}', [SchoolDashboardController::class, 'deleteStudent']);
         
@@ -64,7 +64,7 @@ Route::prefix('school')->group(function () {
         Route::get('/import-rules', [SchoolDashboardController::class, 'importRules']);
         
         // Classes
-        Route::get('/classes', [SchoolDashboardController::class, 'classes']);
+        Route::get('/classes', [SchoolDashboardController::class, 'getClasses']);
         
         // TKA Schedules
         Route::get('/tka-schedules', [TkaScheduleController::class, 'index']);
@@ -139,25 +139,8 @@ Route::prefix('school')->group(function () {
         ]);
     });
     
-    // Protected school routes (with authentication)
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/schools', [ApiController::class, 'getSchools']);
-        Route::get('/questions', [ApiController::class, 'getQuestions']);
-        Route::get('/majors', [ApiController::class, 'getMajors']);
-        Route::get('/dashboard', [SchoolAuthController::class, 'dashboard']);
-        Route::get('/students', [SchoolAuthController::class, 'getStudents']);
-        Route::get('/students/{id}', [SchoolAuthController::class, 'getStudentDetail']);
-        Route::post('/students', [App\Http\Controllers\SchoolDashboardController::class, 'addStudent']);
-        Route::put('/students/{id}', [App\Http\Controllers\SchoolDashboardController::class, 'updateStudent']);
-        Route::delete('/students/{id}', [SchoolAuthController::class, 'deleteStudent']);
-        Route::get('/students-without-choice', [SchoolAuthController::class, 'getStudentsWithoutChoice']);
-        Route::get('/major-statistics', [SchoolAuthController::class, 'getMajorStatistics']);
-        Route::get('/export-students', [SchoolAuthController::class, 'exportStudents']);
-        Route::post('/import-students', [SchoolAuthController::class, 'importStudents']);
-        Route::get('/import-template', [SchoolAuthController::class, 'downloadImportTemplate']);
-        Route::get('/import-rules', [SchoolAuthController::class, 'getImportRules']);
-        Route::get('/classes', [App\Http\Controllers\SchoolDashboardController::class, 'getClasses']);
-    });
+    // Protected school routes (with authentication) - REMOVED DUPLICATE ROUTES
+    // These routes are already defined above with proper school.auth middleware
 });
 
 // ===========================================

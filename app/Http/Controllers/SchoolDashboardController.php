@@ -376,13 +376,13 @@ class SchoolDashboardController extends Controller
     public function addStudent(Request $request)
     {
         try {
-            $school = $request->user('sanctum');
+            $school = $request->school;
             
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
-                ], 401);
+                    'message' => 'Data sekolah tidak ditemukan'
+                ], 404);
             }
 
             $request->validate([
@@ -1221,13 +1221,13 @@ class SchoolDashboardController extends Controller
     public function getClasses(Request $request)
     {
         try {
-            $school = $request->user('sanctum');
+            $school = $request->school;
             
             if (!$school) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized'
-                ], 401);
+                    'message' => 'Data sekolah tidak ditemukan'
+                ], 404);
             }
 
             // Get unique classes from students data

@@ -49,6 +49,8 @@ class Cors
             'http://127.0.0.1:3000',
             'http://localhost:3001',
             'http://127.0.0.1:3001',
+            'http://192.168.1.40:3000',
+            'http://192.168.1.40',
         ];
 
         // Check if the origin is in the allowed list
@@ -58,6 +60,11 @@ class Cors
 
         // For development, allow localhost with any port
         if (str_starts_with($origin, 'http://localhost:') || str_starts_with($origin, 'http://127.0.0.1:')) {
+            return $origin;
+        }
+
+        // Allow 192.168.x.x addresses for local network development
+        if (preg_match('/^http:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d+)?$/', $origin)) {
             return $origin;
         }
 

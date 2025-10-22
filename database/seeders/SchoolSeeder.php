@@ -18,17 +18,17 @@ class SchoolSeeder extends Seeder
             [
                 'npsn' => '12345678',
                 'name' => 'SMA Negeri 1 Jakarta',
-                'password_hash' => Hash::make('password123'),
+                'password' => Hash::make('password123'),
             ],
             [
                 'npsn' => '87654321',
                 'name' => 'SMA Negeri 2 Bandung',
-                'password_hash' => Hash::make('password123'),
+                'password' => Hash::make('password123'),
             ],
             [
                 'npsn' => '11223344',
                 'name' => 'SMA Negeri 3 Surabaya',
-                'password_hash' => Hash::make('password123'),
+                'password' => Hash::make('password123'),
             ],
         ];
 
