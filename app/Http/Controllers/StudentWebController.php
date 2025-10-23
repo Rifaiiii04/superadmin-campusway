@@ -477,10 +477,24 @@ class StudentWebController extends Controller
     public function getTkaSchedules(Request $request)
     {
         try {
-            // For now, return empty array since TKA schedules functionality is not implemented yet
+            $schoolId = $request->query('school_id');
+            
+            $query = \App\Models\TkaSchedule::where('is_active', true)
+                ->orderBy('start_date', 'desc');
+            
+            // Filter by school if provided
+            if ($schoolId) {
+                $query->where(function($q) use ($schoolId) {
+                    $q->whereNull('target_schools')
+                      ->orWhereJsonContains('target_schools', $schoolId);
+                });
+            }
+            
+            $schedules = $query->get();
+            
             return response()->json([
                 'success' => true,
-                'data' => []
+                'data' => $schedules
             ], 200);
         } catch (\Exception $e) {
             Log::error('Get TKA schedules error: ' . $e->getMessage());
@@ -497,10 +511,26 @@ class StudentWebController extends Controller
     public function getUpcomingTkaSchedules(Request $request)
     {
         try {
-            // For now, return empty array since TKA schedules functionality is not implemented yet
+            $schoolId = $request->query('school_id');
+            $now = now();
+            
+            $query = \App\Models\TkaSchedule::where('is_active', true)
+                ->where('end_date', '>=', $now)
+                ->orderBy('start_date', 'asc');
+            
+            // Filter by school if provided
+            if ($schoolId) {
+                $query->where(function($q) use ($schoolId) {
+                    $q->whereNull('target_schools')
+                      ->orWhereJsonContains('target_schools', $schoolId);
+                });
+            }
+            
+            $schedules = $query->get();
+            
             return response()->json([
                 'success' => true,
-                'data' => []
+                'data' => $schedules
             ], 200);
         } catch (\Exception $e) {
             Log::error('Get upcoming TKA schedules error: ' . $e->getMessage());

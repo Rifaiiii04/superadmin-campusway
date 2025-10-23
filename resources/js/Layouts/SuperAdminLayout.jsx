@@ -33,7 +33,7 @@ export default function SuperAdminLayout({ children }) {
         { name: "Hasil Tes", href: "/results", icon: FileText },
         {
             name: "Jadwal TKA",
-            href: "/tka-schedules",
+            href: "/admin/tka-schedules",
             icon: Calendar,
         },
     ];

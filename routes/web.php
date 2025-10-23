@@ -371,6 +371,11 @@ Route::get('/results/export', [App\Http\Controllers\ResultController::class, 'ex
 // SuperAdmin TKA Schedules (UI) - Using controller
 Route::get('/admin/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'index']);
 
+// Redirect /tka-schedules to /admin/tka-schedules for backward compatibility
+Route::get('/tka-schedules', function () {
+    return redirect('/admin/tka-schedules');
+});
+
 // SuperAdmin TKA Schedules - Inertia responses (Web)
 Route::post('/admin/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
 Route::get('/admin/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);

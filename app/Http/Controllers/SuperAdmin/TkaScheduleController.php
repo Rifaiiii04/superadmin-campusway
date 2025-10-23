@@ -577,6 +577,40 @@ class TkaScheduleController extends Controller
     }
 
     /**
+     * Get upcoming TKA schedules
+     */
+    public function upcoming()
+    {
+        try {
+            $schedules = TkaSchedule::select('id', 'title', 'description', 'start_date', 'end_date', 'status', 'type', 'instructions', 'target_schools', 'created_by', 'created_at', 'updated_at')
+                ->where('start_date', '>', now())
+                ->where('is_active', true)
+                ->orderBy('start_date', 'asc')
+                ->limit(20) // Limit results to prevent timeout
+                ->get();
+            
+            $schools = School::select('id', 'name')
+                ->limit(50) // Limit schools to prevent timeout
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $schedules,
+                'schools' => $schools
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Super Admin TKA Schedule upcoming error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat jadwal TKA yang akan datang: ' . $e->getMessage(),
+                'data' => [],
+                'schools' => []
+            ], 500);
+        }
+    }
+
+    /**
      * Get statistics for dashboard
      */
     public function statistics()
