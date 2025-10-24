@@ -151,3 +151,8 @@ Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommend
 // TKA Schedules routes (public access)
 Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'apiIndex']);
 Route::get('/tka-schedules/upcoming', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'upcoming']);
+
+// TKA Schedules CRUD operations (for teacher dashboard)
+Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+Route::put('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::delete('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);

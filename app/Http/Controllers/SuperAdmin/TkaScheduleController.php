@@ -548,7 +548,7 @@ class TkaScheduleController extends Controller
     private function destroyJson($id)
     {
         try {
-            Log::info('TKA Schedule Destroy JSON Request for ID:', $id);
+            Log::info('TKA Schedule Destroy JSON Request for ID:', ['id' => $id]);
             
             $schedule = TkaSchedule::find($id);
 
