@@ -130,7 +130,14 @@ class SchoolDashboardController extends Controller
                         'phone' => $student->phone,
                         'parent_phone' => $student->parent_phone,
                         'has_choice' => $student->studentChoice ? true : false,
-                        'chosen_major' => $student->studentChoice ? $this->getMajorWithSubjects($student->studentChoice->major) : null,
+                        'chosen_major' => $student->studentChoice ? [
+                            'id' => $student->studentChoice->major->id,
+                            'name' => $student->studentChoice->major->major_name,
+                            'description' => $student->studentChoice->major->description,
+                            'category' => $student->studentChoice->major->category,
+                            'rumpun_ilmu' => $student->studentChoice->major->rumpun_ilmu,
+                            'career_prospects' => $student->studentChoice->major->career_prospects,
+                        ] : null,
                         'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
                     ];
                 });

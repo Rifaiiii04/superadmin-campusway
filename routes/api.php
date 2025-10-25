@@ -373,7 +373,8 @@ Route::prefix('school')->group(function () {
                         'chosen_major' => $student->studentChoice ? [
                             'id' => $student->studentChoice->major_id,
                             'name' => $student->studentChoice->major->major_name ?? 'Jurusan Tidak Ditemukan',
-                            'category' => $student->studentChoice->major->category ?? 'Saintek'
+                            'category' => $student->studentChoice->major->category ?? 'Saintek',
+                            'rumpun_ilmu' => $student->studentChoice->major->rumpun_ilmu ?? $student->studentChoice->major->category ?? 'ILMU TERAPAN'
                         ] : null,
                         'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
                     ];

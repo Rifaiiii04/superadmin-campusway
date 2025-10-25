@@ -336,6 +336,7 @@ class StudentWebController extends Controller
                         'major_name' => $choice->majorRecommendation->major_name,
                         'description' => $choice->majorRecommendation->description,
                         'category' => $choice->majorRecommendation->category,
+                        'rumpun_ilmu' => $choice->majorRecommendation->rumpun_ilmu,
                         'career_prospects' => $choice->majorRecommendation->career_prospects,
                         'required_subjects' => $choice->majorRecommendation->required_subjects,
                         'preferred_subjects' => $choice->majorRecommendation->preferred_subjects,

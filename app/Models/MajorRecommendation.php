@@ -15,6 +15,7 @@ class MajorRecommendation extends Model
     protected $fillable = [
         'major_name',
         'category',
+        'rumpun_ilmu',
         'description',
         'required_subjects',
         'preferred_subjects',
