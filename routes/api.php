@@ -116,27 +116,218 @@ Route::prefix('school')->group(function () {
         ]);
     });
     
-    // Test dashboard without authentication
+    // Test dashboard without authentication - with real database data
     Route::get('/test-dashboard-data', function () {
+        try {
+            // Get first school for testing
+            $school = \App\Models\School::first();
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data sekolah di database'
+                ]);
+            }
+
+            // Get real student data
+            $totalStudents = \App\Models\Student::where('school_id', $school->id)->count();
+            $studentsWithChoice = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })->count();
+            $studentsWithoutChoice = $totalStudents - $studentsWithChoice;
+
+            // Get students by class
+            $studentsByClass = \App\Models\Student::where('school_id', $school->id)
+                ->selectRaw('kelas, COUNT(*) as student_count')
+                ->groupBy('kelas')
+                ->orderBy('kelas')
+                ->get();
+
+            // Get top majors
+            $topMajors = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->with('major')
+            ->selectRaw('major_id, COUNT(*) as student_count')
+            ->groupBy('major_id')
+            ->orderBy('student_count', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function($choice) {
+                return [
+                    'major_id' => $choice->major_id,
+                    'major_name' => $choice->major->major_name ?? 'Jurusan Tidak Ditemukan',
+                    'category' => $choice->major->category ?? 'Saintek',
+                    'student_count' => $choice->student_count
+                ];
+            });
+
         return response()->json([
             'success' => true,
             'data' => [
                 'school' => [
-                    'id' => 8,
-                    'name' => 'SMK Negeri 1 Karawang',
-                    'npsn' => '44556677',
-                    'address' => 'Test Address',
-                    'phone' => '021-123456',
-                    'email' => 'test@school.com',
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
                 ],
                 'statistics' => [
-                    'total_students' => 100,
-                    'students_with_choices' => 50,
-                    'students_without_choices' => 50,
-                ],
-                'recent_students' => []
-            ]
-        ]);
+                        'total_students' => $totalStudents,
+                        'students_with_choice' => $studentsWithChoice,
+                        'students_without_choice' => $studentsWithoutChoice,
+                        'completion_percentage' => $totalStudents > 0 ? round(($studentsWithChoice / $totalStudents) * 100, 2) : 0
+                    ],
+                    'top_majors' => $topMajors,
+                    'students_by_class' => $studentsByClass
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    });
+
+    // Test students endpoint without authentication
+    Route::get('/test-students', function () {
+        try {
+            $school = \App\Models\School::first();
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data sekolah di database'
+                ]);
+            }
+
+            $students = \App\Models\Student::where('school_id', $school->id)
+                ->with(['studentChoice.major'])
+                ->orderBy('name')
+                ->get()
+                ->map(function($student) {
+                    return [
+                        'id' => $student->id,
+                        'nisn' => $student->nisn,
+                        'name' => $student->name,
+                        'class' => $student->kelas,
+                        'email' => $student->email,
+                        'phone' => $student->phone,
+                        'parent_phone' => $student->parent_phone,
+                        'has_choice' => $student->studentChoice ? true : false,
+                        'chosen_major' => $student->studentChoice ? [
+                            'id' => $student->studentChoice->major_id,
+                            'name' => $student->studentChoice->major->major_name ?? 'Jurusan Tidak Ditemukan',
+                            'category' => $student->studentChoice->major->category ?? 'Saintek'
+                        ] : null,
+                        'choice_date' => $student->studentChoice ? $student->studentChoice->created_at : null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
+                    ],
+                    'students' => $students,
+                    'total_students' => $students->count()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    });
+
+    // Test major statistics endpoint without authentication
+    Route::get('/test-major-statistics', function () {
+        try {
+            $school = \App\Models\School::first();
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada data sekolah di database'
+                ]);
+            }
+
+            $majorStats = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                $query->where('school_id', $school->id);
+            })
+            ->with('major')
+            ->selectRaw('major_id, COUNT(*) as student_count')
+            ->groupBy('major_id')
+            ->orderBy('student_count', 'desc')
+            ->get()
+            ->map(function($choice) use ($school) {
+                $total = \App\Models\StudentChoice::whereHas('student', function($query) use ($school) {
+                    $query->where('school_id', $school->id);
+                })->count();
+                
+                return [
+                    'major_id' => $choice->major_id,
+                    'major_name' => $choice->major->major_name ?? 'Jurusan Tidak Ditemukan',
+                    'category' => $choice->major->category ?? 'Saintek',
+                    'student_count' => $choice->student_count,
+                    'percentage' => $total > 0 ? round(($choice->student_count / $total) * 100, 2) : 0
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
+                        'id' => $school->id,
+                        'name' => $school->name,
+                        'npsn' => $school->npsn,
+                    ],
+                    'major_statistics' => $majorStats
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    });
+
+    // Debug endpoint to check database data
+    Route::get('/debug-data', function () {
+        try {
+            $schools = \App\Models\School::count();
+            $students = \App\Models\Student::count();
+            $studentChoices = \App\Models\StudentChoice::count();
+            $majors = \App\Models\MajorRecommendation::count();
+            
+            $firstSchool = \App\Models\School::first();
+            $studentsInFirstSchool = $firstSchool ? \App\Models\Student::where('school_id', $firstSchool->id)->count() : 0;
+            
+            return response()->json([
+                'success' => true,
+                'debug' => [
+                    'total_schools' => $schools,
+                    'total_students' => $students,
+                    'total_student_choices' => $studentChoices,
+                    'total_majors' => $majors,
+                    'first_school' => $firstSchool ? [
+                        'id' => $firstSchool->id,
+                        'name' => $firstSchool->name,
+                        'npsn' => $firstSchool->npsn
+                    ] : null,
+                    'students_in_first_school' => $studentsInFirstSchool
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
     });
     
     // Protected school routes (with authentication) - REMOVED DUPLICATE ROUTES
