@@ -45,10 +45,9 @@ class Cors
         $origin = $request->header('Origin');
         $allowedOrigins = [
             'http://103.23.198.101',
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'http://localhost:3001',
-            'http://127.0.0.1:3001',
+            'http://103.23.198.101:3000',
+            'http://10.112.234.213:3000',
+            'http://10.112.234.213',
             'http://192.168.1.40:3000',
             'http://192.168.1.40',
         ];
@@ -58,8 +57,8 @@ class Cors
             return $origin;
         }
 
-        // For development, allow localhost with any port
-        if (str_starts_with($origin, 'http://localhost:') || str_starts_with($origin, 'http://127.0.0.1:')) {
+        // Allow network IPs with any port
+        if (str_starts_with($origin, 'http://10.') || str_starts_with($origin, 'http://192.168.')) {
             return $origin;
         }
 
