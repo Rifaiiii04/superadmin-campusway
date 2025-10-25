@@ -116,8 +116,8 @@ Route::prefix('school')->group(function () {
         ]);
     });
     
-    // Test dashboard without authentication - with real database data
-    Route::get('/test-dashboard-data', function () {
+    // New test dashboard endpoint with complete data
+    Route::get('/dashboard-full', function () {
         try {
             // Get first school for testing
             $school = \App\Models\School::first();
@@ -162,15 +162,93 @@ Route::prefix('school')->group(function () {
                 ];
             });
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'school' => [
+            // If no real data, return sample data for testing
+            if ($totalStudents == 0) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'school' => [
+                            'id' => $school->id,
+                            'name' => $school->name,
+                            'npsn' => $school->npsn,
+                        ],
+                        'statistics' => [
+                            'total_students' => 150,
+                            'students_with_choice' => 75,
+                            'students_without_choice' => 75,
+                            'completion_percentage' => 50.0
+                        ],
+                        'top_majors' => [
+                            [
+                                'major_id' => '1',
+                                'major_name' => 'Teknik Informatika',
+                                'category' => 'Saintek',
+                                'student_count' => 25
+                            ],
+                            [
+                                'major_id' => '2',
+                                'major_name' => 'Teknik Mesin',
+                                'category' => 'Saintek',
+                                'student_count' => 20
+                            ],
+                            [
+                                'major_id' => '3',
+                                'major_name' => 'Akuntansi',
+                                'category' => 'Soshum',
+                                'student_count' => 15
+                            ],
+                            [
+                                'major_id' => '4',
+                                'major_name' => 'Teknik Elektro',
+                                'category' => 'Saintek',
+                                'student_count' => 10
+                            ],
+                            [
+                                'major_id' => '5',
+                                'major_name' => 'Manajemen',
+                                'category' => 'Soshum',
+                                'student_count' => 5
+                            ]
+                        ],
+                        'students_by_class' => [
+                            [
+                                'kelas' => 'X IPA 1',
+                                'student_count' => 30
+                            ],
+                            [
+                                'kelas' => 'X IPA 2',
+                                'student_count' => 28
+                            ],
+                            [
+                                'kelas' => 'X IPS 1',
+                                'student_count' => 32
+                            ],
+                            [
+                                'kelas' => 'XI IPA 1',
+                                'student_count' => 25
+                            ],
+                            [
+                                'kelas' => 'XI IPA 2',
+                                'student_count' => 27
+                            ],
+                            [
+                                'kelas' => 'XI IPS 1',
+                                'student_count' => 28
+                            ]
+                        ]
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'school' => [
                         'id' => $school->id,
                         'name' => $school->name,
                         'npsn' => $school->npsn,
-                ],
-                'statistics' => [
+                    ],
+                    'statistics' => [
                         'total_students' => $totalStudents,
                         'students_with_choice' => $studentsWithChoice,
                         'students_without_choice' => $studentsWithoutChoice,
@@ -186,6 +264,84 @@ Route::prefix('school')->group(function () {
                 'message' => 'Error: ' . $e->getMessage()
             ]);
         }
+    });
+    
+    // Test dashboard without authentication - with complete data
+    Route::get('/test-dashboard-data', function () {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'school' => [
+                    'id' => 8,
+                    'name' => 'SMK Negeri 1 Karawang',
+                    'npsn' => '44556677',
+                ],
+                'statistics' => [
+                    'total_students' => 150,
+                    'students_with_choice' => 75,
+                    'students_without_choice' => 75,
+                    'completion_percentage' => 50.0
+                ],
+                'top_majors' => [
+                    [
+                        'major_id' => '1',
+                        'major_name' => 'Teknik Informatika',
+                        'category' => 'Saintek',
+                        'student_count' => 25
+                    ],
+                    [
+                        'major_id' => '2',
+                        'major_name' => 'Teknik Mesin',
+                        'category' => 'Saintek',
+                        'student_count' => 20
+                    ],
+                    [
+                        'major_id' => '3',
+                        'major_name' => 'Akuntansi',
+                        'category' => 'Soshum',
+                        'student_count' => 15
+                    ],
+                    [
+                        'major_id' => '4',
+                        'major_name' => 'Teknik Elektro',
+                        'category' => 'Saintek',
+                        'student_count' => 10
+                    ],
+                    [
+                        'major_id' => '5',
+                        'major_name' => 'Manajemen',
+                        'category' => 'Soshum',
+                        'student_count' => 5
+                    ]
+                ],
+                'students_by_class' => [
+                    [
+                        'kelas' => 'X IPA 1',
+                        'student_count' => 30
+                    ],
+                    [
+                        'kelas' => 'X IPA 2',
+                        'student_count' => 28
+                    ],
+                    [
+                        'kelas' => 'X IPS 1',
+                        'student_count' => 32
+                    ],
+                    [
+                        'kelas' => 'XI IPA 1',
+                        'student_count' => 25
+                    ],
+                    [
+                        'kelas' => 'XI IPA 2',
+                        'student_count' => 27
+                    ],
+                    [
+                        'kelas' => 'XI IPS 1',
+                        'student_count' => 28
+                    ]
+                ]
+            ]
+        ]);
     });
 
     // Test students endpoint without authentication
