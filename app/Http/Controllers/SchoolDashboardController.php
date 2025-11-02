@@ -181,8 +181,23 @@ class SchoolDashboardController extends Controller
 
             $student = Student::where('id', $studentId)
                 ->where('school_id', $school->id)
-                ->with(['studentChoice.majorRecommendation', 'studentChoice.major'])
                 ->first();
+            
+            // Load relationships separately with error handling
+            if ($student) {
+                try {
+                    $student->load('studentChoice');
+                    if ($student->studentChoice) {
+                        try {
+                            $student->studentChoice->load('majorRecommendation');
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to load majorRecommendation: ' . $e->getMessage());
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Failed to load studentChoice: ' . $e->getMessage());
+                }
+            }
 
             if (!$student) {
                 return response()->json([
@@ -204,40 +219,52 @@ class SchoolDashboardController extends Controller
                 'has_choice' => $student->studentChoice ? true : false
             ];
 
-            if ($student->studentChoice) {
+            // Handle chosen major if student has a choice
+            if ($student && $student->studentChoice) {
                 try {
-                    // Get major from the relationship (could be 'major' or 'majorRecommendation')
                     $major = null;
                     
-                    // Both relationships point to MajorRecommendation, so check which one is available
-                    if ($student->studentChoice->majorRecommendation) {
+                    // Try to get major from majorRecommendation relationship
+                    if (isset($student->studentChoice->majorRecommendation) && $student->studentChoice->majorRecommendation) {
                         $major = $student->studentChoice->majorRecommendation;
-                    } elseif ($student->studentChoice->major) {
+                    } elseif (isset($student->studentChoice->major) && $student->studentChoice->major) {
                         $major = $student->studentChoice->major;
                     } else {
-                        // Try to lazy load if not already loaded
-                        try {
-                            $student->studentChoice->loadMissing(['majorRecommendation']);
-                            if ($student->studentChoice->majorRecommendation) {
-                                $major = $student->studentChoice->majorRecommendation;
+                        // Try to load the major directly from database
+                        $choiceMajorId = $student->studentChoice->major_id ?? null;
+                        if ($choiceMajorId) {
+                            try {
+                                $major = \App\Models\MajorRecommendation::find($choiceMajorId);
+                            } catch (\Exception $dbError) {
+                                Log::warning('Failed to load major from database: ' . $dbError->getMessage());
                             }
-                        } catch (\Exception $loadError) {
-                            Log::warning('Failed to lazy load major for student choice: ' . $loadError->getMessage());
                         }
                     }
                     
-                    if ($major) {
-                        $majorData = $this->getMajorWithSubjects($major);
-                        if ($majorData) {
-                            $majorData['choice_date'] = $student->studentChoice->created_at;
-                            $studentData['chosen_major'] = $majorData;
+                    if ($major && is_object($major)) {
+                        try {
+                            $majorData = $this->getMajorWithSubjects($major);
+                            if ($majorData && is_array($majorData)) {
+                                $majorData['choice_date'] = $student->studentChoice->created_at ?? null;
+                                $studentData['chosen_major'] = $majorData;
+                            }
+                        } catch (\Exception $subjectError) {
+                            Log::error('Error getting major with subjects: ' . $subjectError->getMessage());
+                            // Add basic major info without subjects
+                            $studentData['chosen_major'] = [
+                                'id' => $major->id ?? 0,
+                                'name' => $major->major_name ?? 'Unknown',
+                                'description' => $major->description ?? '',
+                                'category' => $major->category ?? 'Saintek',
+                                'choice_date' => $student->studentChoice->created_at ?? null,
+                                'required_subjects' => [],
+                                'preferred_subjects' => [],
+                                'optional_subjects' => []
+                            ];
                         }
-                    } else {
-                        // Fallback: log warning if major not found
-                        Log::warning('Major not found for student choice ID: ' . ($student->studentChoice->id ?? 'unknown'));
                     }
                 } catch (\Exception $e) {
-                    Log::error('Error loading major for student choice: ' . $e->getMessage());
+                    Log::error('Error processing student choice: ' . $e->getMessage());
                     Log::error('Stack trace: ' . $e->getTraceAsString());
                     // Continue without major data - don't fail the entire request
                 }
@@ -255,12 +282,16 @@ class SchoolDashboardController extends Controller
                 ]
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Get student detail error: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
             Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Always return JSON, even on error
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -317,8 +348,11 @@ class SchoolDashboardController extends Controller
                         ->get();
                     
                     $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
+                        ->filter(function($mapping) {
+                            return $mapping && $mapping->subject;
+                        })
                         ->map(function($mapping) {
-                            return $mapping->subject ? $mapping->subject->name : null;
+                            return $mapping->subject->name ?? null;
                         })
                         ->filter()
                         ->unique()
@@ -326,8 +360,11 @@ class SchoolDashboardController extends Controller
                         ->toArray();
                         
                     $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
+                        ->filter(function($mapping) {
+                            return $mapping && $mapping->subject;
+                        })
                         ->map(function($mapping) {
-                            return $mapping->subject ? $mapping->subject->name : null;
+                            return $mapping->subject->name ?? null;
                         })
                         ->filter()
                         ->unique()
@@ -340,17 +377,21 @@ class SchoolDashboardController extends Controller
             }
 
             // If no mappings found, try to get from required_subjects and preferred_subjects fields
-            if (empty($mandatorySubjects) && !empty($major->required_subjects)) {
-                $mandatorySubjects = $parseSubjects($major->required_subjects);
+            $requiredSubjectsField = $major->required_subjects ?? null;
+            $preferredSubjectsField = $major->preferred_subjects ?? null;
+            $optionalSubjectsField = $major->optional_subjects ?? null;
+            
+            if (empty($mandatorySubjects) && !empty($requiredSubjectsField)) {
+                $mandatorySubjects = $parseSubjects($requiredSubjectsField);
             }
             
-            if (empty($optionalSubjects) && !empty($major->preferred_subjects)) {
-                $optionalSubjects = $parseSubjects($major->preferred_subjects);
+            if (empty($optionalSubjects) && !empty($preferredSubjectsField)) {
+                $optionalSubjects = $parseSubjects($preferredSubjectsField);
             }
             
             // If still empty, try optional_subjects field
-            if (empty($optionalSubjects) && !empty($major->optional_subjects)) {
-                $optionalSubjects = $parseSubjects($major->optional_subjects);
+            if (empty($optionalSubjects) && !empty($optionalSubjectsField)) {
+                $optionalSubjects = $parseSubjects($optionalSubjectsField);
             }
         
             return [
@@ -382,6 +423,7 @@ class SchoolDashboardController extends Controller
                 'education_level' => 'SMA/MA',
                 'required_subjects' => [],
                 'preferred_subjects' => [],
+                'optional_subjects' => [],
                 'kurikulum_merdeka_subjects' => [],
                 'kurikulum_2013_ipa_subjects' => [],
                 'kurikulum_2013_ips_subjects' => [],
