@@ -181,7 +181,7 @@ class SchoolDashboardController extends Controller
 
             $student = Student::where('id', $studentId)
                 ->where('school_id', $school->id)
-                ->with(['studentChoice.majorRecommendation'])
+                ->with(['studentChoice.majorRecommendation', 'studentChoice.major'])
                 ->first();
 
             if (!$student) {
@@ -205,16 +205,41 @@ class SchoolDashboardController extends Controller
             ];
 
             if ($student->studentChoice) {
-                // Get major from the relationship (could be 'major' or 'majorRecommendation')
-                $major = $student->studentChoice->majorRecommendation ?? $student->studentChoice->major ?? null;
-                
-                if ($major) {
-                    $majorData = $this->getMajorWithSubjects($major);
-                    $majorData['choice_date'] = $student->studentChoice->created_at;
-                    $studentData['chosen_major'] = $majorData;
-                } else {
-                    // Fallback: log warning if major not found
-                    Log::warning('Major not found for student choice: ' . $student->studentChoice->id);
+                try {
+                    // Get major from the relationship (could be 'major' or 'majorRecommendation')
+                    $major = null;
+                    
+                    // Both relationships point to MajorRecommendation, so check which one is available
+                    if ($student->studentChoice->majorRecommendation) {
+                        $major = $student->studentChoice->majorRecommendation;
+                    } elseif ($student->studentChoice->major) {
+                        $major = $student->studentChoice->major;
+                    } else {
+                        // Try to lazy load if not already loaded
+                        try {
+                            $student->studentChoice->loadMissing(['majorRecommendation']);
+                            if ($student->studentChoice->majorRecommendation) {
+                                $major = $student->studentChoice->majorRecommendation;
+                            }
+                        } catch (\Exception $loadError) {
+                            Log::warning('Failed to lazy load major for student choice: ' . $loadError->getMessage());
+                        }
+                    }
+                    
+                    if ($major) {
+                        $majorData = $this->getMajorWithSubjects($major);
+                        if ($majorData) {
+                            $majorData['choice_date'] = $student->studentChoice->created_at;
+                            $studentData['chosen_major'] = $majorData;
+                        }
+                    } else {
+                        // Fallback: log warning if major not found
+                        Log::warning('Major not found for student choice ID: ' . ($student->studentChoice->id ?? 'unknown'));
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error loading major for student choice: ' . $e->getMessage());
+                    Log::error('Stack trace: ' . $e->getTraceAsString());
+                    // Continue without major data - don't fail the entire request
                 }
             }
 
@@ -232,9 +257,10 @@ class SchoolDashboardController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Get student detail error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan server'
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -245,7 +271,28 @@ class SchoolDashboardController extends Controller
     private function getMajorWithSubjects($major)
     {
         try {
-            $educationLevel = $this->determineEducationLevel($major->category ?? 'Saintek');
+            // Validate major object
+            if (!$major || !is_object($major)) {
+                Log::warning('Invalid major object passed to getMajorWithSubjects');
+                return [
+                    'id' => 0,
+                    'name' => 'Unknown Major',
+                    'description' => '',
+                    'career_prospects' => '',
+                    'category' => 'Saintek',
+                    'rumpun_ilmu' => 'Saintek',
+                    'education_level' => 'SMA/MA',
+                    'required_subjects' => [],
+                    'preferred_subjects' => [],
+                    'optional_subjects' => [],
+                    'kurikulum_merdeka_subjects' => [],
+                    'kurikulum_2013_ipa_subjects' => [],
+                    'kurikulum_2013_ips_subjects' => [],
+                    'kurikulum_2013_bahasa_subjects' => []
+                ];
+            }
+            
+            $educationLevel = $this->determineEducationLevel($major->category ?? $major->rumpun_ilmu ?? 'Saintek');
             
             // Helper function to parse subjects from JSON or string
             $parseSubjects = function($field) {
@@ -263,27 +310,33 @@ class SchoolDashboardController extends Controller
             $optionalSubjects = [];
             
             try {
-                $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
-                    ->where('is_active', 1)
-                    ->with('subject')
-                    ->get();
-                
-                $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
-                    ->pluck('subject.name')
-                    ->filter()
-                    ->unique()
-                    ->values()
-                    ->toArray();
+                if (isset($major->id)) {
+                    $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+                        ->where('is_active', 1)
+                        ->with('subject')
+                        ->get();
                     
-                $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
-                    ->pluck('subject.name')
-                    ->filter()
-                    ->unique()
-                    ->values()
-                    ->toArray();
+                    $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
+                        ->map(function($mapping) {
+                            return $mapping->subject ? $mapping->subject->name : null;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
+                        
+                    $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
+                        ->map(function($mapping) {
+                            return $mapping->subject ? $mapping->subject->name : null;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->toArray();
+                }
             } catch (\Exception $e) {
                 // If mapping fails, try to get from required_subjects and preferred_subjects fields
-                Log::warning('Failed to load subject mappings for major ' . $major->id . ': ' . $e->getMessage());
+                Log::warning('Failed to load subject mappings for major ' . ($major->id ?? 'unknown') . ': ' . $e->getMessage());
             }
 
             // If no mappings found, try to get from required_subjects and preferred_subjects fields
@@ -301,19 +354,20 @@ class SchoolDashboardController extends Controller
             }
         
             return [
-                'id' => $major->id,
-                'name' => $major->major_name,
-                'description' => $major->description,
-                'career_prospects' => $major->career_prospects,
+                'id' => $major->id ?? 0,
+                'name' => $major->major_name ?? 'Unknown Major',
+                'description' => $major->description ?? '',
+                'career_prospects' => $major->career_prospects ?? '',
                 'category' => $major->category ?? 'Saintek',
                 'rumpun_ilmu' => $major->rumpun_ilmu ?? $major->category ?? 'Saintek',
                 'education_level' => $educationLevel,
                 'required_subjects' => $mandatorySubjects,
                 'preferred_subjects' => $optionalSubjects,
-                'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects),
-                'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects),
-                'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects),
-                'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects)
+                'optional_subjects' => $optionalSubjects, // Also include optional_subjects for consistency
+                'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects ?? null),
+                'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects ?? null),
+                'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects ?? null),
+                'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects ?? null)
             ];
         } catch (\Exception $e) {
             Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
