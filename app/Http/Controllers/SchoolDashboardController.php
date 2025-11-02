@@ -239,27 +239,57 @@ class SchoolDashboardController extends Controller
         try {
             $educationLevel = $this->determineEducationLevel($major->category ?? 'Saintek');
             
+            // Helper function to parse subjects from JSON or string
+            $parseSubjects = function($field) {
+                if (is_null($field)) return [];
+                if (is_array($field)) return $field;
+                if (is_string($field)) {
+                    $decoded = json_decode($field, true);
+                    return is_array($decoded) ? $decoded : (strlen($field) > 0 ? array_filter(array_map('trim', explode(',', $field))) : []);
+                }
+                return [];
+            };
+            
             // Get subjects from database mapping with error handling
             $mandatorySubjects = [];
             $optionalSubjects = [];
             
             try {
                 $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+                    ->where('is_active', 1)
                     ->with('subject')
                     ->get();
                 
                 $mandatorySubjects = $mappings->where('mapping_type', 'wajib')
                     ->pluck('subject.name')
                     ->filter()
+                    ->unique()
+                    ->values()
                     ->toArray();
                     
                 $optionalSubjects = $mappings->where('mapping_type', 'pilihan')
                     ->pluck('subject.name')
                     ->filter()
+                    ->unique()
+                    ->values()
                     ->toArray();
             } catch (\Exception $e) {
-                // If mapping fails, use empty arrays
+                // If mapping fails, try to get from required_subjects and preferred_subjects fields
                 Log::warning('Failed to load subject mappings for major ' . $major->id . ': ' . $e->getMessage());
+            }
+
+            // If no mappings found, try to get from required_subjects and preferred_subjects fields
+            if (empty($mandatorySubjects) && !empty($major->required_subjects)) {
+                $mandatorySubjects = $parseSubjects($major->required_subjects);
+            }
+            
+            if (empty($optionalSubjects) && !empty($major->preferred_subjects)) {
+                $optionalSubjects = $parseSubjects($major->preferred_subjects);
+            }
+            
+            // If still empty, try optional_subjects field
+            if (empty($optionalSubjects) && !empty($major->optional_subjects)) {
+                $optionalSubjects = $parseSubjects($major->optional_subjects);
             }
         
             return [
@@ -268,13 +298,14 @@ class SchoolDashboardController extends Controller
                 'description' => $major->description,
                 'career_prospects' => $major->career_prospects,
                 'category' => $major->category ?? 'Saintek',
+                'rumpun_ilmu' => $major->rumpun_ilmu ?? $major->category ?? 'Saintek',
                 'education_level' => $educationLevel,
                 'required_subjects' => $mandatorySubjects,
                 'preferred_subjects' => $optionalSubjects,
-                'kurikulum_merdeka_subjects' => $major->kurikulum_merdeka_subjects ?? [],
-                'kurikulum_2013_ipa_subjects' => $major->kurikulum_2013_ipa_subjects ?? [],
-                'kurikulum_2013_ips_subjects' => $major->kurikulum_2013_ips_subjects ?? [],
-                'kurikulum_2013_bahasa_subjects' => $major->kurikulum_2013_bahasa_subjects ?? []
+                'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects),
+                'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects),
+                'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects),
+                'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects)
             ];
         } catch (\Exception $e) {
             Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
@@ -285,6 +316,7 @@ class SchoolDashboardController extends Controller
                 'description' => $major->description ?? '',
                 'career_prospects' => $major->career_prospects ?? '',
                 'category' => $major->category ?? 'Saintek',
+                'rumpun_ilmu' => $major->rumpun_ilmu ?? $major->category ?? 'Saintek',
                 'education_level' => 'SMA/MA',
                 'required_subjects' => [],
                 'preferred_subjects' => [],
