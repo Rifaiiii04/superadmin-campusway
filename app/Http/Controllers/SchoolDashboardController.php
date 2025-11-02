@@ -220,65 +220,70 @@ class SchoolDashboardController extends Controller
             ];
 
             // Handle chosen major if student has a choice
-            if ($student && $student->studentChoice) {
+            if ($student && isset($student->studentChoice) && $student->studentChoice) {
                 try {
                     $major = null;
+                    $choiceMajorId = null;
                     
-                    // Try to get major from majorRecommendation relationship
-                    if (isset($student->studentChoice->majorRecommendation) && $student->studentChoice->majorRecommendation) {
-                        $major = $student->studentChoice->majorRecommendation;
-                    } elseif (isset($student->studentChoice->major) && $student->studentChoice->major) {
-                        $major = $student->studentChoice->major;
-                    } else {
-                        // Try to load the major directly from database
+                    // Get major_id safely
+                    try {
                         $choiceMajorId = $student->studentChoice->major_id ?? null;
-                        if ($choiceMajorId) {
-                            try {
-                                $major = \App\Models\MajorRecommendation::find($choiceMajorId);
-                            } catch (\Exception $dbError) {
-                                Log::warning('Failed to load major from database: ' . $dbError->getMessage());
-                            }
+                    } catch (\Exception $e) {
+                        Log::warning('Error accessing major_id: ' . $e->getMessage());
+                    }
+                    
+                    // Try to get major from relationship first
+                    try {
+                        if (property_exists($student->studentChoice, 'majorRecommendation') && $student->studentChoice->majorRecommendation) {
+                            $major = $student->studentChoice->majorRecommendation;
+                        } elseif (property_exists($student->studentChoice, 'major') && $student->studentChoice->major) {
+                            $major = $student->studentChoice->major;
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Error accessing major relationship: ' . $e->getMessage());
+                    }
+                    
+                    // If no major from relationship, load directly from database
+                    if (!$major && $choiceMajorId) {
+                        try {
+                            $major = MajorRecommendation::find($choiceMajorId);
+                        } catch (\Exception $dbError) {
+                            Log::warning('Failed to load major from database: ' . $dbError->getMessage());
                         }
                     }
                     
+                    // Process major data
                     if ($major && is_object($major)) {
                         try {
                             $majorData = $this->getMajorWithSubjects($major);
-                            if ($majorData && is_array($majorData)) {
+                            if (is_array($majorData)) {
                                 $majorData['choice_date'] = $student->studentChoice->created_at ?? null;
                                 $studentData['chosen_major'] = $majorData;
                             } else {
-                                // If getMajorWithSubjects returns null or invalid, create basic structure
-                                $studentData['chosen_major'] = [
-                                    'id' => $major->id ?? 0,
-                                    'name' => $major->major_name ?? 'Unknown',
-                                    'description' => $major->description ?? '',
-                                    'category' => $major->category ?? 'Saintek',
-                                    'choice_date' => $student->studentChoice->created_at ?? null,
-                                    'required_subjects' => [],
-                                    'preferred_subjects' => [],
-                                    'optional_subjects' => []
-                                ];
+                                // Fallback: create basic structure
+                                $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
                             }
                         } catch (\Throwable $subjectError) {
                             Log::error('Error getting major with subjects: ' . $subjectError->getMessage());
-                            Log::error('File: ' . $subjectError->getFile() . ' Line: ' . $subjectError->getLine());
-                            // Add basic major info without subjects
-                            $studentData['chosen_major'] = [
-                                'id' => isset($major->id) ? $major->id : 0,
-                                'name' => isset($major->major_name) ? $major->major_name : 'Unknown',
-                                'description' => isset($major->description) ? $major->description : '',
-                                'category' => isset($major->category) ? $major->category : 'Saintek',
-                                'choice_date' => isset($student->studentChoice->created_at) ? $student->studentChoice->created_at : null,
-                                'required_subjects' => [],
-                                'preferred_subjects' => [],
-                                'optional_subjects' => []
-                            ];
+                            // Fallback: create basic structure
+                            $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
                         }
+                    } elseif ($choiceMajorId) {
+                        // Major object failed but we have ID, create minimal structure
+                        $studentData['chosen_major'] = [
+                            'id' => $choiceMajorId,
+                            'name' => 'Unknown Major',
+                            'description' => '',
+                            'category' => 'Saintek',
+                            'choice_date' => $student->studentChoice->created_at ?? null,
+                            'required_subjects' => [],
+                            'preferred_subjects' => [],
+                            'optional_subjects' => []
+                        ];
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     Log::error('Error processing student choice: ' . $e->getMessage());
-                    Log::error('Stack trace: ' . $e->getTraceAsString());
+                    Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
                     // Continue without major data - don't fail the entire request
                 }
             }
@@ -310,6 +315,67 @@ class SchoolDashboardController extends Controller
     }
 
     /**
+     * Safely get attribute from model
+     */
+    private function safeGetAttribute($model, $attribute)
+    {
+        try {
+            if (method_exists($model, 'getAttribute')) {
+                return $model->getAttribute($attribute);
+            } elseif (property_exists($model, $attribute)) {
+                return $model->$attribute ?? null;
+            }
+            return null;
+        } catch (\Throwable $e) {
+            Log::warning("Error getting attribute {$attribute}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Create basic major data structure (fallback)
+     */
+    private function createBasicMajorData($major, $studentChoice = null)
+    {
+        try {
+            if (!$major) {
+                return [
+                    'id' => 0,
+                    'name' => 'Unknown',
+                    'description' => '',
+                    'category' => 'Saintek',
+                    'choice_date' => null,
+                    'required_subjects' => [],
+                    'preferred_subjects' => [],
+                    'optional_subjects' => []
+                ];
+            }
+            
+            return [
+                'id' => $this->safeGetAttribute($major, 'id') ?? 0,
+                'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown',
+                'description' => $this->safeGetAttribute($major, 'description') ?? '',
+                'category' => $this->safeGetAttribute($major, 'category') ?? 'Saintek',
+                'choice_date' => $studentChoice ? ($this->safeGetAttribute($studentChoice, 'created_at') ?? null) : null,
+                'required_subjects' => [],
+                'preferred_subjects' => [],
+                'optional_subjects' => []
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'id' => 0,
+                'name' => 'Unknown',
+                'description' => '',
+                'category' => 'Saintek',
+                'choice_date' => null,
+                'required_subjects' => [],
+                'preferred_subjects' => [],
+                'optional_subjects' => []
+            ];
+        }
+    }
+
+    /**
      * Get major with subjects from database mapping
      */
     private function getMajorWithSubjects($major)
@@ -336,7 +402,9 @@ class SchoolDashboardController extends Controller
                 ];
             }
             
-            $educationLevel = $this->determineEducationLevel($major->category ?? $major->rumpun_ilmu ?? 'Saintek');
+            $category = $this->safeGetAttribute($major, 'category');
+            $rumpunIlmu = $this->safeGetAttribute($major, 'rumpun_ilmu');
+            $educationLevel = $this->determineEducationLevel($category ?? $rumpunIlmu ?? 'Saintek');
             
             // Helper function to parse subjects from JSON or string
             $parseSubjects = function($field) {
@@ -358,23 +426,25 @@ class SchoolDashboardController extends Controller
             $preferredSubjectsField = null;
             $optionalSubjectsField = null;
             
-            // Safely access properties
-            try {
-                $requiredSubjectsField = isset($major->required_subjects) ? $major->required_subjects : null;
-            } catch (\Exception $e) {
-                Log::warning('Error accessing required_subjects: ' . $e->getMessage());
-            }
+            // Safely access properties using getAttribute or array access
+            $requiredSubjectsField = null;
+            $preferredSubjectsField = null;
+            $optionalSubjectsField = null;
             
             try {
-                $preferredSubjectsField = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
-            } catch (\Exception $e) {
-                Log::warning('Error accessing preferred_subjects: ' . $e->getMessage());
-            }
-            
-            try {
-                $optionalSubjectsField = isset($major->optional_subjects) ? $major->optional_subjects : null;
-            } catch (\Exception $e) {
-                Log::warning('Error accessing optional_subjects: ' . $e->getMessage());
+                // Use getAttribute if available, otherwise direct property access
+                if (method_exists($major, 'getAttribute')) {
+                    $requiredSubjectsField = $major->getAttribute('required_subjects');
+                    $preferredSubjectsField = $major->getAttribute('preferred_subjects');
+                    $optionalSubjectsField = $major->getAttribute('optional_subjects');
+                } else {
+                    $requiredSubjectsField = isset($major->required_subjects) ? $major->required_subjects : null;
+                    $preferredSubjectsField = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
+                    $optionalSubjectsField = isset($major->optional_subjects) ? $major->optional_subjects : null;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Error accessing subject fields: ' . $e->getMessage());
+                // Continue with null values
             }
             
             // Parse subjects from fields
@@ -447,24 +517,25 @@ class SchoolDashboardController extends Controller
             }
         
             $majorData = [
-                'id' => $major->id ?? 0,
-                'name' => $major->major_name ?? 'Unknown Major',
-                'description' => $major->description ?? '',
-                'career_prospects' => $major->career_prospects ?? '',
-                'category' => $major->category ?? 'Saintek',
-                'rumpun_ilmu' => $major->rumpun_ilmu ?? $major->category ?? 'Saintek',
+                'id' => $this->safeGetAttribute($major, 'id') ?? 0,
+                'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown Major',
+                'description' => $this->safeGetAttribute($major, 'description') ?? '',
+                'career_prospects' => $this->safeGetAttribute($major, 'career_prospects') ?? '',
+                'category' => $this->safeGetAttribute($major, 'category') ?? 'Saintek',
+                'rumpun_ilmu' => $this->safeGetAttribute($major, 'rumpun_ilmu') ?? $this->safeGetAttribute($major, 'category') ?? 'Saintek',
                 'education_level' => $educationLevel,
                 'required_subjects' => $mandatorySubjects,
                 'preferred_subjects' => $optionalSubjects,
                 'optional_subjects' => $optionalSubjects, // Also include optional_subjects for consistency
-                'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects ?? null),
-                'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects ?? null),
-                'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects ?? null),
-                'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects ?? null)
+                'kurikulum_merdeka_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_merdeka_subjects')),
+                'kurikulum_2013_ipa_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ipa_subjects')),
+                'kurikulum_2013_ips_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ips_subjects')),
+                'kurikulum_2013_bahasa_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_bahasa_subjects'))
             ];
             
             // Log for debugging
-            Log::info('getMajorWithSubjects returning data for major ' . ($major->id ?? 'unknown'), [
+            $majorId = $this->safeGetAttribute($major, 'id');
+            Log::info('getMajorWithSubjects returning data for major ' . ($majorId ?? 'unknown'), [
                 'required_subjects_count' => count($mandatorySubjects),
                 'preferred_subjects_count' => count($optionalSubjects),
                 'required_subjects' => $mandatorySubjects,
@@ -472,25 +543,31 @@ class SchoolDashboardController extends Controller
             ]);
             
             return $majorData;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
-            // Return basic major data without subjects
-            return [
-                'id' => $major->id ?? 0,
-                'name' => $major->major_name ?? 'Unknown Major',
-                'description' => $major->description ?? '',
-                'career_prospects' => $major->career_prospects ?? '',
-                'category' => $major->category ?? 'Saintek',
-                'rumpun_ilmu' => $major->rumpun_ilmu ?? $major->category ?? 'Saintek',
-                'education_level' => 'SMA/MA',
-                'required_subjects' => [],
-                'preferred_subjects' => [],
-                'optional_subjects' => [],
-                'kurikulum_merdeka_subjects' => [],
-                'kurikulum_2013_ipa_subjects' => [],
-                'kurikulum_2013_ips_subjects' => [],
-                'kurikulum_2013_bahasa_subjects' => []
-            ];
+            Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            // Return basic major data without subjects using safe method
+            try {
+                return $this->createBasicMajorData($major ?? null);
+            } catch (\Throwable $fallbackError) {
+                // Ultimate fallback - return minimal structure
+                return [
+                    'id' => 0,
+                    'name' => 'Unknown Major',
+                    'description' => '',
+                    'career_prospects' => '',
+                    'category' => 'Saintek',
+                    'rumpun_ilmu' => 'Saintek',
+                    'education_level' => 'SMA/MA',
+                    'required_subjects' => [],
+                    'preferred_subjects' => [],
+                    'optional_subjects' => [],
+                    'kurikulum_merdeka_subjects' => [],
+                    'kurikulum_2013_ipa_subjects' => [],
+                    'kurikulum_2013_ips_subjects' => [],
+                    'kurikulum_2013_bahasa_subjects' => []
+                ];
+            }
         }
     }
 
