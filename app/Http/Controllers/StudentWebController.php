@@ -317,7 +317,7 @@ class StudentWebController extends Controller
                 // Format subjects for frontend
                 'required_subjects' => $mandatorySubjects,
                 'preferred_subjects' => $optionalSubjects,
-                'optional_subjects' => $optionalSubjects,
+                'optional_subjects' => $parseSubjects($major->optional_subjects) ?: $optionalSubjects,
                 'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects),
                 'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects),
                 'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects),
