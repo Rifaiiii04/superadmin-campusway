@@ -354,21 +354,53 @@ class SchoolDashboardController extends Controller
             $optionalSubjects = [];
             
             // First, try to get from direct fields (this is most reliable)
-            $requiredSubjectsField = isset($major->required_subjects) ? $major->required_subjects : null;
-            $preferredSubjectsField = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
-            $optionalSubjectsField = isset($major->optional_subjects) ? $major->optional_subjects : null;
+            $requiredSubjectsField = null;
+            $preferredSubjectsField = null;
+            $optionalSubjectsField = null;
             
+            // Safely access properties
+            try {
+                $requiredSubjectsField = isset($major->required_subjects) ? $major->required_subjects : null;
+            } catch (\Exception $e) {
+                Log::warning('Error accessing required_subjects: ' . $e->getMessage());
+            }
+            
+            try {
+                $preferredSubjectsField = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
+            } catch (\Exception $e) {
+                Log::warning('Error accessing preferred_subjects: ' . $e->getMessage());
+            }
+            
+            try {
+                $optionalSubjectsField = isset($major->optional_subjects) ? $major->optional_subjects : null;
+            } catch (\Exception $e) {
+                Log::warning('Error accessing optional_subjects: ' . $e->getMessage());
+            }
+            
+            // Parse subjects from fields
             if (!empty($requiredSubjectsField)) {
-                $mandatorySubjects = $parseSubjects($requiredSubjectsField);
+                try {
+                    $mandatorySubjects = $parseSubjects($requiredSubjectsField);
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing required_subjects: ' . $e->getMessage());
+                }
             }
             
             if (!empty($preferredSubjectsField)) {
-                $optionalSubjects = $parseSubjects($preferredSubjectsField);
+                try {
+                    $optionalSubjects = $parseSubjects($preferredSubjectsField);
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing preferred_subjects: ' . $e->getMessage());
+                }
             }
             
             // If still empty, try optional_subjects field
             if (empty($optionalSubjects) && !empty($optionalSubjectsField)) {
-                $optionalSubjects = $parseSubjects($optionalSubjectsField);
+                try {
+                    $optionalSubjects = $parseSubjects($optionalSubjectsField);
+                } catch (\Exception $e) {
+                    Log::warning('Error parsing optional_subjects: ' . $e->getMessage());
+                }
             }
             
             // Only try database mapping if we don't have subjects from direct fields
@@ -414,7 +446,7 @@ class SchoolDashboardController extends Controller
                 }
             }
         
-            return [
+            $majorData = [
                 'id' => $major->id ?? 0,
                 'name' => $major->major_name ?? 'Unknown Major',
                 'description' => $major->description ?? '',
@@ -430,6 +462,16 @@ class SchoolDashboardController extends Controller
                 'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects ?? null),
                 'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects ?? null)
             ];
+            
+            // Log for debugging
+            Log::info('getMajorWithSubjects returning data for major ' . ($major->id ?? 'unknown'), [
+                'required_subjects_count' => count($mandatorySubjects),
+                'preferred_subjects_count' => count($optionalSubjects),
+                'required_subjects' => $mandatorySubjects,
+                'preferred_subjects' => $optionalSubjects
+            ]);
+            
+            return $majorData;
         } catch (\Exception $e) {
             Log::error('Error in getMajorWithSubjects: ' . $e->getMessage());
             // Return basic major data without subjects
