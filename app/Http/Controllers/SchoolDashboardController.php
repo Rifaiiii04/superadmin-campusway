@@ -181,7 +181,7 @@ class SchoolDashboardController extends Controller
 
             $student = Student::where('id', $studentId)
                 ->where('school_id', $school->id)
-                ->with(['studentChoice.major'])
+                ->with(['studentChoice.majorRecommendation'])
                 ->first();
 
             if (!$student) {
@@ -205,9 +205,17 @@ class SchoolDashboardController extends Controller
             ];
 
             if ($student->studentChoice) {
-                $majorData = $this->getMajorWithSubjects($student->studentChoice->major);
-                $majorData['choice_date'] = $student->studentChoice->created_at;
-                $studentData['chosen_major'] = $majorData;
+                // Get major from the relationship (could be 'major' or 'majorRecommendation')
+                $major = $student->studentChoice->majorRecommendation ?? $student->studentChoice->major ?? null;
+                
+                if ($major) {
+                    $majorData = $this->getMajorWithSubjects($major);
+                    $majorData['choice_date'] = $student->studentChoice->created_at;
+                    $studentData['chosen_major'] = $majorData;
+                } else {
+                    // Fallback: log warning if major not found
+                    Log::warning('Major not found for student choice: ' . $student->studentChoice->id);
+                }
             }
 
             return response()->json([
