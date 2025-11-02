@@ -20,13 +20,16 @@ class SchoolAuth
     public function handle(Request $request, Closure $next)
     {
         try {
+            // Force JSON response - never redirect
+            $request->headers->set('Accept', 'application/json');
+            
             $token = $request->header('Authorization');
             
             if (!$token) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Token tidak ditemukan'
-                ], 401);
+                ], 401)->header('Content-Type', 'application/json');
             }
 
             // Remove "Bearer " prefix if exists
@@ -41,7 +44,7 @@ class SchoolAuth
                 return response()->json([
                     'success' => false,
                     'message' => 'Token tidak valid'
-                ], 401);
+                ], 401)->header('Content-Type', 'application/json');
             }
 
             // Get the school model from token
@@ -51,7 +54,7 @@ class SchoolAuth
                 return response()->json([
                     'success' => false,
                     'message' => 'Token tidak valid untuk sekolah'
-                ], 401);
+                ], 401)->header('Content-Type', 'application/json');
             }
 
             // Check if token is expired
@@ -59,21 +62,31 @@ class SchoolAuth
                 return response()->json([
                     'success' => false,
                     'message' => 'Token sudah expired'
-                ], 401);
+                ], 401)->header('Content-Type', 'application/json');
             }
 
             // Tambahkan data sekolah ke request
             $request->merge(['school_id' => $school->id]);
             $request->merge(['school' => $school]);
 
-            return $next($request);
+            $response = $next($request);
+            
+            // Ensure response is JSON
+            if (!$response instanceof \Illuminate\Http\JsonResponse) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid response format'
+                ], 500)->header('Content-Type', 'application/json');
+            }
+            
+            return $response;
 
         } catch (\Exception $e) {
             Log::error('School auth middleware error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan autentikasi'
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 }
