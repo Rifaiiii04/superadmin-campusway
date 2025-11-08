@@ -241,15 +241,33 @@ class SchoolDashboardController extends Controller
                 ], 404);
             }
 
-            // Load student choice separately
+            // Load student choice separately - get student ID safely
             $studentChoice = null;
             $major = null;
             try {
-                $studentChoice = StudentChoice::where('student_id', $student->id)->first();
-                if ($studentChoice && isset($studentChoice->major_id) && $studentChoice->major_id) {
-                    $major = MajorRecommendation::find($studentChoice->major_id);
+                $studentIdValue = null;
+                try {
+                    $studentIdValue = $student->id ?? null;
+                } catch (\Exception $e) {
+                    Log::warning('Error getting student ID: ' . $e->getMessage());
                 }
-            } catch (\Exception $e) {
+                
+                if ($studentIdValue) {
+                    $studentChoice = StudentChoice::where('student_id', $studentIdValue)->first();
+                    if ($studentChoice) {
+                        $majorIdValue = null;
+                        try {
+                            $majorIdValue = $studentChoice->major_id ?? null;
+                        } catch (\Exception $e) {
+                            Log::warning('Error getting major_id from choice: ' . $e->getMessage());
+                        }
+                        
+                        if ($majorIdValue) {
+                            $major = MajorRecommendation::find($majorIdValue);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
                 Log::warning('Error loading student choice or major: ' . $e->getMessage());
                 // Continue without choice/major data
             }
@@ -480,37 +498,101 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
-            // Return response
+            // Return response - ensure JSON encoding works
             try {
-                return response()->json([
+                $responseData = [
                     'success' => true,
                     'data' => [
                         'school' => $schoolData,
                         'student' => $studentData
                     ]
-                ], 200);
+                ];
+                
+                // Test JSON encoding before returning
+                $jsonTest = json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                if ($jsonTest === false) {
+                    $jsonError = json_last_error_msg();
+                    Log::error('JSON encoding failed: ' . $jsonError);
+                    
+                    // Try without chosen_major if it exists
+                    if (isset($studentData['chosen_major'])) {
+                        unset($studentData['chosen_major']);
+                        $responseData = [
+                            'success' => true,
+                            'data' => [
+                                'school' => $schoolData,
+                                'student' => $studentData
+                            ]
+                        ];
+                        $jsonTest = json_encode($responseData);
+                    }
+                    
+                    if ($jsonTest === false) {
+                        throw new \Exception('JSON encoding failed: ' . json_last_error_msg());
+                    }
+                }
+                
+                return response()->json($responseData, 200);
             } catch (\Exception $e) {
                 Log::error('Error encoding JSON response: ' . $e->getMessage());
                 // Return minimal response
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'school' => ['id' => 0, 'npsn' => '', 'name' => ''],
-                        'student' => ['id' => (int)$studentId, 'name' => '', 'has_choice' => false]
-                    ]
-                ], 200);
+                try {
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'school' => ['id' => 0, 'npsn' => '', 'name' => ''],
+                            'student' => ['id' => (int)$studentId, 'name' => '', 'has_choice' => false]
+                        ]
+                    ], 200);
+                } catch (\Exception $e2) {
+                    // Last resort - return plain text
+                    http_response_code(200);
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'Error processing response']);
+                    exit;
+                }
             }
 
-        } catch (\Exception $e) {
-            Log::error('Get student detail error: ' . $e->getMessage());
-            Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+        } catch (\Throwable $e) {
+            // Log semua jenis error termasuk Error dan Exception
+            try {
+                Log::error('Get student detail error: ' . $e->getMessage());
+            } catch (\Throwable $logError) {
+                // Jika logging gagal, gunakan error_log
+                error_log('Get student detail error: ' . $e->getMessage());
+            }
             
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
-                'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            try {
+                Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            } catch (\Throwable $logError) {
+                error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            }
+            
+            try {
+                Log::error('Stack trace: ' . $e->getTraceAsString());
+            } catch (\Throwable $logError) {
+                error_log('Stack trace: ' . $e->getTraceAsString());
+            }
+            
+            // Return error response
+            try {
+                $errorMessage = config('app.debug') ? $e->getMessage() : null;
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
+                    'error' => $errorMessage,
+                    'error_type' => get_class($e)
+                ], 500);
+            } catch (\Throwable $responseError) {
+                // Jika response juga gagal, return minimal
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan server'
+                ]);
+                exit;
+            }
         }
     }
 
