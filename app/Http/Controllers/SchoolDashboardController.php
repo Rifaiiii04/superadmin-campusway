@@ -169,8 +169,24 @@ class SchoolDashboardController extends Controller
      */
     public function studentDetail(Request $request, $studentId)
     {
+        // Safe logging helper - won't fail if Log is broken
+        $safeLog = function($level, $message, $context = []) {
+            try {
+                if ($level === 'info') {
+                    Log::info($message, $context);
+                } elseif ($level === 'warning') {
+                    Log::warning($message, $context);
+                } elseif ($level === 'error') {
+                    Log::error($message, $context);
+                }
+            } catch (\Throwable $e) {
+                // Silently fail - don't break the request if logging fails
+                error_log("Logging failed: " . $e->getMessage());
+            }
+        };
+        
         try {
-            Log::info('studentDetail called', [
+            $safeLog('info', 'studentDetail called', [
                 'student_id' => $studentId, 
                 'request_method' => $request->method(), 
                 'request_uri' => $request->getRequestUri(),
@@ -180,7 +196,7 @@ class SchoolDashboardController extends Controller
             
             // Validate studentId
             if (!is_numeric($studentId)) {
-                Log::warning('Invalid student ID', ['student_id' => $studentId]);
+                $safeLog('warning', 'Invalid student ID', ['student_id' => $studentId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'ID siswa tidak valid'
@@ -189,14 +205,14 @@ class SchoolDashboardController extends Controller
 
             $school = $request->school ?? null;
             
-            Log::info('School check', [
+            $safeLog('info', 'School check', [
                 'school' => $school ? 'exists' : 'null',
                 'is_object' => is_object($school),
                 'school_id' => $school && is_object($school) ? ($school->id ?? 'no_id') : 'N/A'
             ]);
 
             if (!$school || !is_object($school)) {
-                Log::warning('School not found in request for student detail', [
+                $safeLog('warning', 'School not found in request for student detail', [
                     'student_id' => $studentId,
                     'school' => $school,
                     'request_school_id' => $request->school_id ?? null
@@ -207,18 +223,18 @@ class SchoolDashboardController extends Controller
                 ], 404)->header('Content-Type', 'application/json');
             }
             
-            Log::info('School found', ['school_id' => $school->id ?? 'unknown']);
+            $safeLog('info', 'School found', ['school_id' => $school->id ?? 'unknown']);
 
             // Get student with minimal eager loading to avoid errors
             $schoolId = $this->safeGetAttribute($school, 'id');
-            Log::info('Querying student', ['student_id' => $studentId, 'school_id' => $schoolId]);
+            $safeLog('info', 'Querying student', ['student_id' => $studentId, 'school_id' => $schoolId]);
             
             try {
                 $student = Student::where('id', $studentId)
                     ->where('school_id', $schoolId)
                     ->first();
             } catch (\Exception $e) {
-                Log::error('Error querying student', [
+                $safeLog('error', 'Error querying student', [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
                     'line' => $e->getLine(),
@@ -231,14 +247,14 @@ class SchoolDashboardController extends Controller
             }
 
             if (!$student) {
-                Log::warning('Student not found', ['student_id' => $studentId, 'school_id' => $schoolId]);
+                $safeLog('warning', 'Student not found', ['student_id' => $studentId, 'school_id' => $schoolId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
                 ], 404)->header('Content-Type', 'application/json');
             }
             
-            Log::info('Student found', ['student_id' => $student->id ?? 'unknown']);
+            $safeLog('info', 'Student found', ['student_id' => $student->id ?? 'unknown']);
             
             // Load relationships separately with error handling
             if ($student) {
