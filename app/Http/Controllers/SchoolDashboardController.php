@@ -324,51 +324,50 @@ class SchoolDashboardController extends Controller
             // Handle chosen major if student has a choice
             if ($studentChoice && $major) {
                 try {
-                    // Helper to parse subjects - handle both array and string formats
+                    // Helper to parse subjects - simpler version like StudentWebController
                     $parseSubjects = function($field) {
-                        try {
-                            if (is_null($field) || $field === '') return [];
-                            if (is_array($field)) {
-                                return array_values(array_filter(array_map(function($item) {
-                                    try {
-                                        $trimmed = is_string($item) ? trim($item) : (string)$item;
-                                        return !empty($trimmed) ? $trimmed : null;
-                                    } catch (\Exception $e) {
-                                        return null;
-                                    }
-                                }, $field), function($item) {
-                                    return $item !== null;
-                                }));
-                            }
-                            if (is_string($field)) {
-                                $trimmed = trim($field);
-                                if (empty($trimmed)) return [];
-                                
-                                // Try JSON first
-                                $decoded = @json_decode($trimmed, true);
-                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                    return array_values(array_filter(array_map(function($item) {
-                                        try {
-                                            $trimmed = is_string($item) ? trim($item) : (string)$item;
-                                            return !empty($trimmed) ? $trimmed : null;
-                                        } catch (\Exception $e) {
-                                            return null;
-                                        }
-                                    }, $decoded), function($item) {
-                                        return $item !== null;
-                                    }));
+                        if (is_null($field)) return [];
+                        if (is_array($field)) {
+                            // Filter and clean array values
+                            return array_values(array_filter(array_map(function($item) {
+                                if (is_string($item)) {
+                                    return trim($item);
                                 }
-                                // Fallback to comma-separated
-                                $parts = explode(',', $trimmed);
-                                return array_values(array_filter(array_map('trim', $parts), function($item) {
-                                    return !empty($item);
+                                if (is_numeric($item) || is_bool($item)) {
+                                    return (string)$item;
+                                }
+                                return null;
+                            }, $field), function($item) {
+                                return $item !== null && $item !== '';
+                            }));
+                        }
+                        if (is_string($field)) {
+                            $trimmed = trim($field);
+                            if (empty($trimmed)) return [];
+                            
+                            // Try JSON decode first
+                            $decoded = @json_decode($trimmed, true);
+                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                return array_values(array_filter(array_map(function($item) {
+                                    if (is_string($item)) {
+                                        return trim($item);
+                                    }
+                                    if (is_numeric($item) || is_bool($item)) {
+                                        return (string)$item;
+                                    }
+                                    return null;
+                                }, $decoded), function($item) {
+                                    return $item !== null && $item !== '';
                                 }));
                             }
-                            return [];
-                        } catch (\Exception $e) {
-                            Log::warning('Error in parseSubjects: ' . $e->getMessage());
-                            return [];
+                            
+                            // Fallback to comma-separated
+                            $parts = explode(',', $trimmed);
+                            return array_values(array_filter(array_map('trim', $parts), function($item) {
+                                return !empty($item);
+                            }));
                         }
+                        return [];
                     };
                     
                     // Get major attributes safely with try-catch for each
@@ -456,6 +455,57 @@ class SchoolDashboardController extends Controller
                         Log::warning('Error formatting choice_date: ' . $e->getMessage());
                     }
                     
+                    // Parse all subjects safely
+                    $parsedRequiredSubjects = [];
+                    $parsedPreferredSubjects = [];
+                    $parsedOptionalSubjects = [];
+                    $parsedKurikulumMerdeka = [];
+                    $parsedKurikulum2013Ipa = [];
+                    $parsedKurikulum2013Ips = [];
+                    $parsedKurikulum2013Bahasa = [];
+                    
+                    try {
+                        $parsedRequiredSubjects = $parseSubjects($requiredSubjects);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing required_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedPreferredSubjects = $parseSubjects($preferredSubjects);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing preferred_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedOptionalSubjects = $parseSubjects($optionalSubjects);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing optional_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedKurikulumMerdeka = $parseSubjects($kurikulumMerdeka);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing kurikulum_merdeka_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedKurikulum2013Ipa = $parseSubjects($kurikulum2013Ipa);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing kurikulum_2013_ipa_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedKurikulum2013Ips = $parseSubjects($kurikulum2013Ips);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing kurikulum_2013_ips_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $parsedKurikulum2013Bahasa = $parseSubjects($kurikulum2013Bahasa);
+                    } catch (\Exception $e) {
+                        Log::warning('Error parsing kurikulum_2013_bahasa_subjects: ' . $e->getMessage());
+                    }
+                    
                     $studentData['chosen_major'] = [
                         'id' => $majorId,
                         'name' => $majorName,
@@ -465,13 +515,13 @@ class SchoolDashboardController extends Controller
                         'career_prospects' => $majorCareer,
                         'education_level' => 'SMA/MA',
                         'choice_date' => $choiceDate,
-                        'required_subjects' => $parseSubjects($requiredSubjects),
-                        'preferred_subjects' => $parseSubjects($preferredSubjects),
-                        'optional_subjects' => $parseSubjects($optionalSubjects),
-                        'kurikulum_merdeka_subjects' => $parseSubjects($kurikulumMerdeka),
-                        'kurikulum_2013_ipa_subjects' => $parseSubjects($kurikulum2013Ipa),
-                        'kurikulum_2013_ips_subjects' => $parseSubjects($kurikulum2013Ips),
-                        'kurikulum_2013_bahasa_subjects' => $parseSubjects($kurikulum2013Bahasa),
+                        'required_subjects' => $parsedRequiredSubjects,
+                        'preferred_subjects' => $parsedPreferredSubjects,
+                        'optional_subjects' => $parsedOptionalSubjects,
+                        'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
+                        'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
+                        'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
+                        'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error processing major data: ' . $e->getMessage());
