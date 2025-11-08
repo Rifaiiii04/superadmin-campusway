@@ -1,6 +1,13 @@
 <?php
 
 // Log request untuk debugging
+$logFile = __DIR__ . '/../storage/logs/index_debug.log';
+$logMessage = date('Y-m-d H:i:s') . " - index.php called\n";
+$logMessage .= "  REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A') . "\n";
+$logMessage .= "  REQUEST_METHOD: " . ($_SERVER['REQUEST_METHOD'] ?? 'N/A') . "\n";
+$logMessage .= "  SCRIPT_NAME: " . ($_SERVER['SCRIPT_NAME'] ?? 'N/A') . "\n";
+$logMessage .= "  DOCUMENT_ROOT: " . ($_SERVER['DOCUMENT_ROOT'] ?? 'N/A') . "\n";
+file_put_contents($logFile, $logMessage, FILE_APPEND);
 error_log('=== index.php called ===');
 error_log('REQUEST_URI: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
 error_log('REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
