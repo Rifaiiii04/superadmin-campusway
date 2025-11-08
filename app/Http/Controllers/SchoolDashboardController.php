@@ -170,7 +170,13 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
-            Log::info('studentDetail called', ['student_id' => $studentId, 'request_method' => $request->method(), 'request_uri' => $request->getRequestUri()]);
+            Log::info('studentDetail called', [
+                'student_id' => $studentId, 
+                'request_method' => $request->method(), 
+                'request_uri' => $request->getRequestUri(),
+                'has_school' => isset($request->school),
+                'school_id' => isset($request->school) && is_object($request->school) ? ($request->school->id ?? null) : null
+            ]);
             
             // Validate studentId
             if (!is_numeric($studentId)) {
@@ -182,6 +188,12 @@ class SchoolDashboardController extends Controller
             }
 
             $school = $request->school ?? null;
+            
+            Log::info('School check', [
+                'school' => $school ? 'exists' : 'null',
+                'is_object' => is_object($school),
+                'school_id' => $school && is_object($school) ? ($school->id ?? 'no_id') : 'N/A'
+            ]);
 
             if (!$school || !is_object($school)) {
                 Log::warning('School not found in request for student detail', [
@@ -309,7 +321,33 @@ class SchoolDashboardController extends Controller
                             Log::info('Processing major data', ['major_id' => $choiceMajorId]);
                             
                             // Start with basic major data (safer)
-                            $majorData = $this->createBasicMajorData($major, $student->studentChoice);
+                            try {
+                                $majorData = $this->createBasicMajorData($major, $student->studentChoice);
+                            } catch (\Throwable $createError) {
+                                Log::error('Error in createBasicMajorData: ' . $createError->getMessage(), [
+                                    'major_id' => $choiceMajorId,
+                                    'file' => $createError->getFile(),
+                                    'line' => $createError->getLine()
+                                ]);
+                                // Create minimal structure manually
+                                $majorData = [
+                                    'id' => (int)($choiceMajorId ?? 0),
+                                    'name' => 'Unknown Major',
+                                    'description' => '',
+                                    'category' => 'Saintek',
+                                    'rumpun_ilmu' => 'Saintek',
+                                    'career_prospects' => '',
+                                    'education_level' => 'SMA/MA',
+                                    'choice_date' => $choiceCreatedAt,
+                                    'required_subjects' => [],
+                                    'preferred_subjects' => [],
+                                    'optional_subjects' => [],
+                                    'kurikulum_merdeka_subjects' => [],
+                                    'kurikulum_2013_ipa_subjects' => [],
+                                    'kurikulum_2013_ips_subjects' => [],
+                                    'kurikulum_2013_bahasa_subjects' => []
+                                ];
+                            }
                             
                             // Try to add subjects directly from major fields (simpler, faster approach)
                             // This avoids complex database queries that might cause timeout
@@ -614,33 +652,71 @@ class SchoolDashboardController extends Controller
                     'name' => 'Unknown',
                     'description' => '',
                     'category' => 'Saintek',
+                    'rumpun_ilmu' => 'Saintek',
+                    'career_prospects' => '',
+                    'education_level' => 'SMA/MA',
                     'choice_date' => null,
                     'required_subjects' => [],
                     'preferred_subjects' => [],
-                    'optional_subjects' => []
+                    'optional_subjects' => [],
+                    'kurikulum_merdeka_subjects' => [],
+                    'kurikulum_2013_ipa_subjects' => [],
+                    'kurikulum_2013_ips_subjects' => [],
+                    'kurikulum_2013_bahasa_subjects' => []
                 ];
             }
             
+            $majorId = $this->safeGetAttribute($major, 'id');
+            $majorName = $this->safeGetAttribute($major, 'major_name');
+            $majorDescription = $this->safeGetAttribute($major, 'description');
+            $majorCategory = $this->safeGetAttribute($major, 'category');
+            $majorRumpun = $this->safeGetAttribute($major, 'rumpun_ilmu');
+            $majorCareer = $this->safeGetAttribute($major, 'career_prospects');
+            $choiceDate = null;
+            
+            try {
+                if ($studentChoice) {
+                    $choiceDate = $this->safeGetAttribute($studentChoice, 'created_at');
+                }
+            } catch (\Throwable $e) {
+                // Ignore error getting choice date
+            }
+            
             return [
-                'id' => $this->safeGetAttribute($major, 'id') ?? 0,
-                'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown',
-                'description' => $this->safeGetAttribute($major, 'description') ?? '',
-                'category' => $this->safeGetAttribute($major, 'category') ?? 'Saintek',
-                'choice_date' => $studentChoice ? ($this->safeGetAttribute($studentChoice, 'created_at') ?? null) : null,
+                'id' => is_numeric($majorId) ? (int)$majorId : 0,
+                'name' => is_string($majorName) ? $majorName : (string)($majorName ?? 'Unknown'),
+                'description' => is_string($majorDescription) ? $majorDescription : (string)($majorDescription ?? ''),
+                'category' => is_string($majorCategory) ? $majorCategory : 'Saintek',
+                'rumpun_ilmu' => is_string($majorRumpun) ? $majorRumpun : (is_string($majorCategory) ? $majorCategory : 'Saintek'),
+                'career_prospects' => is_string($majorCareer) ? $majorCareer : (string)($majorCareer ?? ''),
+                'education_level' => 'SMA/MA',
+                'choice_date' => $choiceDate,
                 'required_subjects' => [],
                 'preferred_subjects' => [],
-                'optional_subjects' => []
+                'optional_subjects' => [],
+                'kurikulum_merdeka_subjects' => [],
+                'kurikulum_2013_ipa_subjects' => [],
+                'kurikulum_2013_ips_subjects' => [],
+                'kurikulum_2013_bahasa_subjects' => []
             ];
         } catch (\Throwable $e) {
+            Log::warning('Error in createBasicMajorData: ' . $e->getMessage());
             return [
                 'id' => 0,
                 'name' => 'Unknown',
                 'description' => '',
                 'category' => 'Saintek',
+                'rumpun_ilmu' => 'Saintek',
+                'career_prospects' => '',
+                'education_level' => 'SMA/MA',
                 'choice_date' => null,
                 'required_subjects' => [],
                 'preferred_subjects' => [],
-                'optional_subjects' => []
+                'optional_subjects' => [],
+                'kurikulum_merdeka_subjects' => [],
+                'kurikulum_2013_ipa_subjects' => [],
+                'kurikulum_2013_ips_subjects' => [],
+                'kurikulum_2013_bahasa_subjects' => []
             ];
         }
     }
