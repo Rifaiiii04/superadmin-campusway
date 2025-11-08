@@ -223,11 +223,12 @@ class SchoolDashboardController extends Controller
             // Get student with separate query
             $student = null;
             try {
-                $student = Student::where('id', $studentId)
-                    ->where('school_id', $schoolId)
+                $student = Student::where('id', (int)$studentId)
+                    ->where('school_id', (int)$schoolId)
                     ->first();
             } catch (\Exception $e) {
                 Log::error('Error querying student: ' . $e->getMessage());
+                Log::error('Stack trace: ' . $e->getTraceAsString());
                 return response()->json([
                     'success' => false,
                     'message' => 'Terjadi kesalahan saat mengambil data siswa'
@@ -322,7 +323,7 @@ class SchoolDashboardController extends Controller
             }
 
             // Handle chosen major if student has a choice
-            if ($studentChoice && $major) {
+            if ($studentChoice && $major && is_object($major)) {
                 try {
                     // Helper to parse subjects - simpler version like StudentWebController
                     $parseSubjects = function($field) {
@@ -410,6 +411,7 @@ class SchoolDashboardController extends Controller
                     }
                     
                     // Get subjects - handle casting from model with try-catch
+                    // Use getAttribute method to safely get casted values
                     $requiredSubjects = null;
                     $preferredSubjects = null;
                     $optionalSubjects = null;
@@ -418,31 +420,51 @@ class SchoolDashboardController extends Controller
                     $kurikulum2013Ips = null;
                     $kurikulum2013Bahasa = null;
                     
+                    // Get subjects using toArray() to get properly casted values
+                    $majorArray = null;
                     try {
-                        $requiredSubjects = $major->required_subjects ?? null;
+                        if (method_exists($major, 'toArray')) {
+                            $majorArray = $major->toArray();
+                        } elseif (method_exists($major, 'getAttributes')) {
+                            $majorArray = $major->getAttributes();
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Error converting major to array: ' . $e->getMessage());
+                    }
+                    
+                    // Get subjects from array or directly from model
+                    try {
+                        $requiredSubjects = $majorArray['required_subjects'] ?? $major->required_subjects ?? null;
                     } catch (\Exception $e) {
                         Log::warning('Error getting required_subjects: ' . $e->getMessage());
+                        $requiredSubjects = null;
                     }
                     
                     try {
-                        $preferredSubjects = $major->preferred_subjects ?? null;
+                        $preferredSubjects = $majorArray['preferred_subjects'] ?? $major->preferred_subjects ?? null;
                     } catch (\Exception $e) {
                         Log::warning('Error getting preferred_subjects: ' . $e->getMessage());
+                        $preferredSubjects = null;
                     }
                     
                     try {
-                        $optionalSubjects = $major->optional_subjects ?? null;
+                        $optionalSubjects = $majorArray['optional_subjects'] ?? $major->optional_subjects ?? null;
                     } catch (\Exception $e) {
                         Log::warning('Error getting optional_subjects: ' . $e->getMessage());
+                        $optionalSubjects = null;
                     }
                     
                     try {
-                        $kurikulumMerdeka = $major->kurikulum_merdeka_subjects ?? null;
-                        $kurikulum2013Ipa = $major->kurikulum_2013_ipa_subjects ?? null;
-                        $kurikulum2013Ips = $major->kurikulum_2013_ips_subjects ?? null;
-                        $kurikulum2013Bahasa = $major->kurikulum_2013_bahasa_subjects ?? null;
+                        $kurikulumMerdeka = $majorArray['kurikulum_merdeka_subjects'] ?? $major->kurikulum_merdeka_subjects ?? null;
+                        $kurikulum2013Ipa = $majorArray['kurikulum_2013_ipa_subjects'] ?? $major->kurikulum_2013_ipa_subjects ?? null;
+                        $kurikulum2013Ips = $majorArray['kurikulum_2013_ips_subjects'] ?? $major->kurikulum_2013_ips_subjects ?? null;
+                        $kurikulum2013Bahasa = $majorArray['kurikulum_2013_bahasa_subjects'] ?? $major->kurikulum_2013_bahasa_subjects ?? null;
                     } catch (\Exception $e) {
                         Log::warning('Error getting kurikulum subjects: ' . $e->getMessage());
+                        $kurikulumMerdeka = null;
+                        $kurikulum2013Ipa = null;
+                        $kurikulum2013Ips = null;
+                        $kurikulum2013Bahasa = null;
                     }
                     
                     // Format choice date safely
@@ -506,24 +528,49 @@ class SchoolDashboardController extends Controller
                         Log::warning('Error parsing kurikulum_2013_bahasa_subjects: ' . $e->getMessage());
                     }
                     
-                    $studentData['chosen_major'] = [
-                        'id' => $majorId,
-                        'name' => $majorName,
-                        'description' => $majorDescription,
-                        'category' => $majorCategory,
-                        'rumpun_ilmu' => $majorRumpun,
-                        'career_prospects' => $majorCareer,
-                        'education_level' => 'SMA/MA',
-                        'choice_date' => $choiceDate,
-                        'required_subjects' => $parsedRequiredSubjects,
-                        'preferred_subjects' => $parsedPreferredSubjects,
-                        'optional_subjects' => $parsedOptionalSubjects,
-                        'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
-                        'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
-                        'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
-                        'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
-                    ];
-                } catch (\Exception $e) {
+                    // Build chosen_major data safely
+                    try {
+                        $chosenMajorData = [
+                            'id' => $majorId,
+                            'name' => $majorName,
+                            'description' => $majorDescription,
+                            'category' => $majorCategory,
+                            'rumpun_ilmu' => $majorRumpun,
+                            'career_prospects' => $majorCareer,
+                            'education_level' => 'SMA/MA',
+                            'choice_date' => $choiceDate,
+                            'required_subjects' => $parsedRequiredSubjects,
+                            'preferred_subjects' => $parsedPreferredSubjects,
+                            'optional_subjects' => $parsedOptionalSubjects,
+                            'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
+                            'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
+                            'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
+                            'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
+                        ];
+                        
+                        // Validate that chosen_major can be JSON encoded
+                        $testEncode = @json_encode($chosenMajorData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        if ($testEncode === false) {
+                            Log::warning('chosen_major data cannot be JSON encoded, using minimal data');
+                            $chosenMajorData = [
+                                'id' => $majorId,
+                                'name' => $majorName,
+                                'description' => $majorDescription,
+                                'category' => $majorCategory,
+                                'rumpun_ilmu' => $majorRumpun,
+                                'required_subjects' => [],
+                                'preferred_subjects' => [],
+                                'optional_subjects' => [],
+                            ];
+                        }
+                        
+                        $studentData['chosen_major'] = $chosenMajorData;
+                    } catch (\Exception $e) {
+                        Log::error('Error building chosen_major data: ' . $e->getMessage());
+                        Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+                        // Continue without major data - don't fail the entire request
+                    }
+                } catch (\Throwable $e) {
                     Log::error('Error processing major data: ' . $e->getMessage());
                     Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
                     Log::error('Stack trace: ' . $e->getTraceAsString());
