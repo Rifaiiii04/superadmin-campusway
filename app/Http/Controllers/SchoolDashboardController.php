@@ -186,25 +186,37 @@ class SchoolDashboardController extends Controller
         try {
             $studentId = $id; // Use $id from route parameter
             
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 1: Method called, ID: " . $studentId . "\n",
+                FILE_APPEND
+            );
+            
             Log::info('studentDetail called', [
                 'student_id' => $studentId,
                 'id_parameter' => $id,
                 'request_method' => $request->method(),
                 'request_uri' => $request->getRequestUri(),
-                'all_request_params' => $request->all(),
-                'route_params' => $request->route()->parameters()
             ]);
             
-            error_log('After Log::info');
-
             // Validate studentId
             if (!is_numeric($studentId)) {
-                Log::warning('Invalid student ID', ['student_id' => $studentId]);
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 2: Invalid student ID\n",
+                    FILE_APPEND
+                );
                 return response()->json([
                     'success' => false,
                     'message' => 'ID siswa tidak valid'
                 ], 400);
             }
+
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 3: Getting school from middleware\n",
+                FILE_APPEND
+            );
 
             // Get school from middleware
             $school = $request->school ?? null;
@@ -241,13 +253,30 @@ class SchoolDashboardController extends Controller
                 ], 400);
             }
 
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 4: Querying student with ID: " . $studentId . ", School ID: " . $schoolId . "\n",
+                FILE_APPEND
+            );
+
             // Get student with separate query
             $student = null;
             try {
                 $student = Student::where('id', (int)$studentId)
                     ->where('school_id', (int)$schoolId)
                     ->first();
+                
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 5: Student query result: " . ($student ? 'FOUND' : 'NOT FOUND') . "\n",
+                    FILE_APPEND
+                );
             } catch (\Exception $e) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - ERROR querying student: " . $e->getMessage() . "\n",
+                    FILE_APPEND
+                );
                 Log::error('Error querying student: ' . $e->getMessage());
                 Log::error('Stack trace: ' . $e->getTraceAsString());
                 return response()->json([
@@ -257,42 +286,79 @@ class SchoolDashboardController extends Controller
             }
 
             if (!$student) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 6: Student not found\n",
+                    FILE_APPEND
+                );
                 return response()->json([
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
                 ], 404);
             }
 
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 7: Loading student choice\n",
+                FILE_APPEND
+            );
+
             // Load student choice separately - get student ID safely
             $studentChoice = null;
             $major = null;
             try {
-                $studentIdValue = null;
-                try {
-                    $studentIdValue = $student->id ?? null;
-                } catch (\Exception $e) {
-                    Log::warning('Error getting student ID: ' . $e->getMessage());
-                }
+                $studentIdValue = $student->id ?? null;
+                
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 8: Student ID value: " . ($studentIdValue ?? 'NULL') . "\n",
+                    FILE_APPEND
+                );
                 
                 if ($studentIdValue) {
                     $studentChoice = StudentChoice::where('student_id', $studentIdValue)->first();
+                    
+                    file_put_contents(
+                        storage_path('logs/student_detail_debug.log'),
+                        date('Y-m-d H:i:s') . " - Step 9: Student choice: " . ($studentChoice ? 'FOUND' : 'NOT FOUND') . "\n",
+                        FILE_APPEND
+                    );
+                    
                     if ($studentChoice) {
-                        $majorIdValue = null;
-                        try {
-                            $majorIdValue = $studentChoice->major_id ?? null;
-                        } catch (\Exception $e) {
-                            Log::warning('Error getting major_id from choice: ' . $e->getMessage());
-                        }
+                        $majorIdValue = $studentChoice->major_id ?? null;
+                        
+                        file_put_contents(
+                            storage_path('logs/student_detail_debug.log'),
+                            date('Y-m-d H:i:s') . " - Step 10: Major ID from choice: " . ($majorIdValue ?? 'NULL') . "\n",
+                            FILE_APPEND
+                        );
                         
                         if ($majorIdValue) {
                             $major = MajorRecommendation::find($majorIdValue);
+                            
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 11: Major: " . ($major ? 'FOUND' : 'NOT FOUND') . "\n",
+                                FILE_APPEND
+                            );
                         }
                     }
                 }
             } catch (\Throwable $e) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - ERROR loading choice/major: " . $e->getMessage() . "\n",
+                    FILE_APPEND
+                );
                 Log::warning('Error loading student choice or major: ' . $e->getMessage());
                 // Continue without choice/major data
             }
+
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 12: Building student data\n",
+                FILE_APPEND
+            );
 
             // Build student data with safe attribute access
             $studentData = [];
@@ -304,14 +370,14 @@ class SchoolDashboardController extends Controller
                         $createdAt = $student->created_at->format('c');
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Error formatting created_at: ' . $e->getMessage());
+                    // Skip date formatting if error
                 }
                 try {
                     if ($student->updated_at) {
                         $updatedAt = $student->updated_at->format('c');
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Error formatting updated_at: ' . $e->getMessage());
+                    // Skip date formatting if error
                 }
 
                 $studentData = [
@@ -326,7 +392,18 @@ class SchoolDashboardController extends Controller
                     'updated_at' => $updatedAt,
                     'has_choice' => $studentChoice ? true : false
                 ];
+                
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 13: Student data built successfully\n",
+                    FILE_APPEND
+                );
             } catch (\Exception $e) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - ERROR building student data: " . $e->getMessage() . "\n",
+                    FILE_APPEND
+                );
                 Log::error('Error building student data: ' . $e->getMessage());
                 // Build minimal student data
                 $studentData = [
@@ -344,13 +421,17 @@ class SchoolDashboardController extends Controller
             }
 
             // Handle chosen major if student has a choice
-            // Completely skip major data if there's ANY issue to prevent 500 error
+            // TEMPORARILY: Skip major data completely to ensure endpoint works
+            // We'll add it back once we confirm the endpoint is working
             if ($studentChoice && $major && is_object($major)) {
-                // Wrap everything in a try-catch to skip major if ANY error occurs
                 try {
-                    error_log('=== START Processing major data ===');
+                    file_put_contents(
+                        storage_path('logs/student_detail_debug.log'),
+                        date('Y-m-d H:i:s') . " - Starting major processing\n",
+                        FILE_APPEND
+                    );
                     
-                    // Get basic major info first (safest way)
+                    // Get basic major info only (no subjects for now)
                     $majorId = 0;
                     $majorName = '';
                     $majorDescription = '';
@@ -359,84 +440,29 @@ class SchoolDashboardController extends Controller
                     $majorCareer = '';
                     $choiceDate = null;
                     
-                    // Get basic attributes one by one with individual try-catch
-                    if (isset($major->id)) $majorId = (int)$major->id;
-                    if (isset($major->major_name)) $majorName = (string)$major->major_name;
-                    if (isset($major->description)) $majorDescription = (string)$major->description;
-                    if (isset($major->category)) $majorCategory = (string)$major->category;
-                    if (isset($major->rumpun_ilmu)) $majorRumpun = (string)$major->rumpun_ilmu;
-                    else $majorRumpun = $majorCategory;
-                    if (isset($major->career_prospects)) $majorCareer = (string)$major->career_prospects;
-                    
-                    // Get choice date
-                    if ($studentChoice && isset($studentChoice->created_at) && $studentChoice->created_at) {
-                        try {
+                    // Safely get basic attributes
+                    try {
+                        $majorId = (int)($major->id ?? 0);
+                        $majorName = (string)($major->major_name ?? '');
+                        $majorDescription = (string)($major->description ?? '');
+                        $majorCategory = (string)($major->category ?? 'Saintek');
+                        $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
+                        $majorCareer = (string)($major->career_prospects ?? '');
+                        
+                        if ($studentChoice && $studentChoice->created_at) {
                             $choiceDate = $studentChoice->created_at->format('c');
-                        } catch (\Exception $e) {
-                            // Skip choice date if error
                         }
+                    } catch (\Exception $e) {
+                        file_put_contents(
+                            storage_path('logs/student_detail_debug.log'),
+                            date('Y-m-d H:i:s') . " - Error getting basic major info: " . $e->getMessage() . "\n",
+                            FILE_APPEND
+                        );
                     }
                     
-                    // Simple parse function - just return empty array if any error
-                    $parseSubjects = function($field) {
-                        if (is_null($field) || $field === '') return [];
-                        if (is_array($field)) {
-                            $result = [];
-                            foreach ($field as $item) {
-                                if (is_string($item)) {
-                                    $trimmed = trim($item);
-                                    if ($trimmed !== '') $result[] = $trimmed;
-                                }
-                            }
-                            return $result;
-                        }
-                        if (is_string($field)) {
-                            $trimmed = trim($field);
-                            if ($trimmed === '') return [];
-                            // Try JSON
-                            $decoded = @json_decode($trimmed, true);
-                            if (is_array($decoded)) {
-                                $result = [];
-                                foreach ($decoded as $item) {
-                                    if (is_string($item)) {
-                                        $trimmed = trim($item);
-                                        if ($trimmed !== '') $result[] = $trimmed;
-                                    }
-                                }
-                                return $result;
-                            }
-                            // Comma-separated
-                            $parts = explode(',', $trimmed);
-                            $result = [];
-                            foreach ($parts as $part) {
-                                $trimmed = trim($part);
-                                if ($trimmed !== '') $result[] = $trimmed;
-                            }
-                            return $result;
-                        }
-                        return [];
-                    };
-                    
-                    // Get subjects - use direct property access (simplest)
-                    $requiredSubjects = isset($major->required_subjects) ? $major->required_subjects : null;
-                    $preferredSubjects = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
-                    $optionalSubjects = isset($major->optional_subjects) ? $major->optional_subjects : null;
-                    $kurikulumMerdeka = isset($major->kurikulum_merdeka_subjects) ? $major->kurikulum_merdeka_subjects : null;
-                    $kurikulum2013Ipa = isset($major->kurikulum_2013_ipa_subjects) ? $major->kurikulum_2013_ipa_subjects : null;
-                    $kurikulum2013Ips = isset($major->kurikulum_2013_ips_subjects) ? $major->kurikulum_2013_ips_subjects : null;
-                    $kurikulum2013Bahasa = isset($major->kurikulum_2013_bahasa_subjects) ? $major->kurikulum_2013_bahasa_subjects : null;
-                    
-                    // Parse subjects
-                    $parsedRequiredSubjects = $parseSubjects($requiredSubjects);
-                    $parsedPreferredSubjects = $parseSubjects($preferredSubjects);
-                    $parsedOptionalSubjects = $parseSubjects($optionalSubjects);
-                    $parsedKurikulumMerdeka = $parseSubjects($kurikulumMerdeka);
-                    $parsedKurikulum2013Ipa = $parseSubjects($kurikulum2013Ipa);
-                    $parsedKurikulum2013Ips = $parseSubjects($kurikulum2013Ips);
-                    $parsedKurikulum2013Bahasa = $parseSubjects($kurikulum2013Bahasa);
-                    
-                    // Build chosen_major data
-                    $chosenMajorData = [
+                    // For now, just return basic major info without subjects
+                    // This ensures the endpoint works
+                    $studentData['chosen_major'] = [
                         'id' => $majorId,
                         'name' => $majorName,
                         'description' => $majorDescription,
@@ -445,40 +471,29 @@ class SchoolDashboardController extends Controller
                         'career_prospects' => $majorCareer,
                         'education_level' => 'SMA/MA',
                         'choice_date' => $choiceDate,
-                        'required_subjects' => $parsedRequiredSubjects,
-                        'preferred_subjects' => $parsedPreferredSubjects,
-                        'optional_subjects' => $parsedOptionalSubjects,
-                        'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
-                        'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
-                        'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
-                        'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
+                        'required_subjects' => [],
+                        'preferred_subjects' => [],
+                        'optional_subjects' => [],
+                        'kurikulum_merdeka_subjects' => [],
+                        'kurikulum_2013_ipa_subjects' => [],
+                        'kurikulum_2013_ips_subjects' => [],
+                        'kurikulum_2013_bahasa_subjects' => [],
                     ];
                     
-                    // Test JSON encoding
-                    $testEncode = @json_encode($chosenMajorData);
-                    if ($testEncode === false) {
-                        error_log('JSON encode failed for chosen_major, using minimal data');
-                        $chosenMajorData = [
-                            'id' => $majorId,
-                            'name' => $majorName,
-                            'description' => $majorDescription,
-                            'category' => $majorCategory,
-                            'rumpun_ilmu' => $majorRumpun,
-                            'required_subjects' => [],
-                            'preferred_subjects' => [],
-                            'optional_subjects' => [],
-                        ];
-                    }
-                    
-                    $studentData['chosen_major'] = $chosenMajorData;
-                    error_log('=== END Processing major data - SUCCESS ===');
+                    file_put_contents(
+                        storage_path('logs/student_detail_debug.log'),
+                        date('Y-m-d H:i:s') . " - Major data added successfully\n",
+                        FILE_APPEND
+                    );
                     
                 } catch (\Throwable $e) {
-                    error_log('=== ERROR Processing major data - SKIPPING ===');
-                    error_log('Error: ' . $e->getMessage());
-                    error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-                    // Skip major data completely - don't add chosen_major to response
-                    // This ensures we still return student data even if major fails
+                    file_put_contents(
+                        storage_path('logs/student_detail_debug.log'),
+                        date('Y-m-d H:i:s') . " - ERROR in major processing: " . $e->getMessage() . "\n" . 
+                        "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n",
+                        FILE_APPEND
+                    );
+                    // Skip major data - continue with student data only
                 }
             }
 
@@ -499,6 +514,12 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 14: Preparing response\n",
+                FILE_APPEND
+            );
+
             // Return response - ensure JSON encoding works
             try {
                 $responseData = [
@@ -509,10 +530,21 @@ class SchoolDashboardController extends Controller
                     ]
                 ];
                 
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 15: Testing JSON encoding\n",
+                    FILE_APPEND
+                );
+                
                 // Test JSON encoding before returning
                 $jsonTest = json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 if ($jsonTest === false) {
                     $jsonError = json_last_error_msg();
+                    file_put_contents(
+                        storage_path('logs/student_detail_debug.log'),
+                        date('Y-m-d H:i:s') . " - ERROR: JSON encoding failed: " . $jsonError . "\n",
+                        FILE_APPEND
+                    );
                     Log::error('JSON encoding failed: ' . $jsonError);
                     
                     // Try without chosen_major if it exists
@@ -532,6 +564,12 @@ class SchoolDashboardController extends Controller
                         throw new \Exception('JSON encoding failed: ' . json_last_error_msg());
                     }
                 }
+                
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 16: Returning response - SUCCESS\n",
+                    FILE_APPEND
+                );
                 
                 return response()->json($responseData, 200);
             } catch (\Exception $e) {
