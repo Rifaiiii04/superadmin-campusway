@@ -196,10 +196,9 @@ class SchoolDashboardController extends Controller
                 ], 400);
             }
 
-            // Get student with eager loading
+            // Get student with eager loading - use separate queries for better error handling
             $student = Student::where('id', $studentId)
                 ->where('school_id', $schoolId)
-                ->with(['studentChoice.major'])
                 ->first();
 
             if (!$student) {
@@ -207,6 +206,19 @@ class SchoolDashboardController extends Controller
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
                 ], 404);
+            }
+
+            // Load student choice separately
+            $studentChoice = null;
+            $major = null;
+            try {
+                $studentChoice = StudentChoice::where('student_id', $student->id)->first();
+                if ($studentChoice && $studentChoice->major_id) {
+                    $major = MajorRecommendation::find($studentChoice->major_id);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Error loading student choice or major: ' . $e->getMessage());
+                // Continue without choice/major data
             }
 
             // Build student data
@@ -220,33 +232,39 @@ class SchoolDashboardController extends Controller
                 'parent_phone' => (string)($student->parent_phone ?? ''),
                 'created_at' => $student->created_at ? $student->created_at->format('c') : null,
                 'updated_at' => $student->updated_at ? $student->updated_at->format('c') : null,
-                'has_choice' => $student->studentChoice ? true : false
+                'has_choice' => $studentChoice ? true : false
             ];
 
             // Handle chosen major if student has a choice
-            if ($student->studentChoice && $student->studentChoice->major) {
+            if ($studentChoice && $major) {
                 try {
-                    $major = $student->studentChoice->major;
-                    $choice = $student->studentChoice;
-                    
-                    // Helper to parse subjects
+                    // Helper to parse subjects - handle both array and string formats
                     $parseSubjects = function($field) {
                         if (is_null($field) || $field === '') return [];
                         if (is_array($field)) {
-                            return array_values(array_filter(array_map('trim', $field), function($item) {
-                                return !empty($item) && is_string($item);
+                            return array_values(array_filter(array_map(function($item) {
+                                $trimmed = is_string($item) ? trim($item) : (string)$item;
+                                return !empty($trimmed) ? $trimmed : null;
+                            }, $field), function($item) {
+                                return $item !== null;
                             }));
                         }
                         if (is_string($field)) {
+                            $trimmed = trim($field);
+                            if (empty($trimmed)) return [];
+                            
                             // Try JSON first
-                            $decoded = @json_decode($field, true);
+                            $decoded = @json_decode($trimmed, true);
                             if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                return array_values(array_filter(array_map('trim', $decoded), function($item) {
-                                    return !empty($item) && is_string($item);
+                                return array_values(array_filter(array_map(function($item) {
+                                    $trimmed = is_string($item) ? trim($item) : (string)$item;
+                                    return !empty($trimmed) ? $trimmed : null;
+                                }, $decoded), function($item) {
+                                    return $item !== null;
                                 }));
                             }
                             // Fallback to comma-separated
-                            $parts = explode(',', $field);
+                            $parts = explode(',', $trimmed);
                             return array_values(array_filter(array_map('trim', $parts), function($item) {
                                 return !empty($item);
                             }));
@@ -254,26 +272,44 @@ class SchoolDashboardController extends Controller
                         return [];
                     };
                     
+                    // Get major attributes safely
+                    $majorId = (int)($major->id ?? 0);
+                    $majorName = (string)($major->major_name ?? '');
+                    $majorDescription = (string)($major->description ?? '');
+                    $majorCategory = (string)($major->category ?? 'Saintek');
+                    $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
+                    $majorCareer = (string)($major->career_prospects ?? '');
+                    
+                    // Get subjects - handle casting from model
+                    $requiredSubjects = $major->required_subjects ?? null;
+                    $preferredSubjects = $major->preferred_subjects ?? null;
+                    $optionalSubjects = $major->optional_subjects ?? null;
+                    $kurikulumMerdeka = $major->kurikulum_merdeka_subjects ?? null;
+                    $kurikulum2013Ipa = $major->kurikulum_2013_ipa_subjects ?? null;
+                    $kurikulum2013Ips = $major->kurikulum_2013_ips_subjects ?? null;
+                    $kurikulum2013Bahasa = $major->kurikulum_2013_bahasa_subjects ?? null;
+                    
                     $studentData['chosen_major'] = [
-                        'id' => (int)$major->id,
-                        'name' => (string)($major->major_name ?? ''),
-                        'description' => (string)($major->description ?? ''),
-                        'category' => (string)($major->category ?? 'Saintek'),
-                        'rumpun_ilmu' => (string)($major->rumpun_ilmu ?? $major->category ?? 'Saintek'),
-                        'career_prospects' => (string)($major->career_prospects ?? ''),
+                        'id' => $majorId,
+                        'name' => $majorName,
+                        'description' => $majorDescription,
+                        'category' => $majorCategory,
+                        'rumpun_ilmu' => $majorRumpun,
+                        'career_prospects' => $majorCareer,
                         'education_level' => 'SMA/MA',
-                        'choice_date' => $choice->created_at ? $choice->created_at->format('c') : null,
-                        'required_subjects' => $parseSubjects($major->required_subjects ?? null),
-                        'preferred_subjects' => $parseSubjects($major->preferred_subjects ?? null),
-                        'optional_subjects' => $parseSubjects($major->optional_subjects ?? null),
-                        'kurikulum_merdeka_subjects' => $parseSubjects($major->kurikulum_merdeka_subjects ?? null),
-                        'kurikulum_2013_ipa_subjects' => $parseSubjects($major->kurikulum_2013_ipa_subjects ?? null),
-                        'kurikulum_2013_ips_subjects' => $parseSubjects($major->kurikulum_2013_ips_subjects ?? null),
-                        'kurikulum_2013_bahasa_subjects' => $parseSubjects($major->kurikulum_2013_bahasa_subjects ?? null),
+                        'choice_date' => $studentChoice->created_at ? $studentChoice->created_at->format('c') : null,
+                        'required_subjects' => $parseSubjects($requiredSubjects),
+                        'preferred_subjects' => $parseSubjects($preferredSubjects),
+                        'optional_subjects' => $parseSubjects($optionalSubjects),
+                        'kurikulum_merdeka_subjects' => $parseSubjects($kurikulumMerdeka),
+                        'kurikulum_2013_ipa_subjects' => $parseSubjects($kurikulum2013Ipa),
+                        'kurikulum_2013_ips_subjects' => $parseSubjects($kurikulum2013Ips),
+                        'kurikulum_2013_bahasa_subjects' => $parseSubjects($kurikulum2013Bahasa),
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error processing major data: ' . $e->getMessage());
-                    // Continue without major data
+                    Log::error('Stack trace: ' . $e->getTraceAsString());
+                    // Continue without major data - don't fail the entire request
                 }
             }
 
