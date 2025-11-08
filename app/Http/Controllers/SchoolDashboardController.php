@@ -170,7 +170,7 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
-            Log::info('studentDetail called', ['student_id' => $studentId]);
+            Log::info('studentDetail called', ['student_id' => $studentId, 'request_method' => $request->method(), 'request_uri' => $request->getRequestUri()]);
             
             // Validate studentId
             if (!is_numeric($studentId)) {
@@ -178,7 +178,7 @@ class SchoolDashboardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'ID siswa tidak valid'
-                ], 400);
+                ], 400)->header('Content-Type', 'application/json');
             }
 
             $school = $request->school ?? null;
@@ -192,7 +192,7 @@ class SchoolDashboardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Sekolah tidak ditemukan'
-                ], 404);
+                ], 404)->header('Content-Type', 'application/json');
             }
             
             Log::info('School found', ['school_id' => $school->id ?? 'unknown']);
@@ -215,7 +215,7 @@ class SchoolDashboardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Terjadi kesalahan saat mengambil data siswa'
-                ], 500);
+                ], 500)->header('Content-Type', 'application/json');
             }
 
             if (!$student) {
@@ -223,7 +223,7 @@ class SchoolDashboardController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
-                ], 404);
+                ], 404)->header('Content-Type', 'application/json');
             }
             
             Log::info('Student found', ['student_id' => $student->id ?? 'unknown']);
@@ -359,13 +359,19 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
+            Log::info('studentDetail success', [
+                'student_id' => $studentId,
+                'has_major' => isset($studentData['chosen_major']),
+                'major_id' => $studentData['chosen_major']['id'] ?? null
+            ]);
+            
             return response()->json([
                 'success' => true,
                 'data' => [
                     'school' => $schoolData,
                     'student' => $studentData
                 ]
-            ], 200);
+            ], 200)->header('Content-Type', 'application/json');
 
         } catch (\Throwable $e) {
             Log::error('Get student detail error: ' . $e->getMessage());
