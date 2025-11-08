@@ -171,9 +171,17 @@ class SchoolDashboardController extends Controller
     {
         // Use error_log for immediate logging (bypasses Laravel log system)
         error_log('=== studentDetail METHOD CALLED ===');
-        error_log('ID: ' . $id);
+        error_log('ID parameter: ' . var_export($id, true));
         error_log('Request URI: ' . $request->getRequestUri());
         error_log('Request Method: ' . $request->method());
+        error_log('All route params: ' . json_encode($request->route()->parameters()));
+        
+        // Write to a custom log file that we can check
+        file_put_contents(
+            storage_path('logs/student_detail_debug.log'),
+            date('Y-m-d H:i:s') . " - studentDetail called with ID: " . $id . "\n",
+            FILE_APPEND
+        );
         
         try {
             $studentId = $id; // Use $id from route parameter
@@ -336,223 +344,141 @@ class SchoolDashboardController extends Controller
             }
 
             // Handle chosen major if student has a choice
-            // Skip major data if there's any issue to prevent 500 error
+            // Completely skip major data if there's ANY issue to prevent 500 error
             if ($studentChoice && $major && is_object($major)) {
+                // Wrap everything in a try-catch to skip major if ANY error occurs
                 try {
-                    error_log('Processing major data for student: ' . $studentId);
+                    error_log('=== START Processing major data ===');
                     
-                    // First, try to get basic major info without subjects
-                    $majorId = (int)($major->id ?? 0);
-                    $majorName = (string)($major->major_name ?? '');
-                    $majorDescription = (string)($major->description ?? '');
-                    $majorCategory = (string)($major->category ?? 'Saintek');
-                    $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
-                    $majorCareer = (string)($major->career_prospects ?? '');
-                    
-                    // Format choice date safely
-                    $choiceDate = null;
-                    try {
-                        if ($studentChoice && $studentChoice->created_at) {
-                            $choiceDate = $studentChoice->created_at->format('c');
-                        }
-                    } catch (\Exception $e) {
-                        error_log('Error formatting choice_date: ' . $e->getMessage());
-                    }
-                    
-                    // Try to get subjects, but if it fails, just return basic major info
-                    $parsedRequiredSubjects = [];
-                    $parsedPreferredSubjects = [];
-                    $parsedOptionalSubjects = [];
-                    $parsedKurikulumMerdeka = [];
-                    $parsedKurikulum2013Ipa = [];
-                    $parsedKurikulum2013Ips = [];
-                    $parsedKurikulum2013Bahasa = [];
-                    
-                    // Helper to parse subjects - simpler version like StudentWebController
-                    $parseSubjects = function($field) {
-                        try {
-                            if (is_null($field)) return [];
-                            if (is_array($field)) {
-                                // Filter and clean array values
-                                $result = [];
-                                foreach ($field as $item) {
-                                    if (is_string($item)) {
-                                        $trimmed = trim($item);
-                                        if (!empty($trimmed)) {
-                                            $result[] = $trimmed;
-                                        }
-                                    } elseif (is_numeric($item) || is_bool($item)) {
-                                        $result[] = (string)$item;
-                                    }
-                                }
-                                return array_values($result);
-                            }
-                            if (is_string($field)) {
-                                $trimmed = trim($field);
-                                if (empty($trimmed)) return [];
-                                
-                                // Try JSON decode first
-                                $decoded = @json_decode($trimmed, true);
-                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                                    $result = [];
-                                    foreach ($decoded as $item) {
-                                        if (is_string($item)) {
-                                            $trimmed = trim($item);
-                                            if (!empty($trimmed)) {
-                                                $result[] = $trimmed;
-                                            }
-                                        } elseif (is_numeric($item) || is_bool($item)) {
-                                            $result[] = (string)$item;
-                                        }
-                                    }
-                                    return array_values($result);
-                                }
-                                
-                                // Fallback to comma-separated
-                                $parts = explode(',', $trimmed);
-                                $result = [];
-                                foreach ($parts as $part) {
-                                    $trimmed = trim($part);
-                                    if (!empty($trimmed)) {
-                                        $result[] = $trimmed;
-                                    }
-                                }
-                                return array_values($result);
-                            }
-                            return [];
-                        } catch (\Exception $e) {
-                            error_log('Error in parseSubjects: ' . $e->getMessage());
-                            return [];
-                        }
-                    };
-                    
-                    // Get major attributes safely with try-catch for each
+                    // Get basic major info first (safest way)
                     $majorId = 0;
                     $majorName = '';
                     $majorDescription = '';
                     $majorCategory = 'Saintek';
                     $majorRumpun = 'Saintek';
                     $majorCareer = '';
+                    $choiceDate = null;
                     
-                    try {
-                        $majorId = (int)($major->id ?? 0);
-                    } catch (\Exception $e) {
-                        Log::warning('Error getting major id: ' . $e->getMessage());
+                    // Get basic attributes one by one with individual try-catch
+                    if (isset($major->id)) $majorId = (int)$major->id;
+                    if (isset($major->major_name)) $majorName = (string)$major->major_name;
+                    if (isset($major->description)) $majorDescription = (string)$major->description;
+                    if (isset($major->category)) $majorCategory = (string)$major->category;
+                    if (isset($major->rumpun_ilmu)) $majorRumpun = (string)$major->rumpun_ilmu;
+                    else $majorRumpun = $majorCategory;
+                    if (isset($major->career_prospects)) $majorCareer = (string)$major->career_prospects;
+                    
+                    // Get choice date
+                    if ($studentChoice && isset($studentChoice->created_at) && $studentChoice->created_at) {
+                        try {
+                            $choiceDate = $studentChoice->created_at->format('c');
+                        } catch (\Exception $e) {
+                            // Skip choice date if error
+                        }
                     }
                     
-                    try {
-                        $majorName = (string)($major->major_name ?? '');
-                    } catch (\Exception $e) {
-                        Log::warning('Error getting major name: ' . $e->getMessage());
-                    }
+                    // Simple parse function - just return empty array if any error
+                    $parseSubjects = function($field) {
+                        if (is_null($field) || $field === '') return [];
+                        if (is_array($field)) {
+                            $result = [];
+                            foreach ($field as $item) {
+                                if (is_string($item)) {
+                                    $trimmed = trim($item);
+                                    if ($trimmed !== '') $result[] = $trimmed;
+                                }
+                            }
+                            return $result;
+                        }
+                        if (is_string($field)) {
+                            $trimmed = trim($field);
+                            if ($trimmed === '') return [];
+                            // Try JSON
+                            $decoded = @json_decode($trimmed, true);
+                            if (is_array($decoded)) {
+                                $result = [];
+                                foreach ($decoded as $item) {
+                                    if (is_string($item)) {
+                                        $trimmed = trim($item);
+                                        if ($trimmed !== '') $result[] = $trimmed;
+                                    }
+                                }
+                                return $result;
+                            }
+                            // Comma-separated
+                            $parts = explode(',', $trimmed);
+                            $result = [];
+                            foreach ($parts as $part) {
+                                $trimmed = trim($part);
+                                if ($trimmed !== '') $result[] = $trimmed;
+                            }
+                            return $result;
+                        }
+                        return [];
+                    };
                     
-                    try {
-                        $majorDescription = (string)($major->description ?? '');
-                    } catch (\Exception $e) {
-                        Log::warning('Error getting major description: ' . $e->getMessage());
-                    }
+                    // Get subjects - use direct property access (simplest)
+                    $requiredSubjects = isset($major->required_subjects) ? $major->required_subjects : null;
+                    $preferredSubjects = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
+                    $optionalSubjects = isset($major->optional_subjects) ? $major->optional_subjects : null;
+                    $kurikulumMerdeka = isset($major->kurikulum_merdeka_subjects) ? $major->kurikulum_merdeka_subjects : null;
+                    $kurikulum2013Ipa = isset($major->kurikulum_2013_ipa_subjects) ? $major->kurikulum_2013_ipa_subjects : null;
+                    $kurikulum2013Ips = isset($major->kurikulum_2013_ips_subjects) ? $major->kurikulum_2013_ips_subjects : null;
+                    $kurikulum2013Bahasa = isset($major->kurikulum_2013_bahasa_subjects) ? $major->kurikulum_2013_bahasa_subjects : null;
                     
-                    try {
-                        $majorCategory = (string)($major->category ?? 'Saintek');
-                        $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
-                    } catch (\Exception $e) {
-                        Log::warning('Error getting major category: ' . $e->getMessage());
-                    }
+                    // Parse subjects
+                    $parsedRequiredSubjects = $parseSubjects($requiredSubjects);
+                    $parsedPreferredSubjects = $parseSubjects($preferredSubjects);
+                    $parsedOptionalSubjects = $parseSubjects($optionalSubjects);
+                    $parsedKurikulumMerdeka = $parseSubjects($kurikulumMerdeka);
+                    $parsedKurikulum2013Ipa = $parseSubjects($kurikulum2013Ipa);
+                    $parsedKurikulum2013Ips = $parseSubjects($kurikulum2013Ips);
+                    $parsedKurikulum2013Bahasa = $parseSubjects($kurikulum2013Bahasa);
                     
-                    try {
-                        $majorCareer = (string)($major->career_prospects ?? '');
-                    } catch (\Exception $e) {
-                        Log::warning('Error getting major career: ' . $e->getMessage());
-                    }
+                    // Build chosen_major data
+                    $chosenMajorData = [
+                        'id' => $majorId,
+                        'name' => $majorName,
+                        'description' => $majorDescription,
+                        'category' => $majorCategory,
+                        'rumpun_ilmu' => $majorRumpun,
+                        'career_prospects' => $majorCareer,
+                        'education_level' => 'SMA/MA',
+                        'choice_date' => $choiceDate,
+                        'required_subjects' => $parsedRequiredSubjects,
+                        'preferred_subjects' => $parsedPreferredSubjects,
+                        'optional_subjects' => $parsedOptionalSubjects,
+                        'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
+                        'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
+                        'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
+                        'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
+                    ];
                     
-                    // Get subjects - handle casting from model with try-catch
-                    // Use getAttribute method to safely get casted values
-                    $requiredSubjects = null;
-                    $preferredSubjects = null;
-                    $optionalSubjects = null;
-                    $kurikulumMerdeka = null;
-                    $kurikulum2013Ipa = null;
-                    $kurikulum2013Ips = null;
-                    $kurikulum2013Bahasa = null;
-                    
-                    // Try to get subjects, but skip if there's any error
-                    try {
-                        // Get subjects using getAttribute which respects casts
-                        $requiredSubjects = $major->getAttribute('required_subjects');
-                        $preferredSubjects = $major->getAttribute('preferred_subjects');
-                        $optionalSubjects = $major->getAttribute('optional_subjects');
-                        $kurikulumMerdeka = $major->getAttribute('kurikulum_merdeka_subjects');
-                        $kurikulum2013Ipa = $major->getAttribute('kurikulum_2013_ipa_subjects');
-                        $kurikulum2013Ips = $major->getAttribute('kurikulum_2013_ips_subjects');
-                        $kurikulum2013Bahasa = $major->getAttribute('kurikulum_2013_bahasa_subjects');
-                        
-                        // Parse subjects
-                        $parsedRequiredSubjects = $parseSubjects($requiredSubjects);
-                        $parsedPreferredSubjects = $parseSubjects($preferredSubjects);
-                        $parsedOptionalSubjects = $parseSubjects($optionalSubjects);
-                        $parsedKurikulumMerdeka = $parseSubjects($kurikulumMerdeka);
-                        $parsedKurikulum2013Ipa = $parseSubjects($kurikulum2013Ipa);
-                        $parsedKurikulum2013Ips = $parseSubjects($kurikulum2013Ips);
-                        $parsedKurikulum2013Bahasa = $parseSubjects($kurikulum2013Bahasa);
-                    } catch (\Throwable $e) {
-                        error_log('Error getting/parsing subjects, using empty arrays: ' . $e->getMessage());
-                        // Use empty arrays if subjects fail
-                        $parsedRequiredSubjects = [];
-                        $parsedPreferredSubjects = [];
-                        $parsedOptionalSubjects = [];
-                        $parsedKurikulumMerdeka = [];
-                        $parsedKurikulum2013Ipa = [];
-                        $parsedKurikulum2013Ips = [];
-                        $parsedKurikulum2013Bahasa = [];
-                    }
-                    
-                    // Build chosen_major data safely
-                    try {
+                    // Test JSON encoding
+                    $testEncode = @json_encode($chosenMajorData);
+                    if ($testEncode === false) {
+                        error_log('JSON encode failed for chosen_major, using minimal data');
                         $chosenMajorData = [
                             'id' => $majorId,
                             'name' => $majorName,
                             'description' => $majorDescription,
                             'category' => $majorCategory,
                             'rumpun_ilmu' => $majorRumpun,
-                            'career_prospects' => $majorCareer,
-                            'education_level' => 'SMA/MA',
-                            'choice_date' => $choiceDate,
-                            'required_subjects' => $parsedRequiredSubjects,
-                            'preferred_subjects' => $parsedPreferredSubjects,
-                            'optional_subjects' => $parsedOptionalSubjects,
-                            'kurikulum_merdeka_subjects' => $parsedKurikulumMerdeka,
-                            'kurikulum_2013_ipa_subjects' => $parsedKurikulum2013Ipa,
-                            'kurikulum_2013_ips_subjects' => $parsedKurikulum2013Ips,
-                            'kurikulum_2013_bahasa_subjects' => $parsedKurikulum2013Bahasa,
+                            'required_subjects' => [],
+                            'preferred_subjects' => [],
+                            'optional_subjects' => [],
                         ];
-                        
-                        // Validate that chosen_major can be JSON encoded
-                        $testEncode = @json_encode($chosenMajorData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-                        if ($testEncode === false) {
-                            Log::warning('chosen_major data cannot be JSON encoded, using minimal data');
-                            $chosenMajorData = [
-                                'id' => $majorId,
-                                'name' => $majorName,
-                                'description' => $majorDescription,
-                                'category' => $majorCategory,
-                                'rumpun_ilmu' => $majorRumpun,
-                                'required_subjects' => [],
-                                'preferred_subjects' => [],
-                                'optional_subjects' => [],
-                            ];
-                        }
-                        
-                        $studentData['chosen_major'] = $chosenMajorData;
-                    } catch (\Exception $e) {
-                        Log::error('Error building chosen_major data: ' . $e->getMessage());
-                        Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-                        // Continue without major data - don't fail the entire request
                     }
+                    
+                    $studentData['chosen_major'] = $chosenMajorData;
+                    error_log('=== END Processing major data - SUCCESS ===');
+                    
                 } catch (\Throwable $e) {
-                    Log::error('Error processing major data: ' . $e->getMessage());
-                    Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-                    Log::error('Stack trace: ' . $e->getTraceAsString());
-                    // Continue without major data - don't fail the entire request
+                    error_log('=== ERROR Processing major data - SKIPPING ===');
+                    error_log('Error: ' . $e->getMessage());
+                    error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+                    // Skip major data completely - don't add chosen_major to response
+                    // This ensures we still return student data even if major fails
                 }
             }
 
