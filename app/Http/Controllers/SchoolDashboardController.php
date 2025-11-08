@@ -303,48 +303,75 @@ class SchoolDashboardController extends Controller
                     }
                     
                     // Process major data only if we have a valid major object
+                    // Use simpler approach - try to get basic data first, then add subjects if possible
                     if ($major && is_object($major)) {
                         try {
                             Log::info('Processing major data', ['major_id' => $choiceMajorId]);
-                            $majorData = $this->getMajorWithSubjects($major);
                             
-                            // Ensure majorData is an array and not null
-                            if (!is_array($majorData)) {
-                                Log::warning('getMajorWithSubjects returned non-array', ['type' => gettype($majorData)]);
-                                $majorData = $this->createBasicMajorData($major, $student->studentChoice);
-                            }
+                            // Start with basic major data (safer)
+                            $majorData = $this->createBasicMajorData($major, $student->studentChoice);
                             
-                            if (is_array($majorData) && !empty($majorData)) {
-                                // Ensure choice_date is added safely
-                                if ($choiceCreatedAt) {
-                                    $majorData['choice_date'] = $choiceCreatedAt;
-                                }
-                                $studentData['chosen_major'] = $majorData;
-                                Log::info('Major data added to student data', ['major_id' => $choiceMajorId]);
-                            } else {
-                                // Fallback: create basic structure
-                                Log::warning('Major data is empty, using fallback');
-                                $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
-                                if ($choiceCreatedAt) {
-                                    $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
-                                }
-                            }
-                        } catch (\Throwable $subjectError) {
-                            Log::error('Error getting major with subjects: ' . $subjectError->getMessage(), [
-                                'major_id' => $choiceMajorId,
-                                'file' => $subjectError->getFile(),
-                                'line' => $subjectError->getLine(),
-                                'trace' => $subjectError->getTraceAsString()
-                            ]);
-                            // Fallback: create basic structure
+                            // Try to add subjects (but don't fail if this errors)
                             try {
-                                $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
-                                if ($choiceCreatedAt) {
-                                    $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
+                                $subjectsData = $this->getMajorWithSubjects($major);
+                                if (is_array($subjectsData) && !empty($subjectsData)) {
+                                    // Merge subjects into basic data
+                                    if (isset($subjectsData['required_subjects']) && is_array($subjectsData['required_subjects'])) {
+                                        $majorData['required_subjects'] = $subjectsData['required_subjects'];
+                                    }
+                                    if (isset($subjectsData['preferred_subjects']) && is_array($subjectsData['preferred_subjects'])) {
+                                        $majorData['preferred_subjects'] = $subjectsData['preferred_subjects'];
+                                    }
+                                    if (isset($subjectsData['optional_subjects']) && is_array($subjectsData['optional_subjects'])) {
+                                        $majorData['optional_subjects'] = $subjectsData['optional_subjects'];
+                                    }
+                                    if (isset($subjectsData['kurikulum_merdeka_subjects']) && is_array($subjectsData['kurikulum_merdeka_subjects'])) {
+                                        $majorData['kurikulum_merdeka_subjects'] = $subjectsData['kurikulum_merdeka_subjects'];
+                                    }
+                                    if (isset($subjectsData['kurikulum_2013_ipa_subjects']) && is_array($subjectsData['kurikulum_2013_ipa_subjects'])) {
+                                        $majorData['kurikulum_2013_ipa_subjects'] = $subjectsData['kurikulum_2013_ipa_subjects'];
+                                    }
+                                    if (isset($subjectsData['kurikulum_2013_ips_subjects']) && is_array($subjectsData['kurikulum_2013_ips_subjects'])) {
+                                        $majorData['kurikulum_2013_ips_subjects'] = $subjectsData['kurikulum_2013_ips_subjects'];
+                                    }
+                                    if (isset($subjectsData['kurikulum_2013_bahasa_subjects']) && is_array($subjectsData['kurikulum_2013_bahasa_subjects'])) {
+                                        $majorData['kurikulum_2013_bahasa_subjects'] = $subjectsData['kurikulum_2013_bahasa_subjects'];
+                                    }
                                 }
+                            } catch (\Throwable $subjectError) {
+                                Log::warning('Error getting subjects, using basic data only: ' . $subjectError->getMessage());
+                                // Continue with basic data (without subjects)
+                            }
+                            
+                            // Ensure choice_date is added
+                            if ($choiceCreatedAt) {
+                                $majorData['choice_date'] = $choiceCreatedAt;
+                            }
+                            
+                            $studentData['chosen_major'] = $majorData;
+                            Log::info('Major data added to student data', ['major_id' => $choiceMajorId]);
+                            
+                        } catch (\Throwable $e) {
+                            Log::error('Error processing major: ' . $e->getMessage(), [
+                                'major_id' => $choiceMajorId,
+                                'file' => $e->getFile(),
+                                'line' => $e->getLine()
+                            ]);
+                            // Fallback: create minimal structure
+                            try {
+                                $studentData['chosen_major'] = [
+                                    'id' => (int)$choiceMajorId,
+                                    'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown Major',
+                                    'description' => $this->safeGetAttribute($major, 'description') ?? '',
+                                    'category' => $this->safeGetAttribute($major, 'category') ?? 'Saintek',
+                                    'choice_date' => $choiceCreatedAt,
+                                    'required_subjects' => [],
+                                    'preferred_subjects' => [],
+                                    'optional_subjects' => []
+                                ];
                             } catch (\Throwable $fallbackError) {
-                                Log::error('Error in fallback createBasicMajorData: ' . $fallbackError->getMessage());
-                                // Skip major data entirely
+                                Log::error('Error in fallback: ' . $fallbackError->getMessage());
+                                // Skip major data entirely - don't fail the request
                             }
                         }
                     } elseif ($choiceMajorId) {
@@ -390,20 +417,57 @@ class SchoolDashboardController extends Controller
             }
 
             // Ensure all data is JSON-serializable before encoding
+            // Helper function to recursively sanitize data for JSON encoding
+            $sanitizeForJson = function($data) use (&$sanitizeForJson) {
+                if (is_array($data)) {
+                    $result = [];
+                    foreach ($data as $key => $value) {
+                        $sanitizedKey = is_string($key) ? $key : (string)$key;
+                        $result[$sanitizedKey] = $sanitizeForJson($value);
+                    }
+                    return $result;
+                } elseif (is_object($data)) {
+                    // Convert object to array
+                    return $sanitizeForJson((array)$data);
+                } elseif (is_resource($data)) {
+                    return null; // Resources cannot be JSON encoded
+                } elseif (is_null($data) || is_bool($data) || is_numeric($data)) {
+                    return $data; // These are safe
+                } elseif (is_string($data)) {
+                    // Ensure string is UTF-8 encoded
+                    if (!mb_check_encoding($data, 'UTF-8')) {
+                        return mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+                    }
+                    return $data;
+                } else {
+                    // For any other type, convert to string
+                    return (string)$data;
+                }
+            };
+            
             try {
+                // Sanitize all data before encoding
+                $sanitizedSchoolData = $sanitizeForJson($schoolData);
+                $sanitizedStudentData = $sanitizeForJson($studentData);
+                
                 // Clean and prepare data for JSON encoding
                 $responseData = [
                     'success' => true,
                     'data' => [
-                        'school' => $schoolData,
-                        'student' => $studentData
+                        'school' => $sanitizedSchoolData,
+                        'student' => $sanitizedStudentData
                     ]
                 ];
                 
                 // Test JSON encoding before returning
-                $jsonTest = json_encode($responseData);
+                $jsonTest = json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 if ($jsonTest === false) {
-                    throw new \Exception('JSON encoding failed: ' . json_last_error_msg());
+                    $errorMsg = json_last_error_msg();
+                    Log::error('JSON encoding failed: ' . $errorMsg, [
+                        'json_error' => json_last_error(),
+                        'student_id' => $studentId
+                    ]);
+                    throw new \Exception('JSON encoding failed: ' . $errorMsg);
                 }
                 
                 Log::info('studentDetail success', [
@@ -414,21 +478,38 @@ class SchoolDashboardController extends Controller
                 
                 return response()->json($responseData, 200)->header('Content-Type', 'application/json');
             } catch (\Exception $jsonError) {
-                Log::error('JSON encoding error in studentDetail: ' . $jsonError->getMessage());
+                Log::error('JSON encoding error in studentDetail: ' . $jsonError->getMessage(), [
+                    'file' => $jsonError->getFile(),
+                    'line' => $jsonError->getLine(),
+                    'student_id' => $studentId
+                ]);
                 // Return minimal safe response
-                return response()->json([
-                    'success' => true,
-                    'data' => [
-                        'school' => $schoolData,
-                        'student' => [
-                            'id' => $studentData['id'] ?? $studentId,
-                            'name' => $studentData['name'] ?? '',
-                            'nisn' => $studentData['nisn'] ?? '',
-                            'class' => $studentData['class'] ?? '',
-                            'has_choice' => $studentData['has_choice'] ?? false
+                try {
+                    return response()->json([
+                        'success' => true,
+                        'data' => [
+                            'school' => [
+                                'id' => (int)($schoolData['id'] ?? 0),
+                                'npsn' => (string)($schoolData['npsn'] ?? ''),
+                                'name' => (string)($schoolData['name'] ?? '')
+                            ],
+                            'student' => [
+                                'id' => (int)($studentData['id'] ?? $studentId ?? 0),
+                                'name' => (string)($studentData['name'] ?? ''),
+                                'nisn' => (string)($studentData['nisn'] ?? ''),
+                                'class' => (string)($studentData['class'] ?? ''),
+                                'has_choice' => (bool)($studentData['has_choice'] ?? false)
+                            ]
                         ]
-                    ]
-                ], 200)->header('Content-Type', 'application/json');
+                    ], 200)->header('Content-Type', 'application/json');
+                } catch (\Exception $fallbackError) {
+                    Log::error('Even fallback JSON encoding failed: ' . $fallbackError->getMessage());
+                    // Last resort - return absolute minimal response
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Terjadi kesalahan saat memproses data'
+                    ], 500)->header('Content-Type', 'application/json');
+                }
             }
 
         } catch (\Throwable $e) {
@@ -508,7 +589,7 @@ class SchoolDashboardController extends Controller
 
     /**
      * Get major with subjects from database mapping
-     * Similar to StudentWebController::formatMajorWithSubjects but for teacher dashboard
+     * Uses same approach as StudentWebController::formatMajorWithSubjects
      */
     private function getMajorWithSubjects($major)
     {
