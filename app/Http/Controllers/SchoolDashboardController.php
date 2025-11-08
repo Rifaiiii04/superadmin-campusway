@@ -170,81 +170,123 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
-            $school = $request->school;
+            Log::info('studentDetail called', ['student_id' => $studentId]);
+            
+            // Validate studentId
+            if (!is_numeric($studentId)) {
+                Log::warning('Invalid student ID', ['student_id' => $studentId]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID siswa tidak valid'
+                ], 400);
+            }
 
-            if (!$school) {
+            $school = $request->school ?? null;
+
+            if (!$school || !is_object($school)) {
+                Log::warning('School not found in request for student detail', [
+                    'student_id' => $studentId,
+                    'school' => $school,
+                    'request_school_id' => $request->school_id ?? null
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Sekolah tidak ditemukan'
                 ], 404);
             }
-
-            $student = Student::where('id', $studentId)
-                ->where('school_id', $school->id)
-                ->first();
             
-            // Load relationships separately with error handling
-            if ($student) {
-                try {
-                    $student->load('studentChoice');
-                    if ($student->studentChoice) {
-                        try {
-                            $student->studentChoice->load('majorRecommendation');
-                        } catch (\Exception $e) {
-                            Log::warning('Failed to load majorRecommendation: ' . $e->getMessage());
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Failed to load studentChoice: ' . $e->getMessage());
-                }
+            Log::info('School found', ['school_id' => $school->id ?? 'unknown']);
+
+            // Get student with minimal eager loading to avoid errors
+            $schoolId = $this->safeGetAttribute($school, 'id');
+            Log::info('Querying student', ['student_id' => $studentId, 'school_id' => $schoolId]);
+            
+            try {
+                $student = Student::where('id', $studentId)
+                    ->where('school_id', $schoolId)
+                    ->first();
+            } catch (\Exception $e) {
+                Log::error('Error querying student', [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat mengambil data siswa'
+                ], 500);
             }
 
             if (!$student) {
+                Log::warning('Student not found', ['student_id' => $studentId, 'school_id' => $schoolId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
                 ], 404);
             }
+            
+            Log::info('Student found', ['student_id' => $student->id ?? 'unknown']);
+            
+            // Load relationships separately with error handling
+            if ($student) {
+                try {
+                    $student->load('studentChoice');
+                } catch (\Exception $e) {
+                    Log::warning('Failed to load studentChoice: ' . $e->getMessage());
+                    // Continue without studentChoice
+                }
+            }
 
-            $studentData = [
-                'id' => $student->id,
-                'nisn' => $student->nisn,
-                'name' => $student->name,
-                'class' => $student->kelas,
-                'email' => $student->email,
-                'phone' => $student->phone,
-                'parent_phone' => $student->parent_phone,
-                'created_at' => $student->created_at,
-                'updated_at' => $student->updated_at,
-                'has_choice' => $student->studentChoice ? true : false
-            ];
+            // Build student data safely
+            $studentData = [];
+            try {
+                $studentData = [
+                    'id' => $this->safeGetAttribute($student, 'id') ?? 0,
+                    'nisn' => $this->safeGetAttribute($student, 'nisn') ?? '',
+                    'name' => $this->safeGetAttribute($student, 'name') ?? '',
+                    'class' => $this->safeGetAttribute($student, 'kelas') ?? '',
+                    'email' => $this->safeGetAttribute($student, 'email') ?? '',
+                    'phone' => $this->safeGetAttribute($student, 'phone') ?? '',
+                    'parent_phone' => $this->safeGetAttribute($student, 'parent_phone') ?? '',
+                    'created_at' => $this->safeGetAttribute($student, 'created_at'),
+                    'updated_at' => $this->safeGetAttribute($student, 'updated_at'),
+                    'has_choice' => isset($student->studentChoice) && $student->studentChoice ? true : false
+                ];
+            } catch (\Exception $e) {
+                Log::error('Error building student data: ' . $e->getMessage());
+                // Build minimal student data
+                $studentData = [
+                    'id' => $studentId ?? 0,
+                    'nisn' => '',
+                    'name' => '',
+                    'class' => '',
+                    'email' => '',
+                    'phone' => '',
+                    'parent_phone' => '',
+                    'created_at' => null,
+                    'updated_at' => null,
+                    'has_choice' => false
+                ];
+            }
 
-            // Handle chosen major if student has a choice
-            if ($student && isset($student->studentChoice) && $student->studentChoice) {
+            // Handle chosen major if student has a choice - with extensive error handling
+            if ($student && isset($student->studentChoice) && $student->studentChoice && is_object($student->studentChoice)) {
                 try {
                     $major = null;
                     $choiceMajorId = null;
+                    $choiceCreatedAt = null;
                     
-                    // Get major_id safely
+                    // Get choice data safely
                     try {
-                        $choiceMajorId = $student->studentChoice->major_id ?? null;
+                        $choiceMajorId = $this->safeGetAttribute($student->studentChoice, 'major_id');
+                        $choiceCreatedAt = $this->safeGetAttribute($student->studentChoice, 'created_at');
                     } catch (\Exception $e) {
-                        Log::warning('Error accessing major_id: ' . $e->getMessage());
+                        Log::warning('Error accessing studentChoice attributes: ' . $e->getMessage());
                     }
                     
-                    // Try to get major from relationship first
-                    try {
-                        if (property_exists($student->studentChoice, 'majorRecommendation') && $student->studentChoice->majorRecommendation) {
-                            $major = $student->studentChoice->majorRecommendation;
-                        } elseif (property_exists($student->studentChoice, 'major') && $student->studentChoice->major) {
-                            $major = $student->studentChoice->major;
-                        }
-                    } catch (\Exception $e) {
-                        Log::warning('Error accessing major relationship: ' . $e->getMessage());
-                    }
-                    
-                    // If no major from relationship, load directly from database
-                    if (!$major && $choiceMajorId) {
+                    // Try to load major directly from database (most reliable)
+                    if ($choiceMajorId && is_numeric($choiceMajorId)) {
                         try {
                             $major = MajorRecommendation::find($choiceMajorId);
                         } catch (\Exception $dbError) {
@@ -252,50 +294,75 @@ class SchoolDashboardController extends Controller
                         }
                     }
                     
-                    // Process major data
+                    // Process major data only if we have a valid major object
                     if ($major && is_object($major)) {
                         try {
                             $majorData = $this->getMajorWithSubjects($major);
-                            if (is_array($majorData)) {
-                                $majorData['choice_date'] = $student->studentChoice->created_at ?? null;
+                            if (is_array($majorData) && !empty($majorData)) {
+                                $majorData['choice_date'] = $choiceCreatedAt;
                                 $studentData['chosen_major'] = $majorData;
                             } else {
                                 // Fallback: create basic structure
                                 $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
+                                if ($choiceCreatedAt) {
+                                    $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
+                                }
                             }
                         } catch (\Throwable $subjectError) {
                             Log::error('Error getting major with subjects: ' . $subjectError->getMessage());
+                            Log::error('File: ' . $subjectError->getFile() . ' Line: ' . $subjectError->getLine());
                             // Fallback: create basic structure
                             $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
+                            if ($choiceCreatedAt) {
+                                $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
+                            }
                         }
                     } elseif ($choiceMajorId) {
                         // Major object failed but we have ID, create minimal structure
-                        $studentData['chosen_major'] = [
-                            'id' => $choiceMajorId,
-                            'name' => 'Unknown Major',
-                            'description' => '',
-                            'category' => 'Saintek',
-                            'choice_date' => $student->studentChoice->created_at ?? null,
-                            'required_subjects' => [],
-                            'preferred_subjects' => [],
-                            'optional_subjects' => []
-                        ];
+                        try {
+                            $studentData['chosen_major'] = [
+                                'id' => (int)$choiceMajorId,
+                                'name' => 'Unknown Major',
+                                'description' => '',
+                                'category' => 'Saintek',
+                                'choice_date' => $choiceCreatedAt,
+                                'required_subjects' => [],
+                                'preferred_subjects' => [],
+                                'optional_subjects' => []
+                            ];
+                        } catch (\Exception $e) {
+                            Log::warning('Error creating minimal major data: ' . $e->getMessage());
+                            // Skip major data entirely
+                        }
                     }
                 } catch (\Throwable $e) {
                     Log::error('Error processing student choice: ' . $e->getMessage());
                     Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+                    Log::error('Stack trace: ' . $e->getTraceAsString());
                     // Continue without major data - don't fail the entire request
                 }
+            }
+
+            // Build response safely
+            try {
+                $schoolData = [
+                    'id' => $this->safeGetAttribute($school, 'id') ?? 0,
+                    'npsn' => $this->safeGetAttribute($school, 'npsn') ?? '',
+                    'name' => $this->safeGetAttribute($school, 'name') ?? ''
+                ];
+            } catch (\Exception $e) {
+                Log::warning('Error building school data: ' . $e->getMessage());
+                $schoolData = [
+                    'id' => 0,
+                    'npsn' => '',
+                    'name' => ''
+                ];
             }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'school' => [
-                        'id' => $school->id,
-                        'npsn' => $school->npsn,
-                        'name' => $school->name
-                    ],
+                    'school' => $schoolData,
                     'student' => $studentData
                 ]
             ], 200);
@@ -1009,14 +1076,31 @@ class SchoolDashboardController extends Controller
     public function importStudents(Request $request)
     {
         try {
+            // Get school from middleware first
+            $school = $request->school;
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+
             // Log request data for debugging
             Log::info('Import students request received', [
-                'school_id' => $school->id,
+                'school_id' => $school->id ?? 'unknown',
                 'file_name' => $request->file('file') ? $request->file('file')->getClientOriginalName() : 'No file',
                 'file_size' => $request->file('file') ? $request->file('file')->getSize() : 0
             ]);
             
             // Custom validation untuk file
+            if (!$request->hasFile('file')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File tidak ditemukan'
+                ], 400);
+            }
+
             $file = $request->file('file');
             $extension = $file->getClientOriginalExtension();
             $mimeType = $file->getMimeType();
@@ -1045,19 +1129,6 @@ class SchoolDashboardController extends Controller
                     'extension' => $extension,
                     'file_name' => $file->getClientOriginalName()
                 ]);
-            }
-            
-            // Validasi school_id
-            $request->validate([
-                'school_id' => 'required|exists:schools,id'
-            ]);
-
-            $school = $request->school;
-            if (!$school) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Sekolah tidak ditemukan'
-                ], 404);
             }
             
             // Baca file berdasarkan ekstensi
