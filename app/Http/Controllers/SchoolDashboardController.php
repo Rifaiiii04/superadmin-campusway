@@ -311,36 +311,46 @@ class SchoolDashboardController extends Controller
                             // Start with basic major data (safer)
                             $majorData = $this->createBasicMajorData($major, $student->studentChoice);
                             
-                            // Try to add subjects (but don't fail if this errors)
+                            // Try to add subjects directly from major fields (simpler, faster approach)
+                            // This avoids complex database queries that might cause timeout
                             try {
-                                $subjectsData = $this->getMajorWithSubjects($major);
-                                if (is_array($subjectsData) && !empty($subjectsData)) {
-                                    // Merge subjects into basic data
-                                    if (isset($subjectsData['required_subjects']) && is_array($subjectsData['required_subjects'])) {
-                                        $majorData['required_subjects'] = $subjectsData['required_subjects'];
+                                // Simple helper to parse subjects from string/array
+                                $parseSubjects = function($field) {
+                                    if (is_null($field) || $field === '') return [];
+                                    if (is_array($field)) {
+                                        return array_values(array_filter(array_map('trim', $field), function($item) {
+                                            return !empty($item);
+                                        }));
                                     }
-                                    if (isset($subjectsData['preferred_subjects']) && is_array($subjectsData['preferred_subjects'])) {
-                                        $majorData['preferred_subjects'] = $subjectsData['preferred_subjects'];
+                                    if (is_string($field)) {
+                                        // Try JSON first
+                                        $decoded = @json_decode($field, true);
+                                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                            return array_values(array_filter(array_map('trim', $decoded), function($item) {
+                                                return !empty($item);
+                                            }));
+                                        }
+                                        // Fallback to comma-separated
+                                        $parts = explode(',', $field);
+                                        return array_values(array_filter(array_map('trim', $parts), function($item) {
+                                            return !empty($item);
+                                        }));
                                     }
-                                    if (isset($subjectsData['optional_subjects']) && is_array($subjectsData['optional_subjects'])) {
-                                        $majorData['optional_subjects'] = $subjectsData['optional_subjects'];
-                                    }
-                                    if (isset($subjectsData['kurikulum_merdeka_subjects']) && is_array($subjectsData['kurikulum_merdeka_subjects'])) {
-                                        $majorData['kurikulum_merdeka_subjects'] = $subjectsData['kurikulum_merdeka_subjects'];
-                                    }
-                                    if (isset($subjectsData['kurikulum_2013_ipa_subjects']) && is_array($subjectsData['kurikulum_2013_ipa_subjects'])) {
-                                        $majorData['kurikulum_2013_ipa_subjects'] = $subjectsData['kurikulum_2013_ipa_subjects'];
-                                    }
-                                    if (isset($subjectsData['kurikulum_2013_ips_subjects']) && is_array($subjectsData['kurikulum_2013_ips_subjects'])) {
-                                        $majorData['kurikulum_2013_ips_subjects'] = $subjectsData['kurikulum_2013_ips_subjects'];
-                                    }
-                                    if (isset($subjectsData['kurikulum_2013_bahasa_subjects']) && is_array($subjectsData['kurikulum_2013_bahasa_subjects'])) {
-                                        $majorData['kurikulum_2013_bahasa_subjects'] = $subjectsData['kurikulum_2013_bahasa_subjects'];
-                                    }
-                                }
+                                    return [];
+                                };
+                                
+                                // Get subjects directly from major fields (no complex queries)
+                                $majorData['required_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'required_subjects'));
+                                $majorData['preferred_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'preferred_subjects'));
+                                $majorData['optional_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'optional_subjects'));
+                                $majorData['kurikulum_merdeka_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'kurikulum_merdeka_subjects'));
+                                $majorData['kurikulum_2013_ipa_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ipa_subjects'));
+                                $majorData['kurikulum_2013_ips_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ips_subjects'));
+                                $majorData['kurikulum_2013_bahasa_subjects'] = $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_bahasa_subjects'));
+                                
                             } catch (\Throwable $subjectError) {
-                                Log::warning('Error getting subjects, using basic data only: ' . $subjectError->getMessage());
-                                // Continue with basic data (without subjects)
+                                Log::warning('Error parsing subjects from major fields: ' . $subjectError->getMessage());
+                                // Continue with empty subject arrays (already set in createBasicMajorData)
                             }
                             
                             // Ensure choice_date is added
@@ -416,57 +426,105 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
-            // Ensure all data is JSON-serializable before encoding
-            // Helper function to recursively sanitize data for JSON encoding
-            $sanitizeForJson = function($data) use (&$sanitizeForJson) {
-                if (is_array($data)) {
-                    $result = [];
-                    foreach ($data as $key => $value) {
-                        $sanitizedKey = is_string($key) ? $key : (string)$key;
-                        $result[$sanitizedKey] = $sanitizeForJson($value);
-                    }
-                    return $result;
-                } elseif (is_object($data)) {
-                    // Convert object to array
-                    return $sanitizeForJson((array)$data);
-                } elseif (is_resource($data)) {
-                    return null; // Resources cannot be JSON encoded
-                } elseif (is_null($data) || is_bool($data) || is_numeric($data)) {
-                    return $data; // These are safe
-                } elseif (is_string($data)) {
-                    // Ensure string is UTF-8 encoded
-                    if (!mb_check_encoding($data, 'UTF-8')) {
-                        return mb_convert_encoding($data, 'UTF-8', 'UTF-8');
-                    }
-                    return $data;
-                } else {
-                    // For any other type, convert to string
-                    return (string)$data;
-                }
-            };
-            
+            // Ensure all data is JSON-serializable - use simpler approach to avoid recursion issues
             try {
-                // Sanitize all data before encoding
-                $sanitizedSchoolData = $sanitizeForJson($schoolData);
-                $sanitizedStudentData = $sanitizeForJson($studentData);
+                // Ensure studentData arrays are properly formatted (no objects, no resources)
+                if (isset($studentData['chosen_major']) && is_array($studentData['chosen_major'])) {
+                    // Ensure all subject arrays are simple arrays
+                    $subjectFields = ['required_subjects', 'preferred_subjects', 'optional_subjects', 
+                                     'kurikulum_merdeka_subjects', 'kurikulum_2013_ipa_subjects', 
+                                     'kurikulum_2013_ips_subjects', 'kurikulum_2013_bahasa_subjects'];
+                    foreach ($subjectFields as $field) {
+                        if (isset($studentData['chosen_major'][$field])) {
+                            if (!is_array($studentData['chosen_major'][$field])) {
+                                $studentData['chosen_major'][$field] = [];
+                            } else {
+                                // Filter out any non-string values and ensure UTF-8
+                                $studentData['chosen_major'][$field] = array_values(array_filter(
+                                    array_map(function($item) {
+                                        if (!is_string($item)) {
+                                            return is_scalar($item) ? (string)$item : '';
+                                        }
+                                        // Ensure UTF-8 encoding
+                                        if (!mb_check_encoding($item, 'UTF-8')) {
+                                            return mb_convert_encoding($item, 'UTF-8', 'UTF-8');
+                                        }
+                                        return $item;
+                                    }, $studentData['chosen_major'][$field]),
+                                    function($item) {
+                                        return !empty($item);
+                                    }
+                                ));
+                            }
+                        } else {
+                            $studentData['chosen_major'][$field] = [];
+                        }
+                    }
+                    
+                    // Ensure all scalar fields are properly typed
+                    if (isset($studentData['chosen_major']['id'])) {
+                        $studentData['chosen_major']['id'] = (int)$studentData['chosen_major']['id'];
+                    }
+                    foreach (['name', 'description', 'career_prospects', 'category', 'rumpun_ilmu', 'education_level'] as $field) {
+                        if (isset($studentData['chosen_major'][$field])) {
+                            $studentData['chosen_major'][$field] = (string)$studentData['chosen_major'][$field];
+                        }
+                    }
+                }
+                
+                // Ensure schoolData is properly formatted
+                $schoolData['id'] = (int)($schoolData['id'] ?? 0);
+                $schoolData['npsn'] = (string)($schoolData['npsn'] ?? '');
+                $schoolData['name'] = (string)($schoolData['name'] ?? '');
+                
+                // Ensure studentData basic fields are properly formatted
+                $studentData['id'] = (int)($studentData['id'] ?? 0);
+                $studentData['nisn'] = (string)($studentData['nisn'] ?? '');
+                $studentData['name'] = (string)($studentData['name'] ?? '');
+                $studentData['class'] = (string)($studentData['class'] ?? '');
+                $studentData['email'] = (string)($studentData['email'] ?? '');
+                $studentData['phone'] = (string)($studentData['phone'] ?? '');
+                $studentData['parent_phone'] = (string)($studentData['parent_phone'] ?? '');
+                $studentData['has_choice'] = (bool)($studentData['has_choice'] ?? false);
                 
                 // Clean and prepare data for JSON encoding
                 $responseData = [
                     'success' => true,
                     'data' => [
-                        'school' => $sanitizedSchoolData,
-                        'student' => $sanitizedStudentData
+                        'school' => $schoolData,
+                        'student' => $studentData
                     ]
                 ];
                 
-                // Test JSON encoding before returning
-                $jsonTest = json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                // Test JSON encoding before returning (with error suppression for large data)
+                $jsonTest = @json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
                 if ($jsonTest === false) {
                     $errorMsg = json_last_error_msg();
+                    $errorCode = json_last_error();
                     Log::error('JSON encoding failed: ' . $errorMsg, [
-                        'json_error' => json_last_error(),
-                        'student_id' => $studentId
+                        'json_error' => $errorCode,
+                        'student_id' => $studentId,
+                        'has_major' => isset($studentData['chosen_major'])
                     ]);
+                    
+                    // Try without chosen_major if that's causing the issue
+                    if (isset($studentData['chosen_major'])) {
+                        $studentDataWithoutMajor = $studentData;
+                        unset($studentDataWithoutMajor['chosen_major']);
+                        $responseDataWithoutMajor = [
+                            'success' => true,
+                            'data' => [
+                                'school' => $schoolData,
+                                'student' => $studentDataWithoutMajor
+                            ]
+                        ];
+                        $jsonTest2 = @json_encode($responseDataWithoutMajor);
+                        if ($jsonTest2 !== false) {
+                            Log::warning('JSON encoding succeeded after removing chosen_major');
+                            return response()->json($responseDataWithoutMajor, 200)->header('Content-Type', 'application/json');
+                        }
+                    }
+                    
                     throw new \Exception('JSON encoding failed: ' . $errorMsg);
                 }
                 
