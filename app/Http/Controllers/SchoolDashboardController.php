@@ -289,32 +289,62 @@ class SchoolDashboardController extends Controller
                     if ($choiceMajorId && is_numeric($choiceMajorId)) {
                         try {
                             $major = MajorRecommendation::find($choiceMajorId);
+                            if (!$major) {
+                                Log::warning('Major not found in database', ['major_id' => $choiceMajorId]);
+                            }
                         } catch (\Exception $dbError) {
-                            Log::warning('Failed to load major from database: ' . $dbError->getMessage());
+                            Log::error('Failed to load major from database: ' . $dbError->getMessage(), [
+                                'major_id' => $choiceMajorId,
+                                'file' => $dbError->getFile(),
+                                'line' => $dbError->getLine()
+                            ]);
+                            $major = null;
                         }
                     }
                     
                     // Process major data only if we have a valid major object
                     if ($major && is_object($major)) {
                         try {
+                            Log::info('Processing major data', ['major_id' => $choiceMajorId]);
                             $majorData = $this->getMajorWithSubjects($major);
+                            
+                            // Ensure majorData is an array and not null
+                            if (!is_array($majorData)) {
+                                Log::warning('getMajorWithSubjects returned non-array', ['type' => gettype($majorData)]);
+                                $majorData = $this->createBasicMajorData($major, $student->studentChoice);
+                            }
+                            
                             if (is_array($majorData) && !empty($majorData)) {
-                                $majorData['choice_date'] = $choiceCreatedAt;
+                                // Ensure choice_date is added safely
+                                if ($choiceCreatedAt) {
+                                    $majorData['choice_date'] = $choiceCreatedAt;
+                                }
                                 $studentData['chosen_major'] = $majorData;
+                                Log::info('Major data added to student data', ['major_id' => $choiceMajorId]);
                             } else {
                                 // Fallback: create basic structure
+                                Log::warning('Major data is empty, using fallback');
                                 $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
                                 if ($choiceCreatedAt) {
                                     $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
                                 }
                             }
                         } catch (\Throwable $subjectError) {
-                            Log::error('Error getting major with subjects: ' . $subjectError->getMessage());
-                            Log::error('File: ' . $subjectError->getFile() . ' Line: ' . $subjectError->getLine());
+                            Log::error('Error getting major with subjects: ' . $subjectError->getMessage(), [
+                                'major_id' => $choiceMajorId,
+                                'file' => $subjectError->getFile(),
+                                'line' => $subjectError->getLine(),
+                                'trace' => $subjectError->getTraceAsString()
+                            ]);
                             // Fallback: create basic structure
-                            $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
-                            if ($choiceCreatedAt) {
-                                $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
+                            try {
+                                $studentData['chosen_major'] = $this->createBasicMajorData($major, $student->studentChoice);
+                                if ($choiceCreatedAt) {
+                                    $studentData['chosen_major']['choice_date'] = $choiceCreatedAt;
+                                }
+                            } catch (\Throwable $fallbackError) {
+                                Log::error('Error in fallback createBasicMajorData: ' . $fallbackError->getMessage());
+                                // Skip major data entirely
                             }
                         }
                     } elseif ($choiceMajorId) {
@@ -478,6 +508,7 @@ class SchoolDashboardController extends Controller
 
     /**
      * Get major with subjects from database mapping
+     * Similar to StudentWebController::formatMajorWithSubjects but for teacher dashboard
      */
     private function getMajorWithSubjects($major)
     {
@@ -507,17 +538,17 @@ class SchoolDashboardController extends Controller
             $rumpunIlmu = $this->safeGetAttribute($major, 'rumpun_ilmu');
             $educationLevel = $this->determineEducationLevel($category ?? $rumpunIlmu ?? 'Saintek');
             
-            // Helper function to parse subjects from JSON or string
+            // Helper function to parse subjects from JSON or string (simpler version like StudentWebController)
             $parseSubjects = function($field) {
                 try {
                     if (is_null($field)) return [];
-                    if (is_array($field)) return $field;
+                    if (is_array($field)) return array_values($field);
                     if (is_string($field)) {
                         if (strlen($field) === 0) return [];
                         // Try to decode as JSON first
                         $decoded = @json_decode($field, true);
                         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                            return $decoded;
+                            return array_values($decoded);
                         }
                         // If not JSON, treat as comma-separated string
                         $parts = explode(',', $field);
@@ -533,102 +564,91 @@ class SchoolDashboardController extends Controller
                 }
             };
             
-            // Get subjects - prioritize direct fields, use mapping as fallback
+            // Get subjects - use same approach as StudentWebController::formatMajorWithSubjects
             $mandatorySubjects = [];
             $optionalSubjects = [];
             
-            // First, try to get from direct fields (this is most reliable)
-            $requiredSubjectsField = null;
-            $preferredSubjectsField = null;
-            $optionalSubjectsField = null;
-            
-            // Safely access properties using getAttribute or array access
-            $requiredSubjectsField = null;
-            $preferredSubjectsField = null;
-            $optionalSubjectsField = null;
-            
+            // First, try to get from database mapping (like StudentWebController does)
             try {
-                // Use getAttribute if available, otherwise direct property access
-                if (method_exists($major, 'getAttribute')) {
-                    $requiredSubjectsField = $major->getAttribute('required_subjects');
-                    $preferredSubjectsField = $major->getAttribute('preferred_subjects');
-                    $optionalSubjectsField = $major->getAttribute('optional_subjects');
-                } else {
-                    $requiredSubjectsField = isset($major->required_subjects) ? $major->required_subjects : null;
-                    $preferredSubjectsField = isset($major->preferred_subjects) ? $major->preferred_subjects : null;
-                    $optionalSubjectsField = isset($major->optional_subjects) ? $major->optional_subjects : null;
+                if (isset($major->id) && is_numeric($major->id) && class_exists('\App\Models\MajorSubjectMapping')) {
+                    try {
+                        $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
+                            ->where('is_active', 1)
+                            ->get();
+                        
+                        if ($mappings && $mappings->count() > 0) {
+                            // Load subjects separately to avoid relationship issues (safer approach)
+                            foreach ($mappings as $mapping) {
+                                try {
+                                    if (isset($mapping->subject_id) && is_numeric($mapping->subject_id)) {
+                                        $subject = \App\Models\Subject::find($mapping->subject_id);
+                                        if ($subject && isset($subject->name) && !empty($subject->name)) {
+                                            $subjectName = trim($subject->name);
+                                            if ($mapping->mapping_type === 'wajib') {
+                                                if (!in_array($subjectName, $mandatorySubjects)) {
+                                                    $mandatorySubjects[] = $subjectName;
+                                                }
+                                            } elseif ($mapping->mapping_type === 'pilihan') {
+                                                if (!in_array($subjectName, $optionalSubjects)) {
+                                                    $optionalSubjects[] = $subjectName;
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (\Exception $subjectError) {
+                                    // Skip this subject and continue
+                                    continue;
+                                }
+                            }
+                        }
+                    } catch (\Exception $mappingError) {
+                        Log::warning('Failed to load subject mappings: ' . $mappingError->getMessage(), [
+                            'major_id' => $major->id ?? 'unknown',
+                            'file' => $mappingError->getFile(),
+                            'line' => $mappingError->getLine()
+                        ]);
+                    }
                 }
-            } catch (\Throwable $e) {
-                Log::warning('Error accessing subject fields: ' . $e->getMessage());
-                // Continue with null values
+            } catch (\Exception $e) {
+                Log::warning('Error attempting subject mapping: ' . $e->getMessage(), [
+                    'major_id' => $major->id ?? 'unknown',
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
             }
             
-            // Parse subjects from fields
-            if (!empty($requiredSubjectsField)) {
+            // If no mappings found, try to get from required_subjects and preferred_subjects fields (like StudentWebController)
+            if (empty($mandatorySubjects)) {
                 try {
-                    $mandatorySubjects = $parseSubjects($requiredSubjectsField);
+                    $requiredField = $this->safeGetAttribute($major, 'required_subjects');
+                    if (!empty($requiredField)) {
+                        $mandatorySubjects = $parseSubjects($requiredField);
+                    }
                 } catch (\Exception $e) {
                     Log::warning('Error parsing required_subjects: ' . $e->getMessage());
                 }
             }
             
-            if (!empty($preferredSubjectsField)) {
+            if (empty($optionalSubjects)) {
                 try {
-                    $optionalSubjects = $parseSubjects($preferredSubjectsField);
+                    $preferredField = $this->safeGetAttribute($major, 'preferred_subjects');
+                    if (!empty($preferredField)) {
+                        $optionalSubjects = $parseSubjects($preferredField);
+                    }
                 } catch (\Exception $e) {
                     Log::warning('Error parsing preferred_subjects: ' . $e->getMessage());
                 }
             }
             
             // If still empty, try optional_subjects field
-            if (empty($optionalSubjects) && !empty($optionalSubjectsField)) {
+            if (empty($optionalSubjects)) {
                 try {
-                    $optionalSubjects = $parseSubjects($optionalSubjectsField);
-                } catch (\Exception $e) {
-                    Log::warning('Error parsing optional_subjects: ' . $e->getMessage());
-                }
-            }
-            
-            // Only try database mapping if we don't have subjects from direct fields
-            // This avoids potential errors from missing relationships
-            if (empty($mandatorySubjects) && empty($optionalSubjects)) {
-                try {
-                    if (isset($major->id) && is_numeric($major->id) && class_exists('\App\Models\MajorSubjectMapping')) {
-                        try {
-                            $mappings = \App\Models\MajorSubjectMapping::where('major_id', $major->id)
-                                ->where('is_active', 1)
-                                ->get();
-                            
-                            if ($mappings && $mappings->count() > 0) {
-                                // Load subjects separately to avoid relationship issues
-                                foreach ($mappings as $mapping) {
-                                    if (isset($mapping->subject_id)) {
-                                        try {
-                                            $subject = \App\Models\Subject::find($mapping->subject_id);
-                                            if ($subject && isset($subject->name) && !empty($subject->name)) {
-                                                if ($mapping->mapping_type === 'wajib') {
-                                                    if (!in_array($subject->name, $mandatorySubjects)) {
-                                                        $mandatorySubjects[] = $subject->name;
-                                                    }
-                                                } elseif ($mapping->mapping_type === 'pilihan') {
-                                                    if (!in_array($subject->name, $optionalSubjects)) {
-                                                        $optionalSubjects[] = $subject->name;
-                                                    }
-                                                }
-                                            }
-                                        } catch (\Exception $subjectError) {
-                                            // Skip this subject
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (\Exception $mappingError) {
-                            Log::warning('Failed to load subject mappings: ' . $mappingError->getMessage());
-                        }
+                    $optionalField = $this->safeGetAttribute($major, 'optional_subjects');
+                    if (!empty($optionalField)) {
+                        $optionalSubjects = $parseSubjects($optionalField);
                     }
                 } catch (\Exception $e) {
-                    Log::warning('Error attempting subject mapping: ' . $e->getMessage());
+                    Log::warning('Error parsing optional_subjects: ' . $e->getMessage());
                 }
             }
         
