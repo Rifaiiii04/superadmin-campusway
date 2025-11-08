@@ -1,8 +1,14 @@
 <?php
 
+// Log request untuk debugging
+error_log('=== index.php called ===');
+error_log('REQUEST_URI: ' . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+error_log('REQUEST_METHOD: ' . ($_SERVER['REQUEST_METHOD'] ?? 'N/A'));
+
 // 🚨 EMERGENCY FIX: BLOCK DOUBLE URL REDIRECT AT ENTRY POINT
 if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/super-admin/super-admin') !== false) {
     $newUrl = str_replace('/super-admin/super-admin', '/super-admin', $_SERVER['REQUEST_URI']);
+    error_log('Double URL detected, redirecting to: ' . $newUrl);
     header("Location: http://103.23.198.101{$newUrl}", true, 301);
     exit;
 }

@@ -170,6 +170,151 @@ class SchoolDashboardController extends Controller
      */
     public function studentDetail(Request $request, $id)
     {
+        // MINIMAL VERSION - Just return basic student data to ensure endpoint works
+        try {
+            // Write to log
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " ====== studentDetail CALLED ======\n" .
+                "ID: " . $id . "\n" .
+                "URI: " . $request->getRequestUri() . "\n",
+                FILE_APPEND
+            );
+            
+            // Validate ID
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID siswa tidak valid'
+                ], 400);
+            }
+            
+            $studentId = (int)$id;
+            
+            // Get school from middleware
+            $school = $request->school ?? null;
+            
+            if (!$school || !is_object($school)) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - ERROR: School not found\n",
+                    FILE_APPEND
+                );
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sekolah tidak ditemukan'
+                ], 404);
+            }
+            
+            $schoolId = (int)($school->id ?? 0);
+            
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - School ID: " . $schoolId . "\n",
+                FILE_APPEND
+            );
+            
+            // Get student
+            $student = Student::where('id', $studentId)
+                ->where('school_id', $schoolId)
+                ->first();
+            
+            if (!$student) {
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Student NOT FOUND\n",
+                    FILE_APPEND
+                );
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Siswa tidak ditemukan'
+                ], 404);
+            }
+            
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Student FOUND: " . ($student->name ?? 'NO NAME') . "\n",
+                FILE_APPEND
+            );
+            
+            // Build minimal student data
+            $studentData = [
+                'id' => (int)$student->id,
+                'nisn' => (string)($student->nisn ?? ''),
+                'name' => (string)($student->name ?? ''),
+                'class' => (string)($student->kelas ?? ''),
+                'email' => (string)($student->email ?? ''),
+                'phone' => (string)($student->phone ?? ''),
+                'parent_phone' => (string)($student->parent_phone ?? ''),
+                'created_at' => $student->created_at ? $student->created_at->format('c') : null,
+                'updated_at' => $student->updated_at ? $student->updated_at->format('c') : null,
+                'has_choice' => false
+            ];
+            
+            // Check if student has choice (but don't load major data yet)
+            $hasChoice = StudentChoice::where('student_id', $studentId)->exists();
+            $studentData['has_choice'] = $hasChoice;
+            
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Has choice: " . ($hasChoice ? 'YES' : 'NO') . "\n",
+                FILE_APPEND
+            );
+            
+            // Build school data
+            $schoolData = [
+                'id' => (int)$school->id,
+                'npsn' => (string)($school->npsn ?? ''),
+                'name' => (string)($school->name ?? '')
+            ];
+            
+            // Return response WITHOUT major data for now
+            $responseData = [
+                'success' => true,
+                'data' => [
+                    'school' => $schoolData,
+                    'student' => $studentData
+                ]
+            ];
+            
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Returning response (NO MAJOR DATA)\n",
+                FILE_APPEND
+            );
+            
+            return response()->json($responseData, 200);
+            
+        } catch (\Throwable $e) {
+            // Log error
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " ====== FATAL ERROR ======\n" .
+                "Message: " . $e->getMessage() . "\n" .
+                "File: " . $e->getFile() . "\n" .
+                "Line: " . $e->getLine() . "\n" .
+                "Stack: " . substr($e->getTraceAsString(), 0, 1000) . "\n",
+                FILE_APPEND
+            );
+            
+            Log::error('Get student detail error: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+    
+    /**
+     * OLD studentDetail method - DISABLED for debugging
+     */
+    public function studentDetail_OLD(Request $request, $id)
+    {
+        // This is the old method - keeping for reference
         // Use error_log for immediate logging (bypasses Laravel log system)
         error_log('=== studentDetail METHOD CALLED ===');
         error_log('ID parameter: ' . var_export($id, true));

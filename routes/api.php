@@ -43,6 +43,18 @@ Route::prefix('school')->group(function () {
     Route::post('/login', [SchoolAuthController::class, 'login']);
     Route::post('/logout', [SchoolAuthController::class, 'logout'])->middleware('school.auth');
     
+    // TEST ENDPOINT - No auth required for debugging
+    Route::get('/test-student-detail/{id}', function(Request $request, $id) {
+        \Illuminate\Support\Facades\Log::info('TEST endpoint called', ['id' => $id]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Test endpoint works',
+            'id' => $id,
+            'request_uri' => $request->getRequestUri(),
+            'method' => $request->method()
+        ]);
+    });
+    
     // Protected routes (require authentication)
     Route::middleware('school.auth')->group(function () {
         Route::get('/profile', [SchoolAuthController::class, 'profile']);
