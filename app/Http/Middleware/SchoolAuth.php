@@ -20,6 +20,12 @@ class SchoolAuth
     public function handle(Request $request, Closure $next)
     {
         // Log untuk debugging
+        $logFile = storage_path('logs/middleware_debug.log');
+        $logMsg = date('Y-m-d H:i:s') . " === SchoolAuth Middleware Called ===\n";
+        $logMsg .= "  URI: " . $request->getRequestUri() . "\n";
+        $logMsg .= "  Method: " . $request->method() . "\n";
+        file_put_contents($logFile, $logMsg, FILE_APPEND);
+        
         error_log('=== SchoolAuth Middleware Called ===');
         error_log('URI: ' . $request->getRequestUri());
         error_log('Method: ' . $request->method());
@@ -29,6 +35,7 @@ class SchoolAuth
             $request->headers->set('Accept', 'application/json');
             
             $token = $request->header('Authorization');
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Token exists: " . ($token ? 'YES' : 'NO') . "\n", FILE_APPEND);
             error_log('Token exists: ' . ($token ? 'YES' : 'NO'));
             
             if (!$token) {
@@ -74,17 +81,24 @@ class SchoolAuth
             // Tambahkan data sekolah ke request
             $request->merge(['school_id' => $school->id]);
             $request->merge(['school' => $school]);
+            
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - School added to request: " . ($school->id ?? 'NO ID') . "\n", FILE_APPEND);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Calling next middleware/controller\n", FILE_APPEND);
 
             $response = $next($request);
             
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Response received, status: " . $response->getStatusCode() . "\n", FILE_APPEND);
+            
             // Ensure response is JSON
             if (!$response instanceof \Illuminate\Http\JsonResponse) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: Response is not JSON\n", FILE_APPEND);
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid response format'
                 ], 500)->header('Content-Type', 'application/json');
             }
             
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Returning JSON response\n", FILE_APPEND);
             return $response;
 
         } catch (\Exception $e) {
