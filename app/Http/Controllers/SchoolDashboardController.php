@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\StudentChoice;
 use App\Models\MajorRecommendation;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SchoolDashboardController extends Controller
 {
@@ -334,13 +335,42 @@ class SchoolDashboardController extends Controller
                         );
                         
                         if ($majorIdValue) {
-                            $major = MajorRecommendation::find($majorIdValue);
-                            
-                            file_put_contents(
-                                storage_path('logs/student_detail_debug.log'),
-                                date('Y-m-d H:i:s') . " - Step 11: Major: " . ($major ? 'FOUND' : 'NOT FOUND') . "\n",
-                                FILE_APPEND
-                            );
+                            // Use raw query to get data as string first, then parse safely
+                            try {
+                                $major = MajorRecommendation::find($majorIdValue);
+                                
+                                file_put_contents(
+                                    storage_path('logs/student_detail_debug.log'),
+                                    date('Y-m-d H:i:s') . " - Step 11: Major: " . ($major ? 'FOUND' : 'NOT FOUND') . "\n",
+                                    FILE_APPEND
+                                );
+                                
+                                // If major found, try to access a property to see if it causes error
+                                if ($major) {
+                                    try {
+                                        $test = $major->major_name;
+                                        file_put_contents(
+                                            storage_path('logs/student_detail_debug.log'),
+                                            date('Y-m-d H:i:s') . " - Step 11a: Major name accessible: " . ($test ?? 'NULL') . "\n",
+                                            FILE_APPEND
+                                        );
+                                    } catch (\Exception $e) {
+                                        file_put_contents(
+                                            storage_path('logs/student_detail_debug.log'),
+                                            date('Y-m-d H:i:s') . " - Step 11b: ERROR accessing major name: " . $e->getMessage() . "\n",
+                                            FILE_APPEND
+                                        );
+                                        $major = null; // Set to null if accessing causes error
+                                    }
+                                }
+                            } catch (\Throwable $e) {
+                                file_put_contents(
+                                    storage_path('logs/student_detail_debug.log'),
+                                    date('Y-m-d H:i:s') . " - Step 11c: ERROR finding major: " . $e->getMessage() . "\n",
+                                    FILE_APPEND
+                                );
+                                $major = null;
+                            }
                         }
                     }
                 }
@@ -420,18 +450,48 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
+            file_put_contents(
+                storage_path('logs/student_detail_debug.log'),
+                date('Y-m-d H:i:s') . " - Step 13a: Checking if should process major. Choice: " . ($studentChoice ? 'YES' : 'NO') . ", Major: " . ($major ? 'YES' : 'NO') . "\n",
+                FILE_APPEND
+            );
+
             // Handle chosen major if student has a choice
-            // TEMPORARILY: Skip major data completely to ensure endpoint works
-            // We'll add it back once we confirm the endpoint is working
+            // Use raw DB query to avoid casting issues
             if ($studentChoice && $major && is_object($major)) {
                 try {
                     file_put_contents(
                         storage_path('logs/student_detail_debug.log'),
-                        date('Y-m-d H:i:s') . " - Starting major processing\n",
+                        date('Y-m-d H:i:s') . " - Step 13b: Starting major processing\n",
                         FILE_APPEND
                     );
                     
-                    // Get basic major info only (no subjects for now)
+                    // Get major data using raw query to avoid casting issues
+                    $majorIdValue = $studentChoice->major_id ?? null;
+                    $majorRawData = null;
+                    
+                    if ($majorIdValue) {
+                        try {
+                            // Get raw data from database as array (bypass model casting)
+                            $majorRawData = DB::table('major_recommendations')
+                                ->where('id', $majorIdValue)
+                                ->first();
+                            
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 13c: Raw major data: " . ($majorRawData ? 'FOUND' : 'NOT FOUND') . "\n",
+                                FILE_APPEND
+                            );
+                        } catch (\Exception $e) {
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 13d: ERROR getting raw major data: " . $e->getMessage() . "\n",
+                                FILE_APPEND
+                            );
+                        }
+                    }
+                    
+                    // Get basic major info
                     $majorId = 0;
                     $majorName = '';
                     $majorDescription = '';
@@ -440,28 +500,114 @@ class SchoolDashboardController extends Controller
                     $majorCareer = '';
                     $choiceDate = null;
                     
-                    // Safely get basic attributes
-                    try {
-                        $majorId = (int)($major->id ?? 0);
-                        $majorName = (string)($major->major_name ?? '');
-                        $majorDescription = (string)($major->description ?? '');
-                        $majorCategory = (string)($major->category ?? 'Saintek');
-                        $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
-                        $majorCareer = (string)($major->career_prospects ?? '');
-                        
-                        if ($studentChoice && $studentChoice->created_at) {
-                            $choiceDate = $studentChoice->created_at->format('c');
+                    // Get from raw data or model
+                    if ($majorRawData) {
+                        $majorId = (int)($majorRawData->id ?? 0);
+                        $majorName = (string)($majorRawData->major_name ?? '');
+                        $majorDescription = (string)($majorRawData->description ?? '');
+                        $majorCategory = (string)($majorRawData->category ?? 'Saintek');
+                        $majorRumpun = (string)($majorRawData->rumpun_ilmu ?? $majorCategory);
+                        $majorCareer = (string)($majorRawData->career_prospects ?? '');
+                    } else {
+                        // Fallback to model
+                        try {
+                            $majorId = (int)($major->id ?? 0);
+                            $majorName = (string)($major->major_name ?? '');
+                            $majorDescription = (string)($major->description ?? '');
+                            $majorCategory = (string)($major->category ?? 'Saintek');
+                            $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
+                            $majorCareer = (string)($major->career_prospects ?? '');
+                        } catch (\Exception $e) {
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 13e: ERROR getting major from model: " . $e->getMessage() . "\n",
+                                FILE_APPEND
+                            );
                         }
-                    } catch (\Exception $e) {
-                        file_put_contents(
-                            storage_path('logs/student_detail_debug.log'),
-                            date('Y-m-d H:i:s') . " - Error getting basic major info: " . $e->getMessage() . "\n",
-                            FILE_APPEND
-                        );
                     }
                     
-                    // For now, just return basic major info without subjects
-                    // This ensures the endpoint works
+                    // Get choice date
+                    if ($studentChoice && $studentChoice->created_at) {
+                        try {
+                            $choiceDate = $studentChoice->created_at->format('c');
+                        } catch (\Exception $e) {
+                            // Skip if error
+                        }
+                    }
+                    
+                    // Parse subjects from raw data (as string) to avoid casting issues
+                    $parseSubjectsFromString = function($field) {
+                        if (is_null($field) || $field === '') return [];
+                        if (is_array($field)) {
+                            $result = [];
+                            foreach ($field as $item) {
+                                if (is_string($item) && trim($item) !== '') {
+                                    $result[] = trim($item);
+                                }
+                            }
+                            return $result;
+                        }
+                        if (is_string($field)) {
+                            $trimmed = trim($field);
+                            if ($trimmed === '') return [];
+                            // Try JSON
+                            $decoded = @json_decode($trimmed, true);
+                            if (is_array($decoded)) {
+                                $result = [];
+                                foreach ($decoded as $item) {
+                                    if (is_string($item) && trim($item) !== '') {
+                                        $result[] = trim($item);
+                                    }
+                                }
+                                return $result;
+                            }
+                            // Comma-separated
+                            $parts = explode(',', $trimmed);
+                            $result = [];
+                            foreach ($parts as $part) {
+                                $trimmed = trim($part);
+                                if ($trimmed !== '') $result[] = $trimmed;
+                            }
+                            return $result;
+                        }
+                        return [];
+                    };
+                    
+                    // Get subjects from raw data
+                    $requiredSubjects = [];
+                    $preferredSubjects = [];
+                    $optionalSubjects = [];
+                    $kurikulumMerdeka = [];
+                    $kurikulum2013Ipa = [];
+                    $kurikulum2013Ips = [];
+                    $kurikulum2013Bahasa = [];
+                    
+                    if ($majorRawData) {
+                        try {
+                            $requiredSubjects = $parseSubjectsFromString($majorRawData->required_subjects ?? null);
+                            $preferredSubjects = $parseSubjectsFromString($majorRawData->preferred_subjects ?? null);
+                            $optionalSubjects = $parseSubjectsFromString($majorRawData->optional_subjects ?? null);
+                            $kurikulumMerdeka = $parseSubjectsFromString($majorRawData->kurikulum_merdeka_subjects ?? null);
+                            $kurikulum2013Ipa = $parseSubjectsFromString($majorRawData->kurikulum_2013_ipa_subjects ?? null);
+                            $kurikulum2013Ips = $parseSubjectsFromString($majorRawData->kurikulum_2013_ips_subjects ?? null);
+                            $kurikulum2013Bahasa = $parseSubjectsFromString($majorRawData->kurikulum_2013_bahasa_subjects ?? null);
+                            
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 13f: Subjects parsed. Required: " . count($requiredSubjects) . ", Preferred: " . count($preferredSubjects) . "\n",
+                                FILE_APPEND
+                            );
+                        } catch (\Exception $e) {
+                            file_put_contents(
+                                storage_path('logs/student_detail_debug.log'),
+                                date('Y-m-d H:i:s') . " - Step 13g: ERROR parsing subjects: " . $e->getMessage() . "\n",
+                                FILE_APPEND
+                            );
+                            // Use empty arrays if parsing fails
+                        }
+                    }
+                    
+                    // Build chosen_major data
                     $studentData['chosen_major'] = [
                         'id' => $majorId,
                         'name' => $majorName,
@@ -471,26 +617,27 @@ class SchoolDashboardController extends Controller
                         'career_prospects' => $majorCareer,
                         'education_level' => 'SMA/MA',
                         'choice_date' => $choiceDate,
-                        'required_subjects' => [],
-                        'preferred_subjects' => [],
-                        'optional_subjects' => [],
-                        'kurikulum_merdeka_subjects' => [],
-                        'kurikulum_2013_ipa_subjects' => [],
-                        'kurikulum_2013_ips_subjects' => [],
-                        'kurikulum_2013_bahasa_subjects' => [],
+                        'required_subjects' => $requiredSubjects,
+                        'preferred_subjects' => $preferredSubjects,
+                        'optional_subjects' => $optionalSubjects,
+                        'kurikulum_merdeka_subjects' => $kurikulumMerdeka,
+                        'kurikulum_2013_ipa_subjects' => $kurikulum2013Ipa,
+                        'kurikulum_2013_ips_subjects' => $kurikulum2013Ips,
+                        'kurikulum_2013_bahasa_subjects' => $kurikulum2013Bahasa,
                     ];
                     
                     file_put_contents(
                         storage_path('logs/student_detail_debug.log'),
-                        date('Y-m-d H:i:s') . " - Major data added successfully\n",
+                        date('Y-m-d H:i:s') . " - Step 13h: Major data added successfully\n",
                         FILE_APPEND
                     );
                     
                 } catch (\Throwable $e) {
                     file_put_contents(
                         storage_path('logs/student_detail_debug.log'),
-                        date('Y-m-d H:i:s') . " - ERROR in major processing: " . $e->getMessage() . "\n" . 
-                        "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n",
+                        date('Y-m-d H:i:s') . " - Step 13i: FATAL ERROR in major processing: " . $e->getMessage() . "\n" . 
+                        "File: " . $e->getFile() . " Line: " . $e->getLine() . "\n" .
+                        "Stack: " . substr($e->getTraceAsString(), 0, 500) . "\n",
                         FILE_APPEND
                     );
                     // Skip major data - continue with student data only
