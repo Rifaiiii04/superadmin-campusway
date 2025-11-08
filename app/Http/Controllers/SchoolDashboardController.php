@@ -170,8 +170,15 @@ class SchoolDashboardController extends Controller
     public function studentDetail(Request $request, $studentId)
     {
         try {
+            Log::info('studentDetail called', [
+                'student_id' => $studentId,
+                'request_method' => $request->method(),
+                'request_uri' => $request->getRequestUri()
+            ]);
+
             // Validate studentId
             if (!is_numeric($studentId)) {
+                Log::warning('Invalid student ID', ['student_id' => $studentId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'ID siswa tidak valid'
@@ -182,13 +189,30 @@ class SchoolDashboardController extends Controller
             $school = $request->school ?? null;
             
             if (!$school || !is_object($school)) {
+                Log::error('School not found in request', [
+                    'student_id' => $studentId,
+                    'school_type' => gettype($school),
+                    'has_school' => isset($request->school)
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Sekolah tidak ditemukan'
                 ], 404);
             }
+            
+            Log::info('School found', ['school_id' => $school->id ?? 'unknown']);
 
-            $schoolId = $school->id ?? null;
+            $schoolId = null;
+            try {
+                $schoolId = $school->id ?? null;
+            } catch (\Exception $e) {
+                Log::error('Error getting school ID: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID sekolah tidak valid'
+                ], 400);
+            }
+
             if (!$schoolId) {
                 return response()->json([
                     'success' => false,
@@ -196,10 +220,19 @@ class SchoolDashboardController extends Controller
                 ], 400);
             }
 
-            // Get student with eager loading - use separate queries for better error handling
-            $student = Student::where('id', $studentId)
-                ->where('school_id', $schoolId)
-                ->first();
+            // Get student with separate query
+            $student = null;
+            try {
+                $student = Student::where('id', $studentId)
+                    ->where('school_id', $schoolId)
+                    ->first();
+            } catch (\Exception $e) {
+                Log::error('Error querying student: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat mengambil data siswa'
+                ], 500);
+            }
 
             if (!$student) {
                 return response()->json([
@@ -213,7 +246,7 @@ class SchoolDashboardController extends Controller
             $major = null;
             try {
                 $studentChoice = StudentChoice::where('student_id', $student->id)->first();
-                if ($studentChoice && $studentChoice->major_id) {
+                if ($studentChoice && isset($studentChoice->major_id) && $studentChoice->major_id) {
                     $major = MajorRecommendation::find($studentChoice->major_id);
                 }
             } catch (\Exception $e) {
@@ -221,73 +254,189 @@ class SchoolDashboardController extends Controller
                 // Continue without choice/major data
             }
 
-            // Build student data
-            $studentData = [
-                'id' => (int)$student->id,
-                'nisn' => (string)($student->nisn ?? ''),
-                'name' => (string)($student->name ?? ''),
-                'class' => (string)($student->kelas ?? ''),
-                'email' => (string)($student->email ?? ''),
-                'phone' => (string)($student->phone ?? ''),
-                'parent_phone' => (string)($student->parent_phone ?? ''),
-                'created_at' => $student->created_at ? $student->created_at->format('c') : null,
-                'updated_at' => $student->updated_at ? $student->updated_at->format('c') : null,
-                'has_choice' => $studentChoice ? true : false
-            ];
+            // Build student data with safe attribute access
+            $studentData = [];
+            try {
+                $createdAt = null;
+                $updatedAt = null;
+                try {
+                    if ($student->created_at) {
+                        $createdAt = $student->created_at->format('c');
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error formatting created_at: ' . $e->getMessage());
+                }
+                try {
+                    if ($student->updated_at) {
+                        $updatedAt = $student->updated_at->format('c');
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Error formatting updated_at: ' . $e->getMessage());
+                }
+
+                $studentData = [
+                    'id' => (int)($student->id ?? 0),
+                    'nisn' => (string)($student->nisn ?? ''),
+                    'name' => (string)($student->name ?? ''),
+                    'class' => (string)($student->kelas ?? ''),
+                    'email' => (string)($student->email ?? ''),
+                    'phone' => (string)($student->phone ?? ''),
+                    'parent_phone' => (string)($student->parent_phone ?? ''),
+                    'created_at' => $createdAt,
+                    'updated_at' => $updatedAt,
+                    'has_choice' => $studentChoice ? true : false
+                ];
+            } catch (\Exception $e) {
+                Log::error('Error building student data: ' . $e->getMessage());
+                // Build minimal student data
+                $studentData = [
+                    'id' => (int)$studentId,
+                    'nisn' => '',
+                    'name' => '',
+                    'class' => '',
+                    'email' => '',
+                    'phone' => '',
+                    'parent_phone' => '',
+                    'created_at' => null,
+                    'updated_at' => null,
+                    'has_choice' => false
+                ];
+            }
 
             // Handle chosen major if student has a choice
             if ($studentChoice && $major) {
                 try {
                     // Helper to parse subjects - handle both array and string formats
                     $parseSubjects = function($field) {
-                        if (is_null($field) || $field === '') return [];
-                        if (is_array($field)) {
-                            return array_values(array_filter(array_map(function($item) {
-                                $trimmed = is_string($item) ? trim($item) : (string)$item;
-                                return !empty($trimmed) ? $trimmed : null;
-                            }, $field), function($item) {
-                                return $item !== null;
-                            }));
-                        }
-                        if (is_string($field)) {
-                            $trimmed = trim($field);
-                            if (empty($trimmed)) return [];
-                            
-                            // Try JSON first
-                            $decoded = @json_decode($trimmed, true);
-                            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        try {
+                            if (is_null($field) || $field === '') return [];
+                            if (is_array($field)) {
                                 return array_values(array_filter(array_map(function($item) {
-                                    $trimmed = is_string($item) ? trim($item) : (string)$item;
-                                    return !empty($trimmed) ? $trimmed : null;
-                                }, $decoded), function($item) {
+                                    try {
+                                        $trimmed = is_string($item) ? trim($item) : (string)$item;
+                                        return !empty($trimmed) ? $trimmed : null;
+                                    } catch (\Exception $e) {
+                                        return null;
+                                    }
+                                }, $field), function($item) {
                                     return $item !== null;
                                 }));
                             }
-                            // Fallback to comma-separated
-                            $parts = explode(',', $trimmed);
-                            return array_values(array_filter(array_map('trim', $parts), function($item) {
-                                return !empty($item);
-                            }));
+                            if (is_string($field)) {
+                                $trimmed = trim($field);
+                                if (empty($trimmed)) return [];
+                                
+                                // Try JSON first
+                                $decoded = @json_decode($trimmed, true);
+                                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                    return array_values(array_filter(array_map(function($item) {
+                                        try {
+                                            $trimmed = is_string($item) ? trim($item) : (string)$item;
+                                            return !empty($trimmed) ? $trimmed : null;
+                                        } catch (\Exception $e) {
+                                            return null;
+                                        }
+                                    }, $decoded), function($item) {
+                                        return $item !== null;
+                                    }));
+                                }
+                                // Fallback to comma-separated
+                                $parts = explode(',', $trimmed);
+                                return array_values(array_filter(array_map('trim', $parts), function($item) {
+                                    return !empty($item);
+                                }));
+                            }
+                            return [];
+                        } catch (\Exception $e) {
+                            Log::warning('Error in parseSubjects: ' . $e->getMessage());
+                            return [];
                         }
-                        return [];
                     };
                     
-                    // Get major attributes safely
-                    $majorId = (int)($major->id ?? 0);
-                    $majorName = (string)($major->major_name ?? '');
-                    $majorDescription = (string)($major->description ?? '');
-                    $majorCategory = (string)($major->category ?? 'Saintek');
-                    $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
-                    $majorCareer = (string)($major->career_prospects ?? '');
+                    // Get major attributes safely with try-catch for each
+                    $majorId = 0;
+                    $majorName = '';
+                    $majorDescription = '';
+                    $majorCategory = 'Saintek';
+                    $majorRumpun = 'Saintek';
+                    $majorCareer = '';
                     
-                    // Get subjects - handle casting from model
-                    $requiredSubjects = $major->required_subjects ?? null;
-                    $preferredSubjects = $major->preferred_subjects ?? null;
-                    $optionalSubjects = $major->optional_subjects ?? null;
-                    $kurikulumMerdeka = $major->kurikulum_merdeka_subjects ?? null;
-                    $kurikulum2013Ipa = $major->kurikulum_2013_ipa_subjects ?? null;
-                    $kurikulum2013Ips = $major->kurikulum_2013_ips_subjects ?? null;
-                    $kurikulum2013Bahasa = $major->kurikulum_2013_bahasa_subjects ?? null;
+                    try {
+                        $majorId = (int)($major->id ?? 0);
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting major id: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $majorName = (string)($major->major_name ?? '');
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting major name: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $majorDescription = (string)($major->description ?? '');
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting major description: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $majorCategory = (string)($major->category ?? 'Saintek');
+                        $majorRumpun = (string)($major->rumpun_ilmu ?? $majorCategory);
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting major category: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $majorCareer = (string)($major->career_prospects ?? '');
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting major career: ' . $e->getMessage());
+                    }
+                    
+                    // Get subjects - handle casting from model with try-catch
+                    $requiredSubjects = null;
+                    $preferredSubjects = null;
+                    $optionalSubjects = null;
+                    $kurikulumMerdeka = null;
+                    $kurikulum2013Ipa = null;
+                    $kurikulum2013Ips = null;
+                    $kurikulum2013Bahasa = null;
+                    
+                    try {
+                        $requiredSubjects = $major->required_subjects ?? null;
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting required_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $preferredSubjects = $major->preferred_subjects ?? null;
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting preferred_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $optionalSubjects = $major->optional_subjects ?? null;
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting optional_subjects: ' . $e->getMessage());
+                    }
+                    
+                    try {
+                        $kurikulumMerdeka = $major->kurikulum_merdeka_subjects ?? null;
+                        $kurikulum2013Ipa = $major->kurikulum_2013_ipa_subjects ?? null;
+                        $kurikulum2013Ips = $major->kurikulum_2013_ips_subjects ?? null;
+                        $kurikulum2013Bahasa = $major->kurikulum_2013_bahasa_subjects ?? null;
+                    } catch (\Exception $e) {
+                        Log::warning('Error getting kurikulum subjects: ' . $e->getMessage());
+                    }
+                    
+                    // Format choice date safely
+                    $choiceDate = null;
+                    try {
+                        if ($studentChoice->created_at) {
+                            $choiceDate = $studentChoice->created_at->format('c');
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Error formatting choice_date: ' . $e->getMessage());
+                    }
                     
                     $studentData['chosen_major'] = [
                         'id' => $majorId,
@@ -297,7 +446,7 @@ class SchoolDashboardController extends Controller
                         'rumpun_ilmu' => $majorRumpun,
                         'career_prospects' => $majorCareer,
                         'education_level' => 'SMA/MA',
-                        'choice_date' => $studentChoice->created_at ? $studentChoice->created_at->format('c') : null,
+                        'choice_date' => $choiceDate,
                         'required_subjects' => $parseSubjects($requiredSubjects),
                         'preferred_subjects' => $parseSubjects($preferredSubjects),
                         'optional_subjects' => $parseSubjects($optionalSubjects),
@@ -308,26 +457,49 @@ class SchoolDashboardController extends Controller
                     ];
                 } catch (\Exception $e) {
                     Log::error('Error processing major data: ' . $e->getMessage());
+                    Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
                     Log::error('Stack trace: ' . $e->getTraceAsString());
                     // Continue without major data - don't fail the entire request
                 }
             }
 
-            // Build school data
-            $schoolData = [
-                'id' => (int)$school->id,
-                'npsn' => (string)($school->npsn ?? ''),
-                'name' => (string)($school->name ?? '')
-            ];
+            // Build school data safely
+            $schoolData = [];
+            try {
+                $schoolData = [
+                    'id' => (int)($school->id ?? 0),
+                    'npsn' => (string)($school->npsn ?? ''),
+                    'name' => (string)($school->name ?? '')
+                ];
+            } catch (\Exception $e) {
+                Log::error('Error building school data: ' . $e->getMessage());
+                $schoolData = [
+                    'id' => 0,
+                    'npsn' => '',
+                    'name' => ''
+                ];
+            }
 
             // Return response
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'school' => $schoolData,
-                    'student' => $studentData
-                ]
-            ], 200);
+            try {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'school' => $schoolData,
+                        'student' => $studentData
+                    ]
+                ], 200);
+            } catch (\Exception $e) {
+                Log::error('Error encoding JSON response: ' . $e->getMessage());
+                // Return minimal response
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'school' => ['id' => 0, 'npsn' => '', 'name' => ''],
+                        'student' => ['id' => (int)$studentId, 'name' => '', 'has_choice' => false]
+                    ]
+                ], 200);
+            }
 
         } catch (\Exception $e) {
             Log::error('Get student detail error: ' . $e->getMessage());
