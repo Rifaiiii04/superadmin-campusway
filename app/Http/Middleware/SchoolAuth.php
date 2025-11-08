@@ -19,11 +19,17 @@ class SchoolAuth
      */
     public function handle(Request $request, Closure $next)
     {
+        // Log untuk debugging
+        error_log('=== SchoolAuth Middleware Called ===');
+        error_log('URI: ' . $request->getRequestUri());
+        error_log('Method: ' . $request->method());
+        
         try {
             // Force JSON response - never redirect
             $request->headers->set('Accept', 'application/json');
             
             $token = $request->header('Authorization');
+            error_log('Token exists: ' . ($token ? 'YES' : 'NO'));
             
             if (!$token) {
                 return response()->json([
@@ -82,10 +88,29 @@ class SchoolAuth
             return $response;
 
         } catch (\Exception $e) {
+            error_log('=== SchoolAuth Middleware ERROR ===');
+            error_log('Error: ' . $e->getMessage());
+            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            error_log('Stack: ' . $e->getTraceAsString());
+            
             Log::error('School auth middleware error: ' . $e->getMessage());
+            Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan autentikasi'
+                'message' => 'Terjadi kesalahan autentikasi',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500)->header('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            error_log('=== SchoolAuth Middleware FATAL ERROR ===');
+            error_log('Error: ' . $e->getMessage());
+            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500)->header('Content-Type', 'application/json');
         }
     }

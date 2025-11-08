@@ -167,14 +167,27 @@ class SchoolDashboardController extends Controller
     /**
      * Get detail siswa tertentu
      */
-    public function studentDetail(Request $request, $studentId)
+    public function studentDetail(Request $request, $id)
     {
+        // Use error_log for immediate logging (bypasses Laravel log system)
+        error_log('=== studentDetail METHOD CALLED ===');
+        error_log('ID: ' . $id);
+        error_log('Request URI: ' . $request->getRequestUri());
+        error_log('Request Method: ' . $request->method());
+        
         try {
+            $studentId = $id; // Use $id from route parameter
+            
             Log::info('studentDetail called', [
                 'student_id' => $studentId,
+                'id_parameter' => $id,
                 'request_method' => $request->method(),
-                'request_uri' => $request->getRequestUri()
+                'request_uri' => $request->getRequestUri(),
+                'all_request_params' => $request->all(),
+                'route_params' => $request->route()->parameters()
             ]);
+            
+            error_log('After Log::info');
 
             // Validate studentId
             if (!is_numeric($studentId)) {
@@ -651,24 +664,19 @@ class SchoolDashboardController extends Controller
             }
 
         } catch (\Throwable $e) {
+            // Log langsung ke PHP error log (bypass Laravel log system)
+            error_log('=== studentDetail FATAL ERROR ===');
+            error_log('Error: ' . $e->getMessage());
+            error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
+            error_log('Stack trace: ' . $e->getTraceAsString());
+            
             // Log semua jenis error termasuk Error dan Exception
             try {
                 Log::error('Get student detail error: ' . $e->getMessage());
-            } catch (\Throwable $logError) {
-                // Jika logging gagal, gunakan error_log
-                error_log('Get student detail error: ' . $e->getMessage());
-            }
-            
-            try {
                 Log::error('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-            } catch (\Throwable $logError) {
-                error_log('File: ' . $e->getFile() . ' Line: ' . $e->getLine());
-            }
-            
-            try {
                 Log::error('Stack trace: ' . $e->getTraceAsString());
             } catch (\Throwable $logError) {
-                error_log('Stack trace: ' . $e->getTraceAsString());
+                error_log('Laravel Log failed: ' . $logError->getMessage());
             }
             
             // Return error response
