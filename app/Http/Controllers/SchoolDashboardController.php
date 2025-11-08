@@ -359,19 +359,47 @@ class SchoolDashboardController extends Controller
                 ];
             }
 
-            Log::info('studentDetail success', [
-                'student_id' => $studentId,
-                'has_major' => isset($studentData['chosen_major']),
-                'major_id' => $studentData['chosen_major']['id'] ?? null
-            ]);
-            
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'school' => $schoolData,
-                    'student' => $studentData
-                ]
-            ], 200)->header('Content-Type', 'application/json');
+            // Ensure all data is JSON-serializable before encoding
+            try {
+                // Clean and prepare data for JSON encoding
+                $responseData = [
+                    'success' => true,
+                    'data' => [
+                        'school' => $schoolData,
+                        'student' => $studentData
+                    ]
+                ];
+                
+                // Test JSON encoding before returning
+                $jsonTest = json_encode($responseData);
+                if ($jsonTest === false) {
+                    throw new \Exception('JSON encoding failed: ' . json_last_error_msg());
+                }
+                
+                Log::info('studentDetail success', [
+                    'student_id' => $studentId,
+                    'has_major' => isset($studentData['chosen_major']),
+                    'major_id' => $studentData['chosen_major']['id'] ?? null
+                ]);
+                
+                return response()->json($responseData, 200)->header('Content-Type', 'application/json');
+            } catch (\Exception $jsonError) {
+                Log::error('JSON encoding error in studentDetail: ' . $jsonError->getMessage());
+                // Return minimal safe response
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'school' => $schoolData,
+                        'student' => [
+                            'id' => $studentData['id'] ?? $studentId,
+                            'name' => $studentData['name'] ?? '',
+                            'nisn' => $studentData['nisn'] ?? '',
+                            'class' => $studentData['class'] ?? '',
+                            'has_choice' => $studentData['has_choice'] ?? false
+                        ]
+                    ]
+                ], 200)->header('Content-Type', 'application/json');
+            }
 
         } catch (\Throwable $e) {
             Log::error('Get student detail error: ' . $e->getMessage());
@@ -638,25 +666,32 @@ class SchoolDashboardController extends Controller
                 Log::warning('Error parsing kurikulum_2013_bahasa_subjects: ' . $e->getMessage());
             }
             
+            // Ensure all values are JSON-serializable (convert objects to arrays, handle nulls)
+            $majorId = $this->safeGetAttribute($major, 'id');
+            $majorName = $this->safeGetAttribute($major, 'major_name');
+            $majorDescription = $this->safeGetAttribute($major, 'description');
+            $majorCareer = $this->safeGetAttribute($major, 'career_prospects');
+            $majorCategory = $this->safeGetAttribute($major, 'category');
+            $majorRumpun = $this->safeGetAttribute($major, 'rumpun_ilmu');
+            
             $majorData = [
-                'id' => $this->safeGetAttribute($major, 'id') ?? 0,
-                'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown Major',
-                'description' => $this->safeGetAttribute($major, 'description') ?? '',
-                'career_prospects' => $this->safeGetAttribute($major, 'career_prospects') ?? '',
-                'category' => $this->safeGetAttribute($major, 'category') ?? 'Saintek',
-                'rumpun_ilmu' => $this->safeGetAttribute($major, 'rumpun_ilmu') ?? $this->safeGetAttribute($major, 'category') ?? 'Saintek',
-                'education_level' => $educationLevel,
-                'required_subjects' => $mandatorySubjects,
-                'preferred_subjects' => $optionalSubjects,
-                'optional_subjects' => $optionalSubjects, // Also include optional_subjects for consistency
-                'kurikulum_merdeka_subjects' => $kurikulumMerdekaSubjects,
-                'kurikulum_2013_ipa_subjects' => $kurikulum2013IpaSubjects,
-                'kurikulum_2013_ips_subjects' => $kurikulum2013IpsSubjects,
-                'kurikulum_2013_bahasa_subjects' => $kurikulum2013BahasaSubjects
+                'id' => is_numeric($majorId) ? (int)$majorId : 0,
+                'name' => is_string($majorName) ? $majorName : (string)($majorName ?? 'Unknown Major'),
+                'description' => is_string($majorDescription) ? $majorDescription : (string)($majorDescription ?? ''),
+                'career_prospects' => is_string($majorCareer) ? $majorCareer : (string)($majorCareer ?? ''),
+                'category' => is_string($majorCategory) ? $majorCategory : 'Saintek',
+                'rumpun_ilmu' => is_string($majorRumpun) ? $majorRumpun : (is_string($majorCategory) ? $majorCategory : 'Saintek'),
+                'education_level' => is_string($educationLevel) ? $educationLevel : 'SMA/MA',
+                'required_subjects' => is_array($mandatorySubjects) ? array_values($mandatorySubjects) : [],
+                'preferred_subjects' => is_array($optionalSubjects) ? array_values($optionalSubjects) : [],
+                'optional_subjects' => is_array($optionalSubjects) ? array_values($optionalSubjects) : [],
+                'kurikulum_merdeka_subjects' => is_array($kurikulumMerdekaSubjects) ? array_values($kurikulumMerdekaSubjects) : [],
+                'kurikulum_2013_ipa_subjects' => is_array($kurikulum2013IpaSubjects) ? array_values($kurikulum2013IpaSubjects) : [],
+                'kurikulum_2013_ips_subjects' => is_array($kurikulum2013IpsSubjects) ? array_values($kurikulum2013IpsSubjects) : [],
+                'kurikulum_2013_bahasa_subjects' => is_array($kurikulum2013BahasaSubjects) ? array_values($kurikulum2013BahasaSubjects) : []
             ];
             
             // Log for debugging
-            $majorId = $this->safeGetAttribute($major, 'id');
             Log::info('getMajorWithSubjects returning data for major ' . ($majorId ?? 'unknown'), [
                 'required_subjects_count' => count($mandatorySubjects),
                 'preferred_subjects_count' => count($optionalSubjects),
