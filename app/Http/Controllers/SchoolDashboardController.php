@@ -377,7 +377,7 @@ class SchoolDashboardController extends Controller
                 'success' => false,
                 'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
                 'error' => config('app.debug') ? $e->getMessage() : null
-            ], 500);
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
@@ -475,13 +475,28 @@ class SchoolDashboardController extends Controller
             
             // Helper function to parse subjects from JSON or string
             $parseSubjects = function($field) {
-                if (is_null($field)) return [];
-                if (is_array($field)) return $field;
-                if (is_string($field)) {
-                    $decoded = json_decode($field, true);
-                    return is_array($decoded) ? $decoded : (strlen($field) > 0 ? array_filter(array_map('trim', explode(',', $field))) : []);
+                try {
+                    if (is_null($field)) return [];
+                    if (is_array($field)) return $field;
+                    if (is_string($field)) {
+                        if (strlen($field) === 0) return [];
+                        // Try to decode as JSON first
+                        $decoded = @json_decode($field, true);
+                        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                            return $decoded;
+                        }
+                        // If not JSON, treat as comma-separated string
+                        $parts = explode(',', $field);
+                        $filtered = array_filter(array_map('trim', $parts), function($item) {
+                            return !empty($item);
+                        });
+                        return array_values($filtered);
+                    }
+                    return [];
+                } catch (\Throwable $e) {
+                    Log::warning('Error in parseSubjects: ' . $e->getMessage());
+                    return [];
                 }
-                return [];
             };
             
             // Get subjects - prioritize direct fields, use mapping as fallback
@@ -583,6 +598,40 @@ class SchoolDashboardController extends Controller
                 }
             }
         
+            // Safely parse kurikulum subjects with error handling
+            $kurikulumMerdekaSubjects = [];
+            $kurikulum2013IpaSubjects = [];
+            $kurikulum2013IpsSubjects = [];
+            $kurikulum2013BahasaSubjects = [];
+            
+            try {
+                $kurikulumMerdekaField = $this->safeGetAttribute($major, 'kurikulum_merdeka_subjects');
+                $kurikulumMerdekaSubjects = $parseSubjects($kurikulumMerdekaField);
+            } catch (\Exception $e) {
+                Log::warning('Error parsing kurikulum_merdeka_subjects: ' . $e->getMessage());
+            }
+            
+            try {
+                $kurikulum2013IpaField = $this->safeGetAttribute($major, 'kurikulum_2013_ipa_subjects');
+                $kurikulum2013IpaSubjects = $parseSubjects($kurikulum2013IpaField);
+            } catch (\Exception $e) {
+                Log::warning('Error parsing kurikulum_2013_ipa_subjects: ' . $e->getMessage());
+            }
+            
+            try {
+                $kurikulum2013IpsField = $this->safeGetAttribute($major, 'kurikulum_2013_ips_subjects');
+                $kurikulum2013IpsSubjects = $parseSubjects($kurikulum2013IpsField);
+            } catch (\Exception $e) {
+                Log::warning('Error parsing kurikulum_2013_ips_subjects: ' . $e->getMessage());
+            }
+            
+            try {
+                $kurikulum2013BahasaField = $this->safeGetAttribute($major, 'kurikulum_2013_bahasa_subjects');
+                $kurikulum2013BahasaSubjects = $parseSubjects($kurikulum2013BahasaField);
+            } catch (\Exception $e) {
+                Log::warning('Error parsing kurikulum_2013_bahasa_subjects: ' . $e->getMessage());
+            }
+            
             $majorData = [
                 'id' => $this->safeGetAttribute($major, 'id') ?? 0,
                 'name' => $this->safeGetAttribute($major, 'major_name') ?? 'Unknown Major',
@@ -594,10 +643,10 @@ class SchoolDashboardController extends Controller
                 'required_subjects' => $mandatorySubjects,
                 'preferred_subjects' => $optionalSubjects,
                 'optional_subjects' => $optionalSubjects, // Also include optional_subjects for consistency
-                'kurikulum_merdeka_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_merdeka_subjects')),
-                'kurikulum_2013_ipa_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ipa_subjects')),
-                'kurikulum_2013_ips_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_ips_subjects')),
-                'kurikulum_2013_bahasa_subjects' => $parseSubjects($this->safeGetAttribute($major, 'kurikulum_2013_bahasa_subjects'))
+                'kurikulum_merdeka_subjects' => $kurikulumMerdekaSubjects,
+                'kurikulum_2013_ipa_subjects' => $kurikulum2013IpaSubjects,
+                'kurikulum_2013_ips_subjects' => $kurikulum2013IpsSubjects,
+                'kurikulum_2013_bahasa_subjects' => $kurikulum2013BahasaSubjects
             ];
             
             // Log for debugging
