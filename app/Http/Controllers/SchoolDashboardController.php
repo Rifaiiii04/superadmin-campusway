@@ -681,40 +681,77 @@ class SchoolDashboardController extends Controller
                     }
                     
                     // Parse subjects from raw data (as string) to avoid casting issues
+                    // Handle various formats: JSON string, double-encoded JSON, array, comma-separated
                     $parseSubjectsFromString = function($field) {
                         if (is_null($field) || $field === '') return [];
+                        
+                        // If already array, return as is (after filtering)
                         if (is_array($field)) {
                             $result = [];
                             foreach ($field as $item) {
                                 if (is_string($item) && trim($item) !== '') {
                                     $result[] = trim($item);
+                                } elseif (is_numeric($item) || is_bool($item)) {
+                                    $result[] = (string)$item;
                                 }
                             }
                             return $result;
                         }
+                        
                         if (is_string($field)) {
                             $trimmed = trim($field);
                             if ($trimmed === '') return [];
-                            // Try JSON
+                            
+                            // Try JSON decode (might be double-encoded like "[\"Biologi\"]")
                             $decoded = @json_decode($trimmed, true);
                             if (is_array($decoded)) {
                                 $result = [];
                                 foreach ($decoded as $item) {
-                                    if (is_string($item) && trim($item) !== '') {
-                                        $result[] = trim($item);
+                                    $itemStr = is_string($item) ? trim($item) : (string)$item;
+                                    if ($itemStr !== '') {
+                                        $result[] = $itemStr;
                                     }
                                 }
-                                return $result;
+                                if (!empty($result)) {
+                                    return $result;
+                                }
                             }
-                            // Comma-separated
+                            
+                            // If JSON decode failed or returned empty, try decoding again (double-encoded case)
+                            // Example: "[\"Biologi\"]" -> ["Biologi"] -> ["Biologi"]
+                            if (preg_match('/^"[^"]*"$/', $trimmed)) {
+                                // It's a quoted string, try unquoting and decoding
+                                $unquoted = @json_decode($trimmed, true);
+                                if (is_string($unquoted)) {
+                                    $decoded = @json_decode($unquoted, true);
+                                    if (is_array($decoded)) {
+                                        $result = [];
+                                        foreach ($decoded as $item) {
+                                            $itemStr = is_string($item) ? trim($item) : (string)$item;
+                                            if ($itemStr !== '') {
+                                                $result[] = $itemStr;
+                                            }
+                                        }
+                                        if (!empty($result)) {
+                                            return $result;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Comma-separated fallback
                             $parts = explode(',', $trimmed);
                             $result = [];
                             foreach ($parts as $part) {
-                                $trimmed = trim($part);
-                                if ($trimmed !== '') $result[] = $trimmed;
+                                // Remove quotes and brackets if present
+                                $cleaned = trim($part, ' "[]');
+                                if ($cleaned !== '') {
+                                    $result[] = $cleaned;
+                                }
                             }
                             return $result;
                         }
+                        
                         return [];
                     };
                     
@@ -729,20 +766,50 @@ class SchoolDashboardController extends Controller
                     
                     if ($majorRawData) {
                         try {
-                            $requiredSubjects = $parseSubjectsFromString($majorRawData->required_subjects ?? null);
-                            $preferredSubjects = $parseSubjectsFromString($majorRawData->preferred_subjects ?? null);
-                            $optionalSubjects = $parseSubjectsFromString($majorRawData->optional_subjects ?? null);
+                            // Get raw values from database (might be string, array, or null)
+                            $rawRequired = $majorRawData->required_subjects ?? null;
+                            $rawPreferred = $majorRawData->preferred_subjects ?? null;
+                            $rawOptional = $majorRawData->optional_subjects ?? null;
+                            
+                            // Log raw values for debugging
+                            Log::info('Raw subjects from database', [
+                                'major_id' => $majorId,
+                                'required_subjects_raw' => $rawRequired,
+                                'required_subjects_type' => gettype($rawRequired),
+                                'preferred_subjects_raw' => $rawPreferred,
+                                'preferred_subjects_type' => gettype($rawPreferred),
+                            ]);
+                            
+                            $requiredSubjects = $parseSubjectsFromString($rawRequired);
+                            $preferredSubjects = $parseSubjectsFromString($rawPreferred);
+                            $optionalSubjects = $parseSubjectsFromString($rawOptional);
                             $kurikulumMerdeka = $parseSubjectsFromString($majorRawData->kurikulum_merdeka_subjects ?? null);
                             $kurikulum2013Ipa = $parseSubjectsFromString($majorRawData->kurikulum_2013_ipa_subjects ?? null);
                             $kurikulum2013Ips = $parseSubjectsFromString($majorRawData->kurikulum_2013_ips_subjects ?? null);
                             $kurikulum2013Bahasa = $parseSubjectsFromString($majorRawData->kurikulum_2013_bahasa_subjects ?? null);
                             
+                            // Log parsed results
+                            Log::info('Parsed subjects', [
+                                'major_id' => $majorId,
+                                'required_count' => count($requiredSubjects),
+                                'required_subjects' => $requiredSubjects,
+                                'preferred_count' => count($preferredSubjects),
+                                'preferred_subjects' => $preferredSubjects,
+                                'optional_count' => count($optionalSubjects),
+                            ]);
+                            
                             file_put_contents(
                                 storage_path('logs/student_detail_debug.log'),
-                                date('Y-m-d H:i:s') . " - Step 13f: Subjects parsed. Required: " . count($requiredSubjects) . ", Preferred: " . count($preferredSubjects) . "\n",
+                                date('Y-m-d H:i:s') . " - Step 13f: Subjects parsed. Required: " . count($requiredSubjects) . " (" . implode(', ', $requiredSubjects) . "), Preferred: " . count($preferredSubjects) . " (" . implode(', ', $preferredSubjects) . ")\n",
                                 FILE_APPEND
                             );
                         } catch (\Exception $e) {
+                            Log::error('Error parsing subjects', [
+                                'major_id' => $majorId,
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString()
+                            ]);
+                            
                             file_put_contents(
                                 storage_path('logs/student_detail_debug.log'),
                                 date('Y-m-d H:i:s') . " - Step 13g: ERROR parsing subjects: " . $e->getMessage() . "\n",
