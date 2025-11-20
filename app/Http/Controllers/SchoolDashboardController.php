@@ -771,9 +771,22 @@ class SchoolDashboardController extends Controller
                         'kurikulum_2013_bahasa_subjects' => $kurikulum2013Bahasa,
                     ];
                     
+                    // Log subjects data for debugging
+                    Log::info('Student detail - Major subjects data', [
+                        'student_id' => $student->id,
+                        'major_id' => $majorId,
+                        'major_name' => $majorName,
+                        'required_subjects_count' => count($requiredSubjects),
+                        'preferred_subjects_count' => count($preferredSubjects),
+                        'optional_subjects_count' => count($optionalSubjects),
+                        'required_subjects' => $requiredSubjects,
+                        'preferred_subjects' => $preferredSubjects,
+                        'optional_subjects' => $optionalSubjects,
+                    ]);
+                    
                     file_put_contents(
                         storage_path('logs/student_detail_debug.log'),
-                        date('Y-m-d H:i:s') . " - Step 13h: Major data added successfully\n",
+                        date('Y-m-d H:i:s') . " - Step 13h: Major data added successfully. Required: " . count($requiredSubjects) . ", Preferred: " . count($preferredSubjects) . ", Optional: " . count($optionalSubjects) . "\n",
                         FILE_APPEND
                     );
                     
@@ -2208,20 +2221,28 @@ class SchoolDashboardController extends Controller
                 ], 404);
             }
 
-            // Get unique classes from students data
+            // Optimize query with limit and select only necessary column
             $classes = Student::where('school_id', $school->id)
                 ->select('kelas')
                 ->distinct()
                 ->whereNotNull('kelas')
                 ->where('kelas', '!=', '')
                 ->orderBy('kelas')
+                ->limit(200) // Limit to prevent timeout
                 ->pluck('kelas')
                 ->map(function($kelas) {
                     return [
                         'name' => $kelas,
                         'value' => $kelas
                     ];
-                });
+                })
+                ->values(); // Reset array keys
+
+            // Log for debugging
+            Log::info('Get classes successful', [
+                'school_id' => $school->id,
+                'count' => $classes->count()
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -2232,10 +2253,20 @@ class SchoolDashboardController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Get classes error: ' . $e->getMessage());
+            Log::error('Get classes error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            // Return empty array instead of error to prevent frontend crash
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil daftar kelas'
+                'message' => 'Gagal mengambil daftar kelas: ' . $e->getMessage(),
+                'data' => [
+                    'classes' => [],
+                    'total_classes' => 0
+                ]
             ], 500);
         }
     }
