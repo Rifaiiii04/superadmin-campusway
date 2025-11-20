@@ -1985,15 +1985,72 @@ class SchoolDashboardController extends Controller
                 ->where('school_id', $school->id)
                 ->first();
 
+            // Debug: Check if student exists at all (without school filter)
+            $studentExists = Student::where('id', $studentId)->exists();
+            $studentWithSchool = Student::where('id', $studentId)
+                ->where('school_id', $school->id)
+                ->exists();
+            
+            Log::info('Delete student - Student lookup', [
+                'student_id' => $studentId,
+                'school_id' => $school->id,
+                'student_exists' => $studentExists,
+                'student_with_school_exists' => $studentWithSchool,
+                'student_found' => $student ? true : false
+            ]);
+
             if (!$student) {
+                // Get more info for debugging
+                $allStudentsWithId = Student::where('id', $studentId)->get(['id', 'name', 'school_id']);
+                
                 Log::warning('Delete student failed: Student not found', [
                     'student_id' => $studentId,
-                    'school_id' => $school->id
+                    'school_id' => $school->id,
+                    'school_name' => $school->name ?? 'N/A',
+                    'students_with_id' => $allStudentsWithId->toArray(),
+                    'student_exists_anywhere' => $studentExists,
+                    'student_belongs_to_school' => $studentWithSchool
                 ]);
+                
+                // If student exists but belongs to different school, return specific message
+                if ($studentExists && !$studentWithSchool) {
+                    $otherSchool = $allStudentsWithId->first();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Siswa tidak ditemukan di sekolah Anda. Siswa ini mungkin sudah dihapus atau tidak termasuk dalam sekolah Anda.',
+                        'debug' => config('app.debug') ? [
+                            'student_id' => $studentId,
+                            'school_id' => $school->id,
+                            'student_exists' => $studentExists,
+                            'student_belongs_to_school' => $studentWithSchool,
+                            'student_school_id' => $otherSchool->school_id ?? null
+                        ] : null
+                    ], 404)->header('Content-Type', 'application/json');
+                }
+                
+                // If student doesn't exist at all, it might have been deleted already
+                if (!$studentExists) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Siswa tidak ditemukan. Mungkin sudah dihapus sebelumnya.',
+                        'debug' => config('app.debug') ? [
+                            'student_id' => $studentId,
+                            'school_id' => $school->id,
+                            'student_exists' => false
+                        ] : null
+                    ], 404)->header('Content-Type', 'application/json');
+                }
+                
                 return response()->json([
                     'success' => false,
-                    'message' => 'Siswa tidak ditemukan'
-                ], 404);
+                    'message' => 'Siswa tidak ditemukan',
+                    'debug' => config('app.debug') ? [
+                        'student_id' => $studentId,
+                        'school_id' => $school->id,
+                        'student_exists' => $studentExists,
+                        'student_belongs_to_school' => $studentWithSchool
+                    ] : null
+                ], 404)->header('Content-Type', 'application/json');
             }
 
             // Log before deletion
@@ -2038,7 +2095,15 @@ class SchoolDashboardController extends Controller
 
             Log::info('Student deleted successfully', [
                 'student_id' => $studentId,
-                'student_name' => $studentName
+                'student_name' => $studentName,
+                'school_id' => $school->id
+            ]);
+
+            // Final verification - check one more time
+            $finalCheck = Student::where('id', $studentId)->exists();
+            Log::info('Delete student - Final verification', [
+                'student_id' => $studentId,
+                'still_exists' => $finalCheck
             ]);
 
             return response()->json([
@@ -2048,7 +2113,7 @@ class SchoolDashboardController extends Controller
                     'id' => $studentId,
                     'name' => $studentName
                 ]
-            ], 200);
+            ], 200)->header('Content-Type', 'application/json');
 
         } catch (\Exception $e) {
             Log::error('Error deleting student: ' . $e->getMessage(), [
