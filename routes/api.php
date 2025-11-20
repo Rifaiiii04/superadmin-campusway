@@ -77,6 +77,7 @@ Route::prefix('school')->group(function () {
         
         // Classes
         Route::get('/classes', [SchoolDashboardController::class, 'getClasses']);
+        Route::post('/classes', [SchoolDashboardController::class, 'addClass']);
         
         // TKA Schedules
         Route::get('/tka-schedules', [TkaScheduleController::class, 'index']);

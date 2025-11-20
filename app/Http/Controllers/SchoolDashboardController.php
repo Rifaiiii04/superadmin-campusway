@@ -2729,8 +2729,15 @@ class SchoolDashboardController extends Controller
                 ], 404);
             }
 
-            // Optimize query with limit and select only necessary column
-            $classes = Student::where('school_id', $school->id)
+            // Get classes from school_classes table
+            $schoolClasses = \App\Models\SchoolClass::where('school_id', $school->id)
+                ->where('is_active', true)
+                ->orderBy('class_name')
+                ->pluck('class_name')
+                ->toArray();
+
+            // Get classes from students (distinct)
+            $studentClasses = Student::where('school_id', $school->id)
                 ->select('kelas')
                 ->distinct()
                 ->whereNotNull('kelas')
@@ -2738,13 +2745,19 @@ class SchoolDashboardController extends Controller
                 ->orderBy('kelas')
                 ->limit(200) // Limit to prevent timeout
                 ->pluck('kelas')
-                ->map(function($kelas) {
-                    return [
-                        'name' => $kelas,
-                        'value' => $kelas
-                    ];
-                })
-                ->values(); // Reset array keys
+                ->toArray();
+
+            // Merge and deduplicate classes
+            $allClasses = array_unique(array_merge($schoolClasses, $studentClasses));
+            sort($allClasses);
+
+            // Map to required format
+            $classes = array_map(function($kelas) {
+                return [
+                    'name' => $kelas,
+                    'value' => $kelas
+                ];
+            }, $allClasses);
 
             // Log for debugging
             Log::info('Get classes successful', [
@@ -2775,6 +2788,90 @@ class SchoolDashboardController extends Controller
                     'classes' => [],
                     'total_classes' => 0
                 ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Add a new class
+     */
+    public function addClass(Request $request)
+    {
+        try {
+            $school = $request->school;
+            
+            if (!$school) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data sekolah tidak ditemukan'
+                ], 404);
+            }
+
+            $request->validate([
+                'name' => 'required|string|max:255',
+            ]);
+
+            // Check if class already exists for this school (check both school_classes table and students)
+            $existingClass = \App\Models\SchoolClass::where('school_id', $school->id)
+                ->where('class_name', $request->name)
+                ->first();
+
+            if ($existingClass) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Kelas dengan nama tersebut sudah ada'
+                ], 400);
+            }
+
+            // Also check if class exists in students table
+            $existingStudentClass = Student::where('school_id', $school->id)
+                ->where('kelas', $request->name)
+                ->exists();
+
+            if ($existingStudentClass) {
+                // Class already exists in students, just create in school_classes for consistency
+                Log::info('Class exists in students, creating in school_classes for consistency', [
+                    'school_id' => $school->id,
+                    'class_name' => $request->name
+                ]);
+            }
+
+            // Create new class
+            $class = \App\Models\SchoolClass::create([
+                'school_id' => $school->id,
+                'class_name' => $request->name,
+                'is_active' => true,
+            ]);
+
+            Log::info('Class added successfully', [
+                'school_id' => $school->id,
+                'class_id' => $class->id,
+                'class_name' => $class->name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Kelas berhasil ditambahkan',
+                'data' => [
+                    'class' => [
+                        'id' => $class->id,
+                        'name' => $class->class_name,
+                        'school_id' => $class->school_id,
+                        'is_active' => $class->is_active,
+                    ]
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Add class error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan kelas: ' . $e->getMessage()
             ], 500);
         }
     }
