@@ -858,6 +858,14 @@ class SchoolDashboardController extends Controller
                     );
                     
                 } catch (\Throwable $e) {
+                    Log::error('FATAL ERROR in major processing', [
+                        'student_id' => $student->id,
+                        'error' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    
                     file_put_contents(
                         storage_path('logs/student_detail_debug.log'),
                         date('Y-m-d H:i:s') . " - Step 13i: FATAL ERROR in major processing: " . $e->getMessage() . "\n" . 
@@ -867,7 +875,71 @@ class SchoolDashboardController extends Controller
                     );
                     // Skip major data - continue with student data only
                 }
+            } else {
+                // Log why major processing was skipped
+                file_put_contents(
+                    storage_path('logs/student_detail_debug.log'),
+                    date('Y-m-d H:i:s') . " - Step 13j: Major processing SKIPPED. studentChoice: " . ($studentChoice ? 'YES' : 'NO') . ", major: " . ($major ? 'YES' : 'NO') . ", is_object: " . (is_object($major) ? 'YES' : 'NO') . "\n",
+                    FILE_APPEND
+                );
+                
+                Log::info('Major processing skipped', [
+                    'student_id' => $student->id,
+                    'has_student_choice' => $studentChoice ? true : false,
+                    'has_major' => $major ? true : false,
+                    'major_is_object' => is_object($major)
+                ]);
             }
+            
+            // Ensure chosen_major is set if has_choice is true (even if empty)
+            if ($studentData['has_choice'] && !isset($studentData['chosen_major'])) {
+                // Try to get basic major info as fallback
+                try {
+                    if ($studentChoice && $studentChoice->major_id) {
+                        $fallbackMajor = DB::table('major_recommendations')
+                            ->where('id', $studentChoice->major_id)
+                            ->first();
+                        
+                        if ($fallbackMajor) {
+                            $studentData['chosen_major'] = [
+                                'id' => (int)$fallbackMajor->id,
+                                'name' => (string)($fallbackMajor->major_name ?? ''),
+                                'description' => (string)($fallbackMajor->description ?? ''),
+                                'category' => (string)($fallbackMajor->category ?? 'Saintek'),
+                                'rumpun_ilmu' => (string)($fallbackMajor->rumpun_ilmu ?? $fallbackMajor->category ?? 'Saintek'),
+                                'career_prospects' => (string)($fallbackMajor->career_prospects ?? ''),
+                                'required_subjects' => [],
+                                'preferred_subjects' => [],
+                                'optional_subjects' => [],
+                                'kurikulum_merdeka_subjects' => [],
+                                'kurikulum_2013_ipa_subjects' => [],
+                                'kurikulum_2013_ips_subjects' => [],
+                                'kurikulum_2013_bahasa_subjects' => [],
+                            ];
+                            
+                            Log::info('Fallback major data set', [
+                                'student_id' => $student->id,
+                                'major_id' => $fallbackMajor->id
+                            ]);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error setting fallback major', [
+                        'student_id' => $student->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Final log to confirm chosen_major status
+            Log::info('Final student data status', [
+                'student_id' => $student->id,
+                'has_choice' => $studentData['has_choice'] ?? false,
+                'has_chosen_major' => isset($studentData['chosen_major']),
+                'chosen_major_id' => $studentData['chosen_major']['id'] ?? null,
+                'chosen_major_name' => $studentData['chosen_major']['name'] ?? null,
+                'required_subjects_count' => isset($studentData['chosen_major']) ? count($studentData['chosen_major']['required_subjects'] ?? []) : 0,
+            ]);
 
             // Build school data safely
             $schoolData = [];
