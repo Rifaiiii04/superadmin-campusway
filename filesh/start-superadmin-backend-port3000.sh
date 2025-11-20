@@ -4,12 +4,26 @@ echo "🚀 Starting SuperAdmin Backend on Port 3000"
 echo "==========================================="
 echo ""
 
-# 1. Check if we're in the right directory
-if [ ! -f "artisan" ]; then
-    echo "❌ Error: artisan file not found. Please run this script from superadmin-backend directory"
+# 1. Find the superadmin-backend directory (where artisan file is located)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$SCRIPT_DIR"
+
+# Try to find artisan file in current directory or parent directories
+while [ ! -f "$BACKEND_DIR/artisan" ] && [ "$BACKEND_DIR" != "/" ]; do
+    BACKEND_DIR="$(dirname "$BACKEND_DIR")"
+done
+
+if [ ! -f "$BACKEND_DIR/artisan" ]; then
+    echo "❌ Error: artisan file not found. Please ensure you're in superadmin-backend directory"
     echo "   Current directory: $(pwd)"
+    echo "   Script location: $SCRIPT_DIR"
     exit 1
 fi
+
+# Change to backend directory
+cd "$BACKEND_DIR"
+echo "📁 Working directory: $(pwd)"
+echo ""
 
 # 2. Check if port 3000 is already in use
 if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
