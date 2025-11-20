@@ -1938,11 +1938,28 @@ class SchoolDashboardController extends Controller
             $school = $request->school;
 
             if (!$school) {
+                Log::warning('Delete student failed: School not found', [
+                    'student_id' => $studentId,
+                    'school' => $request->school
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Sekolah tidak ditemukan'
                 ], 404);
             }
+
+            // Validate student ID
+            if (!is_numeric($studentId)) {
+                Log::warning('Delete student failed: Invalid student ID', [
+                    'student_id' => $studentId
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ID siswa tidak valid'
+                ], 400);
+            }
+
+            $studentId = (int)$studentId;
 
             // Cari siswa yang akan dihapus
             $student = Student::where('id', $studentId)
@@ -1950,28 +1967,78 @@ class SchoolDashboardController extends Controller
                 ->first();
 
             if (!$student) {
+                Log::warning('Delete student failed: Student not found', [
+                    'student_id' => $studentId,
+                    'school_id' => $school->id
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Siswa tidak ditemukan'
                 ], 404);
             }
 
+            // Log before deletion
+            Log::info('Deleting student', [
+                'student_id' => $studentId,
+                'student_name' => $student->name,
+                'school_id' => $school->id
+            ]);
+
             // Hapus pilihan jurusan siswa terlebih dahulu (jika ada)
-            StudentChoice::where('student_id', $studentId)->delete();
+            $choicesDeleted = StudentChoice::where('student_id', $studentId)->delete();
+            Log::info('Deleted student choices', [
+                'student_id' => $studentId,
+                'choices_deleted' => $choicesDeleted
+            ]);
 
             // Hapus siswa
-            $student->delete();
+            $studentName = $student->name;
+            $deleted = $student->delete();
+
+            if (!$deleted) {
+                Log::error('Failed to delete student', [
+                    'student_id' => $studentId
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus siswa dari database'
+                ], 500);
+            }
+
+            // Verify deletion
+            $stillExists = Student::where('id', $studentId)->exists();
+            if ($stillExists) {
+                Log::error('Student still exists after deletion', [
+                    'student_id' => $studentId
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus siswa. Data masih ada di database.'
+                ], 500);
+            }
+
+            Log::info('Student deleted successfully', [
+                'student_id' => $studentId,
+                'student_name' => $studentName
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Siswa berhasil dihapus'
+                'message' => 'Siswa berhasil dihapus',
+                'data' => [
+                    'id' => $studentId,
+                    'name' => $studentName
+                ]
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('Error deleting student: ' . $e->getMessage());
+            Log::error('Error deleting student: ' . $e->getMessage(), [
+                'student_id' => $studentId ?? null,
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan server'
+                'message' => 'Terjadi kesalahan server: ' . $e->getMessage()
             ], 500);
         }
     }
