@@ -1932,15 +1932,25 @@ class SchoolDashboardController extends Controller
     /**
      * Delete student
      */
-    public function deleteStudent(Request $request, $studentId)
+    public function deleteStudent(Request $request, $id)
     {
         try {
+            // Log incoming request
+            Log::info('=== deleteStudent method called ===', [
+                'request_uri' => $request->getRequestUri(),
+                'method' => $request->method(),
+                'id' => $id,
+                'route_parameters' => $request->route()->parameters(),
+                'all_parameters' => $request->all()
+            ]);
+
             $school = $request->school;
 
             if (!$school) {
                 Log::warning('Delete student failed: School not found', [
-                    'student_id' => $studentId,
-                    'school' => $request->school
+                    'student_id' => $id,
+                    'school' => $request->school,
+                    'request_uri' => $request->getRequestUri()
                 ]);
                 return response()->json([
                     'success' => false,
@@ -1948,10 +1958,14 @@ class SchoolDashboardController extends Controller
                 ], 404);
             }
 
+            // Use $id from route parameter
+            $studentId = $id;
+
             // Validate student ID
             if (!is_numeric($studentId)) {
                 Log::warning('Delete student failed: Invalid student ID', [
-                    'student_id' => $studentId
+                    'student_id' => $studentId,
+                    'id_type' => gettype($studentId)
                 ]);
                 return response()->json([
                     'success' => false,
@@ -1960,6 +1974,11 @@ class SchoolDashboardController extends Controller
             }
 
             $studentId = (int)$studentId;
+            
+            Log::info('Delete student - Validated ID', [
+                'student_id' => $studentId,
+                'school_id' => $school->id
+            ]);
 
             // Cari siswa yang akan dihapus
             $student = Student::where('id', $studentId)
