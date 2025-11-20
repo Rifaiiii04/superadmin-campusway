@@ -251,7 +251,7 @@ class SchoolDashboardController extends Controller
                 'has_choice' => false
             ];
             
-            // Check if student has choice (but don't load major data yet)
+            // Check if student has choice and load major data
             $hasChoice = StudentChoice::where('student_id', $studentId)->exists();
             $studentData['has_choice'] = $hasChoice;
             
@@ -261,6 +261,135 @@ class SchoolDashboardController extends Controller
                 FILE_APPEND
             );
             
+            // Load student choice and major data if exists
+            if ($hasChoice) {
+                try {
+                    $studentChoice = StudentChoice::with('majorRecommendation')
+                        ->where('student_id', $studentId)
+                        ->first();
+                    
+                    if ($studentChoice && $studentChoice->majorRecommendation) {
+                        $major = $studentChoice->majorRecommendation;
+                        
+                        // Get raw data from database to avoid casting issues
+                        $majorRawData = DB::table('major_recommendations')
+                            ->where('id', $major->id)
+                            ->first();
+                        
+                        // Parse subjects function
+                        $parseSubjectsFromString = function($field) {
+                            if (is_null($field) || $field === '') return [];
+                            if (is_array($field)) {
+                                $result = [];
+                                foreach ($field as $item) {
+                                    if (is_string($item) && trim($item) !== '') {
+                                        $result[] = trim($item);
+                                    } elseif (is_numeric($item) || is_bool($item)) {
+                                        $result[] = (string)$item;
+                                    }
+                                }
+                                return $result;
+                            }
+                            if (is_string($field)) {
+                                $trimmed = trim($field);
+                                if ($trimmed === '') return [];
+                                $decoded = @json_decode($trimmed, true);
+                                if (is_array($decoded)) {
+                                    $result = [];
+                                    foreach ($decoded as $item) {
+                                        $itemStr = is_string($item) ? trim($item) : (string)$item;
+                                        if ($itemStr !== '') {
+                                            $result[] = $itemStr;
+                                        }
+                                    }
+                                    if (!empty($result)) {
+                                        return $result;
+                                    }
+                                }
+                                if (preg_match('/^"[^"]*"$/', $trimmed)) {
+                                    $unquoted = @json_decode($trimmed, true);
+                                    if (is_string($unquoted)) {
+                                        $decoded = @json_decode($unquoted, true);
+                                        if (is_array($decoded)) {
+                                            $result = [];
+                                            foreach ($decoded as $item) {
+                                                $itemStr = is_string($item) ? trim($item) : (string)$item;
+                                                if ($itemStr !== '') {
+                                                    $result[] = $itemStr;
+                                                }
+                                            }
+                                            if (!empty($result)) {
+                                                return $result;
+                                            }
+                                        }
+                                    }
+                                }
+                                $parts = explode(',', $trimmed);
+                                $result = [];
+                                foreach ($parts as $part) {
+                                    $cleaned = trim($part, ' "[]');
+                                    if ($cleaned !== '') {
+                                        $result[] = $cleaned;
+                                    }
+                                }
+                                return $result;
+                            }
+                            return [];
+                        };
+                        
+                        // Parse subjects from raw data
+                        $requiredSubjects = [];
+                        $preferredSubjects = [];
+                        $optionalSubjects = [];
+                        $kurikulumMerdeka = [];
+                        $kurikulum2013Ipa = [];
+                        $kurikulum2013Ips = [];
+                        $kurikulum2013Bahasa = [];
+                        
+                        if ($majorRawData) {
+                            $requiredSubjects = $parseSubjectsFromString($majorRawData->required_subjects ?? null);
+                            $preferredSubjects = $parseSubjectsFromString($majorRawData->preferred_subjects ?? null);
+                            $optionalSubjects = $parseSubjectsFromString($majorRawData->optional_subjects ?? null);
+                            $kurikulumMerdeka = $parseSubjectsFromString($majorRawData->kurikulum_merdeka_subjects ?? null);
+                            $kurikulum2013Ipa = $parseSubjectsFromString($majorRawData->kurikulum_2013_ipa_subjects ?? null);
+                            $kurikulum2013Ips = $parseSubjectsFromString($majorRawData->kurikulum_2013_ips_subjects ?? null);
+                            $kurikulum2013Bahasa = $parseSubjectsFromString($majorRawData->kurikulum_2013_bahasa_subjects ?? null);
+                        }
+                        
+                        // Build chosen_major data
+                        $studentData['chosen_major'] = [
+                            'id' => (int)($majorRawData->id ?? $major->id ?? 0),
+                            'name' => (string)($majorRawData->major_name ?? $major->major_name ?? ''),
+                            'description' => (string)($majorRawData->description ?? $major->description ?? ''),
+                            'category' => (string)($majorRawData->category ?? $major->category ?? 'Saintek'),
+                            'rumpun_ilmu' => (string)($majorRawData->rumpun_ilmu ?? $major->rumpun_ilmu ?? $majorRawData->category ?? 'Saintek'),
+                            'career_prospects' => (string)($majorRawData->career_prospects ?? $major->career_prospects ?? ''),
+                            'education_level' => 'SMA/MA',
+                            'choice_date' => $studentChoice->created_at ? $studentChoice->created_at->format('c') : null,
+                            'required_subjects' => $requiredSubjects,
+                            'preferred_subjects' => $preferredSubjects,
+                            'optional_subjects' => $optionalSubjects,
+                            'kurikulum_merdeka_subjects' => $kurikulumMerdeka,
+                            'kurikulum_2013_ipa_subjects' => $kurikulum2013Ipa,
+                            'kurikulum_2013_ips_subjects' => $kurikulum2013Ips,
+                            'kurikulum_2013_bahasa_subjects' => $kurikulum2013Bahasa,
+                        ];
+                        
+                        Log::info('Student detail - Major data loaded', [
+                            'student_id' => $studentId,
+                            'major_id' => $studentData['chosen_major']['id'],
+                            'required_count' => count($requiredSubjects),
+                            'preferred_count' => count($preferredSubjects),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error loading major data', [
+                        'student_id' => $studentId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
             // Build school data
             $schoolData = [
                 'id' => (int)$school->id,
@@ -268,7 +397,7 @@ class SchoolDashboardController extends Controller
                 'name' => (string)($school->name ?? '')
             ];
             
-            // Return response WITHOUT major data for now
+            // Return response WITH major data
             $responseData = [
                 'success' => true,
                 'data' => [
@@ -279,7 +408,7 @@ class SchoolDashboardController extends Controller
             
             file_put_contents(
                 storage_path('logs/student_detail_debug.log'),
-                date('Y-m-d H:i:s') . " - Returning response (NO MAJOR DATA)\n",
+                date('Y-m-d H:i:s') . " - Returning response WITH major data. Has chosen_major: " . (isset($studentData['chosen_major']) ? 'YES' : 'NO') . "\n",
                 FILE_APPEND
             );
             
