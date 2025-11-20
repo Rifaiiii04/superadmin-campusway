@@ -22,14 +22,17 @@ class TkaScheduleController extends Controller
             if ($isApiRequest) {
                 $schoolId = $request->query('school_id');
                 
-                $query = TkaSchedule::where('is_active', true)
-                    ->orderBy('start_date', 'desc');
+                // Select only necessary columns to reduce memory usage
+                $query = TkaSchedule::select('id', 'title', 'description', 'start_date', 'end_date', 'status', 'type', 'instructions', 'target_schools', 'is_active', 'created_at', 'updated_at')
+                    ->where('is_active', true)
+                    ->orderBy('start_date', 'desc')
+                    ->limit(100); // Limit to prevent timeout
                 
                 // Filter by school if provided
                 if ($schoolId) {
                     $query->where(function($q) use ($schoolId) {
                         $q->whereNull('target_schools')
-                          ->orWhereJsonContains('target_schools', $schoolId);
+                          ->orWhereJsonContains('target_schools', (int)$schoolId);
                     });
                 }
                 
@@ -79,29 +82,45 @@ class TkaScheduleController extends Controller
             $schoolId = $request->query('school_id');
             $now = now();
             
-            $query = TkaSchedule::where('is_active', true)
+            // Add timeout protection and limit results
+            // Select only necessary columns to reduce memory usage
+            $query = TkaSchedule::select('id', 'title', 'description', 'start_date', 'end_date', 'status', 'type', 'instructions', 'target_schools', 'is_active', 'created_at', 'updated_at')
+                ->where('is_active', true)
                 ->where('end_date', '>=', $now)
-                ->orderBy('start_date', 'asc');
+                ->orderBy('start_date', 'asc')
+                ->limit(50); // Limit to prevent timeout
             
             // Filter by school if provided
             if ($schoolId) {
                 $query->where(function($q) use ($schoolId) {
                     $q->whereNull('target_schools')
-                      ->orWhereJsonContains('target_schools', $schoolId);
+                      ->orWhereJsonContains('target_schools', (int)$schoolId);
                 });
             }
             
             $schedules = $query->get();
+            
+            // Log for debugging
+            \Log::info('Upcoming TKA schedules fetched', [
+                'count' => $schedules->count(),
+                'school_id' => $schoolId
+            ]);
             
             return response()->json([
                 'success' => true,
                 'data' => $schedules
             ], 200);
         } catch (\Exception $e) {
-            \Log::error('Error fetching upcoming TKA schedules: ' . $e->getMessage());
+            \Log::error('Error fetching upcoming TKA schedules: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
+            // Return empty array instead of error to prevent frontend crash
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal memuat jadwal TKA mendatang',
+                'message' => 'Gagal memuat jadwal TKA mendatang: ' . $e->getMessage(),
                 'data' => []
             ], 500);
         }
