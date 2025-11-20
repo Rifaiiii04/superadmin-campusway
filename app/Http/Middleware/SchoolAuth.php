@@ -89,16 +89,27 @@ class SchoolAuth
             
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Response received, status: " . $response->getStatusCode() . "\n", FILE_APPEND);
             
-            // Ensure response is JSON
-            if (!$response instanceof \Illuminate\Http\JsonResponse) {
-                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: Response is not JSON\n", FILE_APPEND);
+            // Allow non-JSON responses for file downloads (CSV, Excel, etc.)
+            $requestUri = $request->getRequestUri();
+            $isFileDownload = strpos($requestUri, '/import-template') !== false || 
+                             strpos($requestUri, '/export-') !== false ||
+                             strpos($requestUri, '/download') !== false;
+            
+            // Ensure response is JSON only for API endpoints that should return JSON
+            // Allow file downloads (CSV, Excel, etc.) to return their own content type
+            if (!$isFileDownload && !$response instanceof \Illuminate\Http\JsonResponse) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - ERROR: Response is not JSON for non-download endpoint\n", FILE_APPEND);
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid response format'
                 ], 500)->header('Content-Type', 'application/json');
             }
             
-            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Returning JSON response\n", FILE_APPEND);
+            if ($isFileDownload) {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Returning file download response\n", FILE_APPEND);
+            } else {
+                file_put_contents($logFile, date('Y-m-d H:i:s') . " - Returning JSON response\n", FILE_APPEND);
+            }
             return $response;
 
         } catch (\Exception $e) {
