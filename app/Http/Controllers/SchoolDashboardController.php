@@ -2775,12 +2775,19 @@ class SchoolDashboardController extends Controller
             ]);
 
             // Merge and deduplicate classes
+            // IMPORTANT: Include ALL classes from school_classes table, even if no students yet
+            // This ensures newly added classes appear immediately
             $allClasses = array_unique(array_merge($schoolClasses, $studentClasses));
             sort($allClasses);
             
-            Log::info('Merged classes', [
-                'total_count' => count($allClasses),
-                'all_classes' => $allClasses
+            Log::info('Merged classes - FINAL RESULT', [
+                'school_id' => $school->id,
+                'school_classes_from_db' => $schoolClasses,
+                'student_classes_from_students' => $studentClasses,
+                'merged_total_count' => count($allClasses),
+                'all_classes_final' => $allClasses,
+                'classes_only_in_school_classes' => array_diff($schoolClasses, $studentClasses),
+                'classes_only_in_students' => array_diff($studentClasses, $schoolClasses)
             ]);
 
             // Map to required format
