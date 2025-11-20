@@ -23,36 +23,48 @@ class SuperAdminController extends Controller
 
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string',
-            'password' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'username' => 'required|string',
+                'password' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
+            if ($validator->fails()) {
+                return back()->withErrors($validator)->withInput();
+            }
 
-        $credentials = $request->only('username', 'password');
+            $credentials = $request->only('username', 'password');
 
-        // Check if username exists first
-        $admin = \App\Models\Admin::where('username', $credentials['username'])->first();
+            // Check if username exists first
+            $admin = \App\Models\Admin::where('username', $credentials['username'])->first();
 
-        if (!$admin) {
+            if (!$admin) {
+                return back()->withErrors([
+                    'username' => 'Username tidak ditemukan. Silakan periksa kembali username Anda.',
+                ])->withInput($request->only('username'));
+            }
+
+            // Attempt authentication
+            if (Auth::guard('admin')->attempt($credentials)) {
+                $request->session()->regenerate();
+                return redirect('/super-admin/dashboard');
+            }
+
+            // If username exists but password is wrong
             return back()->withErrors([
-                'username' => 'Username tidak ditemukan. Silakan periksa kembali username Anda.',
+                'password' => 'Password salah. Silakan periksa kembali password Anda.',
+            ])->withInput($request->only('username'));
+        } catch (\Illuminate\Session\TokenMismatchException $e) {
+            // Handle CSRF token mismatch (419 error)
+            return back()->withErrors([
+                'message' => 'Session telah berakhir. Silakan refresh halaman dan coba lagi.',
+            ])->withInput($request->only('username'));
+        } catch (\Exception $e) {
+            \Log::error('Login error: ' . $e->getMessage());
+            return back()->withErrors([
+                'message' => 'Terjadi kesalahan saat login. Silakan coba lagi.',
             ])->withInput($request->only('username'));
         }
-
-        // Attempt authentication
-        if (Auth::guard('admin')->attempt($credentials)) {
-            $request->session()->regenerate();
-            return redirect('/super-admin/dashboard');
-        }
-
-        // If username exists but password is wrong
-        return back()->withErrors([
-            'password' => 'Password salah. Silakan periksa kembali password Anda.',
-        ])->withInput($request->only('username'));
     }
 
     public function dashboard()
@@ -120,9 +132,39 @@ class SuperAdminController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::guard('admin')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/super-admin/login');
+        try {
+            // Log logout action for security audit
+            \Log::info('SuperAdmin logout', [
+                'username' => Auth::guard('admin')->user()?->username,
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'timestamp' => now()->toISOString(),
+            ]);
+
+            // Logout and clear session
+            Auth::guard('admin')->logout();
+            
+            // Invalidate session completely
+            $request->session()->invalidate();
+            
+            // Regenerate CSRF token
+            $request->session()->regenerateToken();
+            
+            // Clear any cached data related to this admin
+            Cache::forget('superadmin_dashboard_stats');
+            Cache::forget('recent_schools');
+            Cache::forget('recent_students');
+            
+            return redirect('/super-admin/login')->with('message', 'Anda telah berhasil logout.');
+        } catch (\Exception $e) {
+            \Log::error('Logout error: ' . $e->getMessage());
+            
+            // Force logout even if there's an error
+            Auth::guard('admin')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return redirect('/super-admin/login')->with('message', 'Anda telah logout.');
+        }
     }
 }

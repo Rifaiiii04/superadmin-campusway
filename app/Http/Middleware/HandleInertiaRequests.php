@@ -25,10 +25,23 @@ class HandleInertiaRequests extends Middleware  // PASTIKAN EXTENDS Middleware
      */
     public function share(Request $request): array
     {
+        $admin = $request->user('admin');
+        
+        // Security: Only share non-sensitive admin data
+        $adminData = null;
+        if ($admin) {
+            $adminData = [
+                'id' => $admin->id,
+                'username' => $admin->username,
+                'name' => $admin->name ?? null,
+                // DO NOT share password, tokens, or other sensitive data
+            ];
+        }
+        
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
-                'admin' => $request->user('admin'),
+                'admin' => $adminData, // Only non-sensitive data
             ],
             'csrf_token' => csrf_token(),
         ]);

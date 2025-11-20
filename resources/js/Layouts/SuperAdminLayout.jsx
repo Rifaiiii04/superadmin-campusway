@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link, usePage } from "@inertiajs/react";
+import React, { useState, useEffect } from "react";
+import { Link, usePage, router } from "@inertiajs/react";
 import {
     Building2,
     BookOpen,
@@ -16,6 +16,28 @@ import {
 export default function SuperAdminLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { auth } = usePage().props;
+
+    // Security: Clear any sensitive data from storage on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // Clear any potentially sensitive data that shouldn't be in client storage
+            const sensitiveKeys = ['token', 'password', 'credential', 'secret', 'key', 'auth_token'];
+            sensitiveKeys.forEach(key => {
+                Object.keys(localStorage).forEach(localKey => {
+                    if (localKey.toLowerCase().includes(key)) {
+                        console.warn(`🔒 Security: Removing sensitive data from localStorage: ${localKey}`);
+                        localStorage.removeItem(localKey);
+                    }
+                });
+                Object.keys(sessionStorage).forEach(sessionKey => {
+                    if (sessionKey.toLowerCase().includes(key)) {
+                        console.warn(`🔒 Security: Removing sensitive data from sessionStorage: ${sessionKey}`);
+                        sessionStorage.removeItem(sessionKey);
+                    }
+                });
+            });
+        }
+    }, []);
 
     const navigation = [
         { name: "Dashboard", href: "/", icon: Home },
@@ -115,28 +137,52 @@ export default function SuperAdminLayout({ children }) {
                         <div className="flex items-center">
                             <div className="h-8 w-8 bg-maroon-100 rounded-full flex items-center justify-center">
                                 <span className="text-sm font-medium text-maroon-700">
-                                    {auth?.user?.username
+                                    {(auth?.admin?.username || auth?.user?.username)
                                         ?.charAt(0)
                                         ?.toUpperCase() || "A"}
                                 </span>
                             </div>
                             <div className="ml-3">
                                 <p className="text-sm font-medium text-gray-700">
-                                    {auth?.user?.username || "Admin"}
+                                    {auth?.admin?.username || auth?.user?.username || "Admin"}
                                 </p>
                                 <p className="text-xs text-gray-500">
                                     Super Admin
                                 </p>
                             </div>
                         </div>
-                        <Link
-                            href="/logout"
-                            method="post"
-                            as="button"
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                // Clear any client-side storage before logout
+                                if (typeof window !== 'undefined') {
+                                    // Clear localStorage
+                                    localStorage.clear();
+                                    // Clear sessionStorage
+                                    sessionStorage.clear();
+                                    // Clear any cookies that might contain sensitive data
+                                    document.cookie.split(";").forEach((c) => {
+                                        document.cookie = c
+                                            .replace(/^ +/, "")
+                                            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                                    });
+                                }
+                                // Perform logout
+                                router.post('/logout', {}, {
+                                    onSuccess: () => {
+                                        // Additional cleanup after logout
+                                        if (typeof window !== 'undefined') {
+                                            localStorage.clear();
+                                            sessionStorage.clear();
+                                        }
+                                    }
+                                });
+                            }}
                             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                            title="Logout"
                         >
                             <LogOut className="h-5 w-5" />
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

@@ -9,6 +9,26 @@
             password: "",
         });
 
+        // Security: Clear any sensitive data from storage on component mount
+        React.useEffect(() => {
+            if (typeof window !== 'undefined') {
+                // Clear any potentially sensitive data from previous sessions
+                const sensitiveKeys = ['token', 'password', 'credential', 'secret', 'key', 'auth'];
+                sensitiveKeys.forEach(key => {
+                    Object.keys(localStorage).forEach(localKey => {
+                        if (localKey.toLowerCase().includes(key)) {
+                            localStorage.removeItem(localKey);
+                        }
+                    });
+                    Object.keys(sessionStorage).forEach(sessionKey => {
+                        if (sessionKey.toLowerCase().includes(key)) {
+                            sessionStorage.removeItem(sessionKey);
+                        }
+                    });
+                });
+            }
+        }, []);
+
         const handleSubmit = (e) => {
             e.preventDefault();
             post("/login", {
@@ -18,10 +38,35 @@
                 },
                 onError: (errors) => {
                     console.log("Login failed:", errors);
+                    
+                    // Handle 419 CSRF token mismatch error
+                    // Check for various error formats that indicate CSRF token mismatch
+                    const errorMessage = errors.message || errors.error || JSON.stringify(errors);
+                    const has419Error = errorMessage && (
+                        errorMessage.includes('419') || 
+                        errorMessage.includes('CSRF') ||
+                        errorMessage.includes('token mismatch') ||
+                        errorMessage.includes('Session telah berakhir') ||
+                        errorMessage.includes('The page has expired')
+                    );
+                    
+                    if (has419Error) {
+                        // Show user-friendly message and reload page to get fresh CSRF token
+                        alert('Session telah berakhir. Halaman akan dimuat ulang untuk memperbarui token keamanan.');
+                        window.location.reload();
+                        return;
+                    }
+                    
+                    // Handle other errors
+                    if (errors.message) {
+                        console.error("Login error:", errors.message);
+                    }
                 },
                 onFinish: () => {
                     console.log("Login process finished");
-                }
+                },
+                preserveState: false,
+                preserveScroll: false,
             });
         };
 
@@ -60,6 +105,7 @@
                                             id="username"
                                             name="username"
                                             type="text"
+                                            autoComplete="username"
                                             required
                                             value={data.username}
                                             onChange={(e) =>
@@ -92,6 +138,7 @@
                                             type={
                                                 showPassword ? "text" : "password"
                                             }
+                                            autoComplete="current-password"
                                             required
                                             value={data.password}
                                             onChange={(e) =>
@@ -118,6 +165,13 @@
                                         <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
                                             <p className="text-sm text-red-800 font-medium">
                                                 {errors.password}
+                                            </p>
+                                        </div>
+                                    )}
+                                    {errors.message && (
+                                        <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                            <p className="text-sm text-yellow-800 font-medium">
+                                                {errors.message}
                                             </p>
                                         </div>
                                     )}
