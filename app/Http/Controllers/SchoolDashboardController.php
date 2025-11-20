@@ -2500,9 +2500,20 @@ class SchoolDashboardController extends Controller
                 'Nama Lengkap', 
                 'Kelas',
                 'Email',
-                'No Handphone (Format: ="081234567890")',
-                'No Handphone Orang Tua (Format: ="081234567890")',
+                'No Handphone',
+                'No Handphone Orang Tua',
                 'Password'
+            ];
+            
+            // Mapping untuk header display (dengan format hint)
+            $headerDisplay = [
+                'NISN' => 'NISN',
+                'Nama Lengkap' => 'Nama Lengkap',
+                'Kelas' => 'Kelas',
+                'Email' => 'Email',
+                'No Handphone' => 'No Handphone (Format: ="081234567890")',
+                'No Handphone Orang Tua' => 'No Handphone Orang Tua (Format: ="081234567890")',
+                'Password' => 'Password'
             ];
 
             // Data contoh yang lebih lengkap dengan format yang Excel-friendly
@@ -2567,7 +2578,12 @@ class SchoolDashboardController extends Controller
             };
             
             // Header dengan semicolon sebagai delimiter (lebih kompatibel dengan Excel Indonesia)
-            $csvContent .= implode(';', array_map($escapeField, $headers)) . "\n";
+            // Gunakan headerDisplay untuk menampilkan format hint
+            $headerRow = [];
+            foreach ($headers as $header) {
+                $headerRow[] = $headerDisplay[$header] ?? $header;
+            }
+            $csvContent .= implode(';', array_map($escapeField, $headerRow)) . "\n";
             
             // Data contoh dengan semicolon sebagai delimiter
             foreach ($sampleData as $row) {
