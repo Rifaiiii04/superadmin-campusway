@@ -11,13 +11,12 @@ class SchoolClass extends Model
 
     protected $fillable = [
         'school_id',
-        'name',
-        'level',
-        'program',
-        'class_number',
-        'description',
+        'class_name',
+        'class_level',
         'is_active',
     ];
+
+    protected $table = 'school_classes';
 
     protected $casts = [
         'is_active' => 'boolean',
