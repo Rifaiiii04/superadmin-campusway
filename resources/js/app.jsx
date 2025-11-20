@@ -11,9 +11,43 @@ import axios from 'axios';
 
 // Configure axios for Inertia
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-const token = document.head.querySelector('meta[name="csrf-token"]');
-if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+
+// Function to update CSRF token
+const updateCsrfToken = () => {
+    const token = document.head.querySelector('meta[name="csrf-token"]');
+    if (token) {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
+    } else {
+        // Try to fetch CSRF token if not found
+        fetch('/csrf-token')
+            .then(res => res.json())
+            .then(data => {
+                if (data.csrf_token) {
+                    // Update or create meta tag
+                    let meta = document.head.querySelector('meta[name="csrf-token"]');
+                    if (!meta) {
+                        meta = document.createElement('meta');
+                        meta.name = 'csrf-token';
+                        document.head.appendChild(meta);
+                    }
+                    meta.content = data.csrf_token;
+                    axios.defaults.headers.common['X-CSRF-TOKEN'] = data.csrf_token;
+                }
+            })
+            .catch(() => {
+                // Silently fail - token will be updated on next page load
+            });
+    }
+};
+
+// Initialize CSRF token
+updateCsrfToken();
+
+// Auto-refresh CSRF token every 5 minutes to prevent expiration
+if (typeof window !== 'undefined') {
+    setInterval(() => {
+        updateCsrfToken();
+    }, 5 * 60 * 1000); // 5 minutes
 }
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";

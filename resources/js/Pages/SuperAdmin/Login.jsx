@@ -31,39 +31,70 @@
 
         const handleSubmit = (e) => {
             e.preventDefault();
+            
+            // Try to refresh CSRF token before submitting if available
+            const csrfToken = document.head.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                // Token exists, proceed with login
+            } else {
+                // No CSRF token found, try to get it
+                fetch('/csrf-token')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.csrf_token) {
+                            // Update meta tag
+                            const meta = document.createElement('meta');
+                            meta.name = 'csrf-token';
+                            meta.content = data.csrf_token;
+                            document.head.appendChild(meta);
+                        }
+                    })
+                    .catch(() => {
+                        // If can't get token, just proceed - Inertia will handle it
+                    });
+            }
+            
             post("/login", {
                 onSuccess: (page) => {
-                    console.log("Login successful, redirecting...");
+                    // Login successful - no console log needed
                     // Inertia akan handle redirect otomatis
                 },
                 onError: (errors) => {
-                    console.log("Login failed:", errors);
+                    // Determine if this is a validation/credential error (should not be logged)
+                    const isValidationError = errors.username || errors.password;
+                    const errorMessage = errors.message || errors.error || JSON.stringify(errors);
                     
                     // Handle 419 CSRF token mismatch error
-                    // Check for various error formats that indicate CSRF token mismatch
-                    const errorMessage = errors.message || errors.error || JSON.stringify(errors);
                     const has419Error = errorMessage && (
                         errorMessage.includes('419') || 
                         errorMessage.includes('CSRF') ||
                         errorMessage.includes('token mismatch') ||
                         errorMessage.includes('Session telah berakhir') ||
-                        errorMessage.includes('The page has expired')
+                        errorMessage.includes('The page has expired') ||
+                        errorMessage.includes('PAGE EXPIRED')
                     );
                     
                     if (has419Error) {
-                        // Show user-friendly message and reload page to get fresh CSRF token
-                        alert('Session telah berakhir. Halaman akan dimuat ulang untuk memperbarui token keamanan.');
+                        // Silently reload page to get fresh CSRF token (no alert, no console error)
+                        // The page reload will get a fresh token automatically
                         window.location.reload();
                         return;
                     }
                     
-                    // Handle other errors
-                    if (errors.message) {
-                        console.error("Login error:", errors.message);
+                    // Only log non-validation errors to console
+                    if (!isValidationError && errors.message) {
+                        // Only log if it's not a credential/validation error
+                        const message = String(errors.message).toLowerCase();
+                        if (!message.includes('password') && 
+                            !message.includes('username') && 
+                            !message.includes('tidak ditemukan') &&
+                            !message.includes('salah')) {
+                            console.error("Login error:", errors.message);
+                        }
                     }
                 },
                 onFinish: () => {
-                    console.log("Login process finished");
+                    // Process finished - no console log needed
                 },
                 preserveState: false,
                 preserveScroll: false,

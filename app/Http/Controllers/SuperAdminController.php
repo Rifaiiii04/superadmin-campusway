@@ -24,6 +24,15 @@ class SuperAdminController extends Controller
     public function login(Request $request)
     {
         try {
+            // Check CSRF token first - if invalid, regenerate and return with message
+            if (!$request->session()->token() || $request->session()->token() !== $request->input('_token')) {
+                // CSRF token mismatch - regenerate token silently
+                $request->session()->regenerateToken();
+                return back()->withErrors([
+                    'message' => 'Session telah berakhir. Silakan refresh halaman dan coba lagi.',
+                ])->withInput($request->only('username'));
+            }
+            
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',
                 'password' => 'required|string',
@@ -39,6 +48,7 @@ class SuperAdminController extends Controller
             $admin = \App\Models\Admin::where('username', $credentials['username'])->first();
 
             if (!$admin) {
+                // Don't log validation errors - just return error
                 return back()->withErrors([
                     'username' => 'Username tidak ditemukan. Silakan periksa kembali username Anda.',
                 ])->withInput($request->only('username'));
@@ -50,17 +60,24 @@ class SuperAdminController extends Controller
                 return redirect('/super-admin/dashboard');
             }
 
-            // If username exists but password is wrong
+            // If username exists but password is wrong - don't log this
             return back()->withErrors([
                 'password' => 'Password salah. Silakan periksa kembali password Anda.',
             ])->withInput($request->only('username'));
         } catch (\Illuminate\Session\TokenMismatchException $e) {
-            // Handle CSRF token mismatch (419 error)
+            // Handle CSRF token mismatch (419 error) - regenerate token
+            $request->session()->regenerateToken();
             return back()->withErrors([
                 'message' => 'Session telah berakhir. Silakan refresh halaman dan coba lagi.',
             ])->withInput($request->only('username'));
         } catch (\Exception $e) {
-            \Log::error('Login error: ' . $e->getMessage());
+            // Only log non-validation errors
+            $errorMessage = $e->getMessage();
+            if (!str_contains($errorMessage, 'password') && 
+                !str_contains($errorMessage, 'username') && 
+                !str_contains($errorMessage, 'validation')) {
+                \Log::error('Login error: ' . $errorMessage);
+            }
             return back()->withErrors([
                 'message' => 'Terjadi kesalahan saat login. Silakan coba lagi.',
             ])->withInput($request->only('username'));
