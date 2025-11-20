@@ -2740,10 +2740,20 @@ class SchoolDashboardController extends Controller
                         ->orderBy('class_name')
                         ->pluck('class_name')
                         ->toArray();
+                    
+                    Log::info('Fetched classes from school_classes table', [
+                        'school_id' => $school->id,
+                        'count' => count($schoolClasses),
+                        'classes' => $schoolClasses
+                    ]);
+                } else {
+                    Log::info('school_classes table does not exist yet');
                 }
             } catch (\Exception $e) {
                 // Table might not exist, just log and continue with student classes
-                Log::warning('Could not fetch from school_classes table: ' . $e->getMessage());
+                Log::warning('Could not fetch from school_classes table: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString()
+                ]);
                 $schoolClasses = [];
             }
 
@@ -2758,9 +2768,20 @@ class SchoolDashboardController extends Controller
                 ->pluck('kelas')
                 ->toArray();
 
+            Log::info('Fetched classes from students table', [
+                'school_id' => $school->id,
+                'count' => count($studentClasses),
+                'classes' => $studentClasses
+            ]);
+
             // Merge and deduplicate classes
             $allClasses = array_unique(array_merge($schoolClasses, $studentClasses));
             sort($allClasses);
+            
+            Log::info('Merged classes', [
+                'total_count' => count($allClasses),
+                'all_classes' => $allClasses
+            ]);
 
             // Map to required format
             $classes = array_map(function($kelas) {
