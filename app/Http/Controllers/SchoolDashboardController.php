@@ -2486,7 +2486,7 @@ class SchoolDashboardController extends Controller
     /**
      * Download template CSV untuk import data siswa
      */
-    public function downloadImportTemplate()
+    public function downloadTemplate()
     {
         try {
             // Header CSV dengan nama yang lebih jelas
