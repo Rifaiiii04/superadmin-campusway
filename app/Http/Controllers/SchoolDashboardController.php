@@ -2559,6 +2559,11 @@ class SchoolDashboardController extends Controller
             // Buat CSV content dengan format yang benar untuk Excel
             $csvContent = '';
             
+            Log::info('Starting CSV generation', [
+                'headers_count' => count($headers),
+                'sample_data_count' => count($sampleData)
+            ]);
+            
             // BOM untuk UTF-8 (agar Excel mengenali encoding dengan benar)
             $csvContent .= "\xEF\xBB\xBF";
             
@@ -2577,40 +2582,70 @@ class SchoolDashboardController extends Controller
                 return $field;
             };
             
-            // Header dengan semicolon sebagai delimiter (lebih kompatibel dengan Excel Indonesia)
-            // Gunakan headerDisplay untuk menampilkan format hint
-            $headerRow = [];
-            foreach ($headers as $header) {
-                $headerRow[] = $headerDisplay[$header] ?? $header;
-            }
-            $csvContent .= implode(';', array_map($escapeField, $headerRow)) . "\n";
-            
-            // Data contoh dengan semicolon sebagai delimiter
-            foreach ($sampleData as $row) {
-                // Pastikan urutan sesuai dengan headers
-                $rowData = [];
+            try {
+                // Header dengan semicolon sebagai delimiter (lebih kompatibel dengan Excel Indonesia)
+                // Gunakan headerDisplay untuk menampilkan format hint
+                $headerRow = [];
                 foreach ($headers as $header) {
-                    $rowData[] = $row[$header] ?? '';
+                    $headerRow[] = $headerDisplay[$header] ?? $header;
                 }
-                $csvContent .= implode(';', array_map($escapeField, $rowData)) . "\n";
+                Log::info('Header row prepared', ['header_count' => count($headerRow)]);
+                
+                $csvContent .= implode(';', array_map($escapeField, $headerRow)) . "\n";
+                Log::info('Header row added to CSV');
+                
+                // Data contoh dengan semicolon sebagai delimiter
+                $rowIndex = 0;
+                foreach ($sampleData as $row) {
+                    $rowIndex++;
+                    // Pastikan urutan sesuai dengan headers
+                    $rowData = [];
+                    foreach ($headers as $header) {
+                        $rowData[] = $row[$header] ?? '';
+                    }
+                    $csvContent .= implode(';', array_map($escapeField, $rowData)) . "\n";
+                    
+                    if ($rowIndex === 1) {
+                        Log::info('First row added to CSV', ['row_data_keys' => array_keys($row)]);
+                    }
+                }
+                Log::info('All data rows added to CSV', ['total_rows' => $rowIndex]);
+            } catch (\Exception $e) {
+                Log::error('Error during CSV generation: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw $e;
             }
 
             // Set headers untuk download
             $filename = 'Template_Import_Siswa_' . date('Y-m-d') . '.csv';
+            $contentLength = strlen($csvContent);
             
             Log::info('Template CSV generated', [
                 'filename' => $filename,
-                'content_length' => strlen($csvContent),
+                'content_length' => $contentLength,
                 'rows' => count($sampleData)
             ]);
             
-            return response($csvContent, 200)
-                ->header('Content-Type', 'text/csv; charset=UTF-8')
-                ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
-                ->header('Content-Length', strlen($csvContent))
-                ->header('Cache-Control', 'no-cache, must-revalidate')
-                ->header('Pragma', 'no-cache')
-                ->header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
+            try {
+                $response = response($csvContent, 200)
+                    ->header('Content-Type', 'text/csv; charset=UTF-8')
+                    ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
+                    ->header('Content-Length', (string)$contentLength)
+                    ->header('Cache-Control', 'no-cache, must-revalidate')
+                    ->header('Pragma', 'no-cache')
+                    ->header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
+                
+                Log::info('Response prepared successfully');
+                return $response;
+            } catch (\Exception $e) {
+                Log::error('Error creating response: ' . $e->getMessage(), [
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
 
         } catch (\Exception $e) {
             Log::error('Download template error: ' . $e->getMessage(), [
