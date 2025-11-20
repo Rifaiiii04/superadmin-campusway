@@ -508,11 +508,22 @@ Route::prefix('school')->group(function () {
 // ===========================================
 Route::get('/major-recommendations/export', [App\Http\Controllers\MajorRecommendationController::class, 'export']);
 
-// TKA Schedules routes (public access)
+// ===========================================
+// TKA SCHEDULES ROUTES (Public Access)
+// ===========================================
+// Note: These routes are accessible at /api/tka-schedules due to RouteServiceProvider prefix
 Route::get('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'apiIndex']);
 Route::get('/tka-schedules/upcoming', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'upcoming']);
 
-// TKA Schedules CRUD operations (for teacher dashboard)
+// ===========================================
+// TKA SCHEDULES CRUD OPERATIONS (For Teacher Dashboard)
+// ===========================================
+// POST route for creating new schedule
 Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+// PUT/PATCH route for updating schedule
 Route::put('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::patch('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+// DELETE route for deleting schedule
 Route::delete('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
+// PATCH route for canceling schedule
+Route::patch('/tka-schedules/{id}/cancel', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);

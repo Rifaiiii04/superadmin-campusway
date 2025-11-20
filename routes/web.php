@@ -376,6 +376,14 @@ Route::get('/tka-schedules', function () {
     return redirect('/admin/tka-schedules');
 });
 
+// API routes for TKA Schedules (without /api prefix) - for frontend compatibility
+// These routes handle requests from frontend that don't use /api prefix
+Route::post('/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
+Route::put('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::patch('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'update']);
+Route::delete('/tka-schedules/{id}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'destroy']);
+Route::patch('/tka-schedules/{id}/cancel', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'cancel']);
+
 // SuperAdmin TKA Schedules - Inertia responses (Web)
 Route::post('/admin/tka-schedules', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'store']);
 Route::get('/admin/tka-schedules/{tkaSchedule}', [App\Http\Controllers\SuperAdmin\TkaScheduleController::class, 'show']);
