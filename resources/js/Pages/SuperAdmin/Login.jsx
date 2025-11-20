@@ -70,9 +70,11 @@
                                         />
                                     </div>
                                     {errors.username && (
-                                        <p className="mt-2 text-sm text-red-600">
-                                            {errors.username}
-                                        </p>
+                                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                                            <p className="text-sm text-red-800 font-medium">
+                                                {errors.username}
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
 
@@ -113,9 +115,11 @@
                                         </button>
                                     </div>
                                     {errors.password && (
-                                        <p className="mt-2 text-sm text-red-600">
-                                            {errors.password}
-                                        </p>
+                                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                                            <p className="text-sm text-red-800 font-medium">
+                                                {errors.password}
+                                            </p>
+                                        </div>
                                     )}
                                 </div>
 

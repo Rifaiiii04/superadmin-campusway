@@ -34,14 +34,25 @@ class SuperAdminController extends Controller
 
         $credentials = $request->only('username', 'password');
 
+        // Check if username exists first
+        $admin = \App\Models\Admin::where('username', $credentials['username'])->first();
+
+        if (!$admin) {
+            return back()->withErrors([
+                'username' => 'Username tidak ditemukan. Silakan periksa kembali username Anda.',
+            ])->withInput($request->only('username'));
+        }
+
+        // Attempt authentication
         if (Auth::guard('admin')->attempt($credentials)) {
             $request->session()->regenerate();
             return redirect('/super-admin/dashboard');
         }
 
+        // If username exists but password is wrong
         return back()->withErrors([
-            'username' => 'Invalid credentials.',
-        ])->withInput();
+            'password' => 'Password salah. Silakan periksa kembali password Anda.',
+        ])->withInput($request->only('username'));
     }
 
     public function dashboard()
