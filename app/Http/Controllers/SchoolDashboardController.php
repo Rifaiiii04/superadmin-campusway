@@ -2486,9 +2486,14 @@ class SchoolDashboardController extends Controller
     /**
      * Download template CSV untuk import data siswa
      */
-    public function downloadTemplate()
+    public function downloadTemplate(Request $request)
     {
         try {
+            Log::info('Download template requested', [
+                'request_uri' => $request->getRequestUri(),
+                'method' => $request->method()
+            ]);
+            
             // Header CSV dengan nama yang lebih jelas
             $headers = [
                 'NISN',
@@ -2546,26 +2551,44 @@ class SchoolDashboardController extends Controller
             // BOM untuk UTF-8 (agar Excel mengenali encoding dengan benar)
             $csvContent .= "\xEF\xBB\xBF";
             
+            // Helper function untuk escape CSV field
+            $escapeField = function($field) {
+                if ($field === null) {
+                    return '';
+                }
+                $field = (string)$field;
+                // Escape quotes
+                $field = str_replace('"', '""', $field);
+                // Wrap dengan quotes jika mengandung semicolon, comma, atau quotes
+                if (strpos($field, ';') !== false || strpos($field, ',') !== false || strpos($field, '"') !== false || strpos($field, "\n") !== false) {
+                    return '"' . $field . '"';
+                }
+                return $field;
+            };
+            
             // Header dengan semicolon sebagai delimiter (lebih kompatibel dengan Excel Indonesia)
-            $csvContent .= implode(';', $headers) . "\n";
+            $csvContent .= implode(';', array_map($escapeField, $headers)) . "\n";
             
             // Data contoh dengan semicolon sebagai delimiter
             foreach ($sampleData as $row) {
-                $csvContent .= implode(';', array_map(function($field) {
-                    // Escape semicolon dan quotes jika ada
-                    $field = str_replace('"', '""', $field);
-                    // Wrap dengan quotes jika mengandung semicolon, comma, atau quotes
-                    if (strpos($field, ';') !== false || strpos($field, ',') !== false || strpos($field, '"') !== false) {
-                        return '"' . $field . '"';
-                    }
-                    return $field;
-                }, $row)) . "\n";
+                // Pastikan urutan sesuai dengan headers
+                $rowData = [];
+                foreach ($headers as $header) {
+                    $rowData[] = $row[$header] ?? '';
+                }
+                $csvContent .= implode(';', array_map($escapeField, $rowData)) . "\n";
             }
 
             // Set headers untuk download
             $filename = 'Template_Import_Siswa_' . date('Y-m-d') . '.csv';
             
-            return response($csvContent)
+            Log::info('Template CSV generated', [
+                'filename' => $filename,
+                'content_length' => strlen($csvContent),
+                'rows' => count($sampleData)
+            ]);
+            
+            return response($csvContent, 200)
                 ->header('Content-Type', 'text/csv; charset=UTF-8')
                 ->header('Content-Disposition', 'attachment; filename="' . $filename . '"')
                 ->header('Content-Length', strlen($csvContent))
@@ -2574,10 +2597,24 @@ class SchoolDashboardController extends Controller
                 ->header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
 
         } catch (\Exception $e) {
-            Log::error('Download template error: ' . $e->getMessage());
+            Log::error('Download template error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengunduh template'
+                'message' => 'Gagal mengunduh template: ' . $e->getMessage()
+            ], 500);
+        } catch (\Throwable $e) {
+            Log::error('Download template fatal error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengunduh template: ' . $e->getMessage()
             ], 500);
         }
     }
