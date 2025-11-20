@@ -2491,7 +2491,8 @@ class SchoolDashboardController extends Controller
         try {
             Log::info('Download template requested', [
                 'request_uri' => $request->getRequestUri(),
-                'method' => $request->method()
+                'method' => $request->method(),
+                'has_school' => $request->has('school') || isset($request->school)
             ]);
             
             // Header CSV dengan nama yang lebih jelas
@@ -2557,12 +2558,14 @@ class SchoolDashboardController extends Controller
             ];
 
             // Buat CSV content dengan format yang benar untuk Excel
-            $csvContent = '';
-            
-            Log::info('Starting CSV generation', [
+            Log::info('Preparing CSV generation', [
                 'headers_count' => count($headers),
                 'sample_data_count' => count($sampleData)
             ]);
+            
+            $csvContent = '';
+            
+            Log::info('Starting CSV generation');
             
             // BOM untuk UTF-8 (agar Excel mengenali encoding dengan benar)
             $csvContent .= "\xEF\xBB\xBF";
@@ -2647,26 +2650,24 @@ class SchoolDashboardController extends Controller
                 throw $e;
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Download template error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'class' => get_class($e)
             ]);
+            
+            // Return JSON error response
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengunduh template: ' . $e->getMessage()
-            ], 500);
-        } catch (\Throwable $e) {
-            Log::error('Download template fatal error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengunduh template: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Gagal mengunduh template: ' . $e->getMessage(),
+                'error' => config('app.debug') ? [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                    'trace' => $e->getTraceAsString()
+                ] : null
+            ], 500)->header('Content-Type', 'application/json');
         }
     }
 
